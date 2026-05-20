@@ -26,10 +26,7 @@ The skill will not proceed until these are answered.
 
 | Situation | Command | Pipeline |
 |-----------|---------|----------|
-| New product or greenfield app | `/build-product` | Personal → Full |
-| New feature in existing app | `/build-product` | Personal → Medium |
-| Bug fix, small UI change | `/build-product` | Personal → Light |
-| Work project — planning + Jira only | `/build-product` | Work |
+| Any feature — planning + Jira export | `/build-product` | Work |
 
 **Fast mode** (default): Chains all auto-steps. Pauses only at 3 approval gates.
 **Gated mode**: Pauses after every step. Use when reviewing each output matters.
@@ -39,11 +36,9 @@ The skill will not proceed until these are answered.
 ## Available Commands
 
 ### Pipeline Orchestration
-- `/build-product` — Full pipeline (research → ship). Handles Personal and Work projects.
+- `/build-product` — Work pipeline (research → PRD → design → Jira export). Planning only, no implementation.
 - `/change-mode` — Propagate a change after Gate 1 across every artifact for an existing feature.
 - `/reopen-gate-1`, `/reopen-gate-2`, `/reopen-gate-3` — Re-open an approved gate.
-- `/review-parallel` — Dual product + CTO review in parallel.
-- `/validate-parallel` — Three-way parallel validation: AC compliance + design match + NFR.
 
 ### Standalone Pipeline Steps
 Each command runs one stage of the pipeline independently. Each asks for the inputs it needs (PRD, design catalog, etc.) if you call it outside the full `/build-product` run.
@@ -54,7 +49,7 @@ Each command runs one stage of the pipeline independently. Each asks for the inp
 - `/review-prd` — Product Reviewer pass on an existing PRD.
 - `/cto-review` — Technical Reviewer pass on an existing PRD (also reads codebase review if available).
 - `/system-design` — Generate a system-design doc from a PRD.
-- `/visual-diagram` — Generate a Mermaid diagram from a PRD or feature description.
+- `/visual-diagram` — Generate a Figma FigJam diagram from a PRD (falls back to Mermaid if Figma MCP is unavailable).
 - `/user-stories` — Generate the User Stories Breakdown (Gherkin AC + FE/BE pairing) from an approved PRD.
 - `/prd-to-jira` — Create Jira tickets from a user-stories breakdown or PRD.
 - `/drive-sync` — Sync a feature's pipeline artifacts to Google Drive (requires Google Drive MCP installed).
@@ -63,16 +58,11 @@ Each command runs one stage of the pipeline independently. Each asks for the inp
 - `/read-feedback` — Pull reviewer comments from a Confluence page, synthesize into suggested PRD edits, and apply approved changes. Re-syncs PRD to Confluence after edits.
 
 ### Design
-- `/design` — In-repo UI design: AI builds screens directly in code.
-- `/design-with-v0` — v0-based design: AI generates prompts, you paste into v0.
+- `/design-prompts` — Generate screen design prompts for v0 or Figma Make from an approved PRD.
 - `/update-prd-from-designs` — Sync PRD with finalized design catalog.
-- `/compare-figma-prd` — Figma vs PRD & Jira gap analysis (Work pipeline, after designer delivers).
+- `/compare-figma-prd` — Figma vs PRD & Jira gap analysis after designer delivers.
 
 ### Execution & Validation
-- `/execute-plan` — Implement current phase (solo or team mode).
-- `/validate` — Smoke-test against PRD acceptance criteria and designs.
-- `/update-prd-from-build` — Sync PRD with what was actually implemented.
-- `/generate-tests` — Scaffold test stubs from a user-stories breakdown (Gherkin AC → test framework). Run after breakdown is approved, before execution.
 - `/lint-style` — Check any generated document against `ai-framework/style-preferences.md` and flag or fix style violations.
 
 ### Status & Utilities
@@ -82,7 +72,6 @@ Each command runs one stage of the pipeline independently. Each asks for the inp
 - `/prioritize` — Feature/initiative prioritization (RICE, MoSCoW, Value vs Effort).
 - `/meeting-notes` — Parse raw notes into decisions, action items, next steps.
 - `/learn-codebase` — Plain-language walkthrough of any app in this workspace.
-- `/learn` — Post-ship reflection and learning report.
 
 
 ---
@@ -95,11 +84,10 @@ The PRD must be updated at every stage transition:
 |---------|--------|
 | After reviews | Apply all product + CTO review fixes |
 | After design finalized | Run `/update-prd-from-designs` |
-| After phase validated | Run `/update-prd-from-build` |
 | Scope change | Update stories, phases, AC before proceeding |
 | New decision made | Add row to decision log |
 
-Never start execution with a PRD that does not reflect the approved design.
+Never start the User Stories Breakdown with a PRD that does not reflect the approved design.
 
 ---
 
@@ -128,3 +116,18 @@ Outputs land at `~/Desktop/Resources/PDLC Workflow Docs/[feature-name]/`. See `S
 ## Writing Style
 
 Writing style preferences live in a separate file at `ai-framework/style-preferences.md`. Edit that file to match your preferences. Leave it empty to use no style rules. The skill reads from that file and applies whatever rules are present.
+
+---
+
+## Release Checklist
+
+When making significant changes to this skill (new commands, pipeline changes, bug fixes), update these four files before committing:
+
+| File | What to update |
+|------|---------------|
+| `CHANGELOG.md` | Add a new version entry at the top following the existing format. Use semantic versioning: MAJOR for breaking changes, MINOR for new features, PATCH for bug fixes. |
+| `VERSION.md` | Update to the new version number and date. |
+| `README.md` | Update the pipeline table, commands table, or any section that reflects what changed. Update the version badge at the top. |
+| `docs/index.html` | Update the version comment on line 6, the `.version-badge` text, the stats if counts changed, step cards if pipeline steps changed, the commands section if commands changed, and add a new entry to the changelog section. |
+
+The HTML at `docs/index.html` is served via GitHub Pages at `https://judy-eapen.github.io/build-product-skill/`. It must always reflect the current version — update it in the same commit as the skill changes.

@@ -4,6 +4,10 @@ Runs after Gate 1 and before the design step (when called from the orchestrator)
 
 Read `ai-framework/rules.md` and `ai-framework/error-handling.md` before executing.
 
+**Primary format: Figma FigJam diagram** (created via Figma MCP `generate_diagram`). The diagram lives in Figma, can be shared with any team member, and embeds cleanly in Confluence.
+
+**Fallback format: Mermaid syntax** — only if the Figma MCP is unavailable. Note: Mermaid does not render visually in Confluence without a third-party plugin; stakeholders viewing the Confluence page will see raw code, not a diagram. If using Mermaid, inform the PM of this limitation.
+
 ---
 
 ## Step 0 — Input Check (gracefully handle standalone calls)
@@ -44,16 +48,25 @@ State the inferred choice and ask for confirmation before generating.
 
 ---
 
-## Step 2 — Diagram Generation
+## Step 2 — Generate Diagram
 
-Ask the PM which format they prefer:
+### Primary path — Figma MCP
 
-- **Mermaid diagram syntax** — renders natively in most markdown viewers.
-- **Structured text description** — detailed enough for a designer or engineer to reproduce exactly in Figma, Miro, or Whimsical.
+Load the `/figma-generate-diagram` skill before calling the Figma MCP. This skill is mandatory before calling `generate_diagram`.
 
-Generate the diagram in the chosen format.
+Once the skill is loaded, call `generate_diagram` to create a FigJam diagram. The diagram must reflect the PRD exactly — every node must trace to a specific PRD user story or section. Do not add flows, screens, or components that are not in PRD scope.
 
-The diagram must reflect the PRD exactly. Do not add any flows, screens, or components that are not in the PRD scope. Every node must trace to a specific PRD user story or section.
+After the diagram is created:
+- Record the Figma diagram URL in `_pipeline-state.json` → `export_urls.figma_diagram_url`.
+- Store the URL as a variable for use in Step 3 (output file) and downstream steps (Confluence embed, if publishing).
+
+If `generate_diagram` fails or the Figma MCP is not available, fall back to the Mermaid path below.
+
+### Fallback path — Mermaid syntax
+
+⚠ **Mermaid limitation:** Mermaid syntax renders visually in tools like Cursor (with the Mermaid extension), VS Code, and some markdown viewers, but **does not render in Confluence** without a third-party plugin. Stakeholders opening the Confluence page will see raw Mermaid code. Inform the PM of this limitation before proceeding.
+
+Generate the diagram in Mermaid syntax. Every node must trace to a specific PRD user story or section.
 
 ---
 
@@ -69,8 +82,9 @@ Then write the diagram to that path. If the parent folders do not exist, create 
 
 The output file must include:
 - Diagram type chosen.
-- Format used (Mermaid or structured text).
-- The diagram itself.
+- Format used (Figma FigJam or Mermaid).
+- If Figma: the Figma diagram URL.
+- If Mermaid: the Mermaid code block, plus the Confluence limitation note.
 - A traceability table mapping every node, screen, or component to its source PRD user story or section.
 
 ---
@@ -93,3 +107,4 @@ Ask exactly one question:
 - Every screen or component in the diagram must trace back to a user story or PRD section.
 - Do not add flows that imply scope not in the PRD. If the diagram exposes a missing flow, flag it as an open question to the PM rather than inventing it.
 - Self-check before writing: does this diagram contradict any decision recorded in the PRD decision log? If yes, surface to the PM before writing.
+- If using Figma FigJam, always load `/figma-generate-diagram` before calling `generate_diagram`.

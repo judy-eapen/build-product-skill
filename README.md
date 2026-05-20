@@ -1,24 +1,32 @@
 # /build-product
 
-**A Claude skill that takes a product manager from an idea for a feature → a Jira Epic with all the linked tickets.** Research, codebase grounding, PRD, dual review, designs, exhaustive user stories with Gherkin acceptance criteria, and ticket creation in Jira (plus optional Google Drive sync and Confluence publishing) — in one continuous workflow with three human approval gates.
+**A Claude skill that takes a PM from a feature idea → a Jira Epic with all linked tickets.** Research, codebase grounding, PRD, dual AI review, design prompts for v0 or Figma Make, exhaustive user stories with Gherkin acceptance criteria, and Jira ticket creation — in one continuous Work pipeline with three human approval gates.
+
+> **v2.0.0 — Work pipeline only.** The Personal pipeline (Full/Medium/Light) has been removed. This skill is built for product managers, not individual developers building personal projects.
+
+📄 **[View the interactive pipeline explainer →](https://judy-eapen.github.io/build-product-skill/)**
+
+---
 
 ## What it does
 
-When you type `/build-product` in Claude Code, an AI orchestrator runs an 11-step pipeline:
+Type `/build-product` in Claude Code. An AI orchestrator runs an 11-step Work pipeline:
 
-1. **Research Idea** — Interactive Discovery, 15-dimension internal checklist, no fixed question count.
-2. **Codebase Review** — point at folder paths on disk; the skill reads structure, samples files, rates risks.
-3. **Create PRD** — 11-section PRD, scoping-aware, self-checking against decisions.
-4. **Dual Review (parallel)** — two true agents at the same instant: Product Reviewer + Technical Reviewer.
-5. **Apply Fixes → Gate 1** — ~10 automated quality checks + conflict-card resolution + your approval.
-6. **System Design** (optional, if architecturally non-trivial).
-7. **Visual Diagram** — user journey, system architecture, or wireflow (Mermaid).
-8. **Design** — in-repo screens or v0 prompts, with required state coverage per screen.
-9. **Update PRD from Designs → Gate 2** — surgical sync, your approval.
-10. **User Stories Breakdown → Gate 3** — exhaustive Gherkin AC, FE/BE pairing, testing notes, sizing, 8 quality checks.
-11. **Export (parallel)** — Jira tickets always, plus optional Google Drive sync + Confluence publishing.
+| # | Step | Mode | Output |
+|---|------|------|--------|
+| 1 | **Research Idea** — Interactive discovery, knowledge-base check, web scan | AUTO | `research/` |
+| 2 | **Codebase Review** — Reads folder structure, samples files, rates risks | AUTO | `codebase-review/` |
+| 3 | **Create PRD** — 11-section PRD, scoping-aware, auto-linted | AUTO | `prd/` |
+| 4 | **Dual Review** — Two parallel agents: Product Reviewer + Technical Reviewer | PARALLEL | `product-review/` + `technical-review/` |
+| 5 | **Apply Fixes → Gate 1** — ~10 auto quality checks, conflict cards, your approval | **GATE** | `prd/` (updated) |
+| 6 | **System Design** — Architecture, data model, build order (optional) | AUTO | `technical-review/` |
+| 7 | **Visual Diagram** — Figma FigJam via Figma MCP (falls back to Mermaid) | AUTO | `diagrams/` |
+| 8 | **Design Prompts** — Structured v0 / Figma Make prompts per screen, per state | AUTO | `design/` |
+| 9 | **Update PRD from Designs → Gate 2** — Surgical sync, your approval | **GATE** | `prd/` (updated) |
+| 10 | **User Stories Breakdown → Gate 3** — Exhaustive Gherkin AC, FE/BE pairs, 8 quality checks | **GATE** | `user-stories/` |
+| 11 | **Export** — Jira tickets always; Google Drive + Confluence optional, parallel | PARALLEL | Jira + Drive + Confluence |
 
-Plus `/change-mode` for propagating changes after a gate, `/reopen-gate-1/2/3` for unwinding bad approvals, and 11 standalone commands so you can use individual steps without running the whole pipeline.
+---
 
 ## Installation
 
@@ -26,45 +34,109 @@ Plus `/change-mode` for propagating changes after a gate, `/reopen-gate-1/2/3` f
 
 - A Claude account (Pro or Team).
 - [Claude Code](https://docs.claude.com/en/docs/claude-code) installed.
-- `git` installed. Check with `git --version`. On Mac, git ships with Xcode Command Line Tools — if you don't have it, just run any `git` command and macOS will prompt to install. Or `brew install git` if you use Homebrew.
+- `git` installed (`git --version` to check; on Mac, Xcode Command Line Tools includes it).
 
-### Install the skill
-
-**1. Clone this repo into your local Claude skills directory:**
+### Install
 
 ```bash
 git clone https://github.com/judy-eapen/build-product-skill.git ~/.claude/skills/build-product
 ```
 
-**2. Register the slash commands** (one-time setup; creates wrapper files in `~/.claude/commands/` for each command the skill exposes):
+**Register the slash commands** (one-time; creates wrapper files in `~/.claude/commands/`):
 
 ```bash
 mkdir -p ~/.claude/commands && for f in ~/.claude/skills/build-product/subprompts/*.md; do n=$(basename "$f" .md); printf 'Read and follow `~/.claude/skills/build-product/subprompts/%s.md`.\n' "$n" > ~/.claude/commands/"$n.md"; done
 ```
 
-Open Claude Code in any folder, type `/`, and `/build-product` plus 20+ standalone commands (`/change-mode`, `/research-idea`, `/codebase-review`, `/create-prd`, `/review-prd`, `/cto-review`, `/user-stories`, `/prd-to-jira`, etc.) will appear in the autocomplete.
+Open Claude Code, type `/`, and `/build-product` plus all standalone commands appear in autocomplete.
 
-> **Why the second step?** Claude Code discovers slash commands from `~/.claude/commands/`, not from inside a skill's folder. The one-liner above creates a thin wrapper for each command in the skill's `subprompts/` folder so they all show up as top-level slash commands.
+> **Why the second step?** Claude Code discovers slash commands from `~/.claude/commands/`, not from inside a skill folder. The one-liner creates a thin wrapper for each subprompt so they all surface as top-level commands.
 
-### Update to the latest version
+### Update
 
 ```bash
-cd ~/.claude/skills/build-product
-git pull
+cd ~/.claude/skills/build-product && git pull
 ```
+
+---
 
 ## Quickstart
 
-1. Open Claude Code in any folder (works from anywhere).
+1. Open Claude Code in any folder.
 2. Type `/build-product`.
-3. Answer a few setup questions (feature name, Jira project, product type).
-4. The pipeline walks you through 11 steps. You approve at 3 gates along the way.
-5. Find every artifact at `~/Desktop/Resources/PDLC Workflow Docs/[feature-name]/`.
+3. Answer a few setup questions (feature name, Jira project, product type, tech stack).
+4. The pipeline runs. You approve at 3 gates.
+5. Artifacts land at `~/Desktop/Resources/PDLC Workflow Docs/[feature-name]/`.
 
-## Where outputs land
+---
+
+## All commands
+
+### Pipeline
+| Command | What it does |
+|---------|-------------|
+| `/build-product` | Full Work pipeline — research → Jira export |
+| `/change-mode` | Propagate a scope change after any gate across all artifacts |
+| `/reopen-gate-1` | Unwind Gate 1 approval; re-run steps before it |
+| `/reopen-gate-2` | Unwind Gate 2 approval; re-run steps before it |
+| `/reopen-gate-3` | Unwind Gate 3 approval; re-run steps before it |
+
+### Standalone steps
+| Command | What it does |
+|---------|-------------|
+| `/research-idea` | Research stage only |
+| `/codebase-review` | Codebase review only |
+| `/create-prd` | Generate a PRD from research or a brief |
+| `/review-prd` | Product Reviewer pass on an existing PRD |
+| `/cto-review` | Technical Reviewer pass on an existing PRD |
+| `/system-design` | System design doc from a PRD |
+| `/visual-diagram` | Figma FigJam diagram from a PRD (Mermaid fallback) |
+| `/user-stories` | User Stories Breakdown from an approved PRD |
+| `/prd-to-jira` | Create Jira tickets from a breakdown or PRD |
+| `/drive-sync` | Sync artifacts to Google Drive |
+| `/prd-to-confluence` | Publish PRD as a Confluence page |
+| `/share-for-review` | Post a Confluence link to Slack with reviewers + deadline |
+| `/read-feedback` | Pull Confluence comments, synthesize into PRD edits, re-sync |
+
+### Design
+| Command | What it does |
+|---------|-------------|
+| `/design-prompts` | Screen design prompts for v0 or Figma Make |
+| `/update-prd-from-designs` | Sync PRD with finalized design catalog |
+| `/compare-figma-prd` | Figma vs PRD & Jira gap analysis after designer delivers |
+
+### Utilities
+| Command | What it does |
+|---------|-------------|
+| `/lint-style` | Check any document against `style-preferences.md` |
+| `/team-status` | Portfolio dashboard: all features, phases, owners, blockers |
+| `/feature-kickoff` | Role-specific briefing for an engineer or designer picking up a feature |
+| `/project-status` | Pipeline state and next step for a single feature |
+| `/prioritize` | RICE / MoSCoW / Value-vs-Effort prioritization |
+| `/meeting-notes` | Parse raw meeting notes into decisions, actions, next steps |
+| `/learn-codebase` | Plain-language walkthrough of any codebase |
+
+---
+
+## Optional integrations
+
+| Integration | MCP | Used for |
+|-------------|-----|---------|
+| **Jira** | Atlassian MCP | Step 11a — ticket creation (required for export) |
+| **Confluence** | Atlassian MCP | Step 11c + `/prd-to-confluence` + `/read-feedback` |
+| **Google Drive** | Drive MCP | Step 11b + `/drive-sync` |
+| **Figma** | Figma MCP | Step 7 — FigJam diagram generation |
+| **Slack** | Slack MCP | `/share-for-review` — post review links with @mentions |
+
+Any integration the skill can't reach is skipped cleanly — it never blocks the rest of the pipeline.
+
+---
+
+## Output structure
 
 ```
 ~/Desktop/Resources/PDLC Workflow Docs/
+├── _knowledge-base.md          ← cross-feature learnings (append-only)
 └── [feature-name]/
     ├── research/
     ├── codebase-review/
@@ -76,41 +148,40 @@ git pull
     ├── user-stories/
     ├── jira-export/
     ├── changelog/
-    └── _pipeline-state.md
+    ├── stakeholders/
+    ├── _pipeline-state.json    ← resumable session state
+    ├── _context-checkpoint.md  ← compact context for session resumption
+    └── _open-conditions.md     ← conditions from "approved with conditions" gates
 ```
+
+---
 
 ## Customize
 
-The skill is yours to edit once cloned. Common starting points:
+Common starting points:
 
-- `ai-framework/style-preferences.md` — your writing style.
+- `ai-framework/style-preferences.md` — your writing style rules.
 - `ai-framework/01-research-idea.md` — the 15-dimension Interactive Discovery checklist.
 - `ai-framework/02-create-prd.md` — PRD sections and scoping logic.
-- `subprompts/prd-to-jira.md` — how tickets get composed and which Jira custom fields are filled.
-- `CLAUDE.md` — intake parameters every PM is asked at the start.
+- `subprompts/prd-to-jira.md` — how tickets are composed and which Jira custom fields are filled.
+- `CLAUDE.md` — intake parameters every PM answers at pipeline start.
 
-Pull updates from this repo with `git pull` (your local edits stay unless they conflict).
+---
 
-## Optional integrations
+## Architecture notes
 
-- **Jira** — always required for Step 11. Connect Atlassian MCP in Claude Code.
-- **Google Drive** — optional. Install a Google Drive MCP and authenticate. Enables `/drive-sync` and the Step 11b parallel agent.
-- **Confluence** — optional. Uses the same Atlassian MCP. Enables `/prd-to-confluence` and the Step 11c parallel agent.
+- **Resumable** — `_pipeline-state.json` is written at the end of every step and read first in every new session. Gate approvals, artifact paths, and export URLs are all persisted.
+- **True parallelism** — Dual review (Step 4) and Export (Step 11) use the Claude Agent tool to run isolated sub-agents simultaneously, not role-switching in a single context.
+- **Forcing functions** — 15-dimension research checklist, conflict cards that must be resolved at Gate 1, pre-flight Jira field validation before bulk creation.
+- **Safe change propagation** — `/change-mode` computes blast radius and walks you through diff-by-diff approval. `/reopen-gate-N` unwinds without losing downstream artifacts.
+- **Cross-feature memory** — `_knowledge-base.md` accumulates lessons. Future PRDs surface relevant past decisions before web search runs.
 
-The skill skips any optional integration cleanly if its MCP isn't connected — it never blocks the rest of the pipeline.
-
-## Architecture highlights
-
-- **Resumable**: a `_pipeline-state.md` file is written at the end of every step and read first on every new conversation. Sessions can pause for hours or days and resume in a fresh chat window.
-- **Cross-step traceability**: each step's output is a structured input to specific downstream steps. The codebase review handoff seeds the PRD. The PRD decision log is referenced everywhere. The breakdown feeds the Jira export. The Jira manifest enables `/change-mode`.
-- **Forcing functions, not soft instructions**: 15-dimension checklist forces completeness. Conflict cards block Gate 1 approval. Pre-flight validates Jira custom field IDs before bulk creation.
-- **Memory across features**: `_knowledge-base.md` captures lessons from every shipped feature. Future PRDs surface relevant past learnings.
-- **Recovery without restart**: `/change-mode` blast-radius reports + diff-by-diff approval. Reopen gates without losing downstream work.
-
-## License
-
-MIT (see LICENSE file if included). Feel free to fork, modify, and adapt.
+---
 
 ## Version
 
-v1.0 — initial public release.
+**v2.0.0** — See [CHANGELOG.md](./CHANGELOG.md) for full version history.
+
+## License
+
+MIT
