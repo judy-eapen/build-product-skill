@@ -1,0 +1,14 @@
+# macOS
+.DS_Store
+
+# Build artifacts
+*.zip
+build-product.zip
+
+# Editor / IDE
+.vscode/
+.idea/
+*.swp
+
+# Pipeline state in published versions (per-feature, not shared)
+_pipeline-state.md
