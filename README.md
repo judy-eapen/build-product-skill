@@ -26,6 +26,7 @@ Plus `/change-mode` for propagating changes after a gate, `/reopen-gate-1/2/3` f
 
 - A Claude account (Pro or Team).
 - [Claude Code](https://docs.claude.com/en/docs/claude-code) installed.
+- `git` installed. Check with `git --version`. On Mac, git ships with Xcode Command Line Tools — if you don't have it, just run any `git` command and macOS will prompt to install. Or `brew install git` if you use Homebrew.
 
 ### Install the skill
 
