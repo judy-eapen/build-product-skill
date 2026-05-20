@@ -476,21 +476,6 @@ Then proceed. The Gate 2 quality check will automatically verify all Gate 1 cond
 
 Update `_pipeline-state.json`. Mark Gate 1 as Approved with date. Write context checkpoint to `_context-checkpoint.md`.
 
-**Optional — publish PRD to Confluence and share for review:**
-After Gate 1 approval, offer once:
-```
-The PRD is approved. Want to publish it to Confluence and share it with stakeholders
-for async review before design starts? (yes / skip)
-```
-
-If yes:
-1. First publish the PRD to Confluence — read and follow `subprompts/prd-to-confluence.md`.
-   Record the resulting page URL in `_pipeline-state.json` → `export_urls.confluence_page`.
-2. Then read and follow `subprompts/share-for-review.md` using that URL.
-
-If the PM skips, note that they can run `/prd-to-confluence` and `/share-for-review`
-manually at any time.
-
 ---
 
 ### Steps 5a + 5b — System Design + Phase 1 Screen Inventory Prep [PARALLEL, if yes at Gate 1]
@@ -604,22 +589,6 @@ Options:
 ```
 
 Update `_pipeline-state.json`. Mark Gate 2 as Approved with date. Write context checkpoint to `_context-checkpoint.md`.
-
-**Optional — publish updated PRD to Confluence and share designs for review:**
-After Gate 2 approval, offer once:
-```
-Designs approved. Want to update the Confluence PRD page (it now reflects the final
-designs) and share the design catalog with the engineering lead before implementation
-starts? (yes / skip)
-```
-
-If yes:
-1. Update the Confluence PRD page with the post-design PRD — call `updateConfluencePage`
-   using the page URL already in `_pipeline-state.json` → `export_urls.confluence_page`.
-   If no page exists yet (Gate 1 share was skipped), publish fresh via `subprompts/prd-to-confluence.md`.
-2. Then read and follow `subprompts/share-for-review.md` — the artifact to share is
-   the design catalog, not the PRD. Pass the design catalog file path; the command will
-   offer to publish it to Confluence as a separate page if needed.
 
 ---
 
