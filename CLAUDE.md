@@ -70,6 +70,8 @@ Each command runs one stage of the pipeline independently. Each asks for the inp
 - `/execute-plan` — Implement current phase (solo or team mode).
 - `/validate` — Smoke-test against PRD acceptance criteria and designs.
 - `/update-prd-from-build` — Sync PRD with what was actually implemented.
+- `/generate-tests` — Scaffold test stubs from a user-stories breakdown (Gherkin AC → test framework). Run after breakdown is approved, before execution.
+- `/lint-style` — Check any generated document against `ai-framework/style-preferences.md` and flag or fix style violations.
 
 ### Status & Utilities
 - `/team-status` — Portfolio dashboard: all products, phases, owners, blockers.

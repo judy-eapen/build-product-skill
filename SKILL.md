@@ -39,9 +39,88 @@ Before any pipeline routing, run this check. It must run exactly once per sessio
 
 End-to-end product development pipeline with parallelized steps for maximum throughput. Handles Personal and Work projects across Full, Medium, and Light pipelines.
 
+**Pipeline routing is config-driven.** After the PM selects a pipeline type, read `ai-framework/pipeline-configs.yaml` to determine the exact steps, gates, quality checks, and conditions for that pipeline. Do not hardcode step logic — derive it from config. If a pipeline type the PM describes is not listed in the config file, say so and offer the closest match.
+
 Read `ai-framework/05-parallel-rules.md` before executing any parallel block.
 
 **Global rules inheritance.** Every step in every pipeline must read both `ai-framework/rules.md` and `ai-framework/error-handling.md` before executing.
+
+---
+
+## CONTEXT BUDGET RULES
+
+Long pipelines consume significant context. Follow these rules to prevent mid-pipeline context exhaustion.
+
+### Lazy loading — load only what you need
+
+At any given step, load ONLY:
+1. `ai-framework/rules.md` (always)
+2. `ai-framework/error-handling.md` (always)
+3. The current step's instruction file (e.g. `ai-framework/02-create-prd.md`)
+
+Do NOT pre-load all framework files at the start of the session. Load other files on demand:
+- `ai-framework/05-parallel-rules.md` — load only when about to execute a parallel block
+- `ai-framework/personas.md` — load only when composing agent prompts for a review step
+- `ai-framework/03-design.md` / `subprompts/design-with-v0.md` — load only at Step 7
+- `ai-framework/06-user-stories.md` — load only at Step 10 (Work pipeline)
+- `ai-framework/07-drive-sync.md` — load only if Drive export was enabled at Step 11 pre-flight
+
+### Gate context checkpoints — write after every gate approval
+
+After every gate is approved, write a compact context checkpoint to:
+```
+~/Desktop/Resources/PDLC Workflow Docs/[feature-name]/_context-checkpoint.md
+```
+
+Overwrite this file each time (only the most recent checkpoint is needed).
+
+The checkpoint captures all decisions and artifact paths in compressed form so that subsequent sessions can reconstruct context without re-reading every artifact in full:
+
+```markdown
+# Context Checkpoint — [feature-name]
+Last updated: [YYYY-MM-DD] after Gate [N] approval
+
+## Pipeline
+- Type: [Personal Full / Personal Medium / Personal Light / Work]
+- Mode: [Fast / Gated]
+- Current phase: [N]
+
+## Key decisions (Decision Log summary)
+- [Decision 1 — one line]
+- [Decision 2 — one line]
+- [Add one line per locked decision from the PRD decision log]
+
+## Open conflicts awaiting PM resolution
+- [Conflict N — one line summary, or "none"]
+
+## Artifact paths
+| Artifact | Path |
+|----------|------|
+| PRD | [path] |
+| Research | [path or N/A] |
+| Codebase review | [path or N/A] |
+| Product review | [path or N/A] |
+| Technical review | [path or N/A] |
+| System design | [path or N/A] |
+| Visual diagram | [path or N/A] |
+| Design catalog Phase N | [path or N/A] |
+| User stories | [path or N/A] |
+| Validation Phase N | [path or N/A] |
+
+## Gate status
+- Gate 1: [Approved YYYY-MM-DD / Pending]
+- Gate 2: [Approved YYYY-MM-DD / Pending / N/A]
+- Gate 3: [Approved YYYY-MM-DD / Pending / N/A]
+
+## Next step
+[Step number and name]
+```
+
+### Session resumption with checkpoint
+
+When resuming a session, prefer reading `_context-checkpoint.md` over reading every artifact file from scratch. The checkpoint gives you all decisions and paths without loading the full PRD and all reviews into context.
+
+Only read the full artifact files when the current step requires processing their content (e.g. applying fixes, syncing, validating). For routing and state decisions, the checkpoint is sufficient.
 
 ---
 
@@ -62,8 +141,8 @@ Rules:
 - No step writes to `docs/` or any other path. The new root replaces the old path entirely for all new runs.
 - Existing files under the old `docs/` path are not touched by new runs.
 - Changelog folder appends, never overwrites.
-- `_pipeline-state.md` is written at the end of every step (overwrite each step) to `~/Desktop/Resources/PDLC Workflow Docs/[feature-name]/_pipeline-state.md`.
-- `_pipeline-state.md` is read at the start of every new conversation before anything else.
+- `_pipeline-state.json` is written at the end of every step (overwrite each step) to `~/Desktop/Resources/PDLC Workflow Docs/[feature-name]/_pipeline-state.json`.
+- `_pipeline-state.json` is read at the start of every new conversation before anything else. Integrity verification runs before any step routing.
 - Knowledge base lives at the root (not inside any feature folder): `~/Desktop/Resources/PDLC Workflow Docs/_knowledge-base.md`. Append-only.
 
 ### Subfolder structure within each feature folder
@@ -112,7 +191,9 @@ Rules:
 | Success metrics | `success-metrics/[feature]-success-metrics.md` |
 | QA scenarios | `qa-scenarios/[feature]-qa-scenarios.md` |
 | Stakeholder list | `stakeholders/[feature]-stakeholders.md` |
-| Pipeline state | `_pipeline-state.md` (overwrite each step) |
+| Pipeline state | `_pipeline-state.json` (overwrite each step) |
+| Context checkpoint | `_context-checkpoint.md` (overwrite each gate) |
+| Open conditions | `_open-conditions.md` (append per gate, only if conditions set) |
 | Knowledge base (root) | `~/Desktop/Resources/PDLC Workflow Docs/_knowledge-base.md` (append) |
 
 ### Feature name confirmation at intake
@@ -134,12 +215,20 @@ Derivation rule: replace spaces with hyphens, all lowercase. Example: `Customer 
 
 At the very top of every new conversation, before any step routing:
 
-- If `_pipeline-state.md` exists in the current feature folder, read it first and use it to determine which step to resume from.
-- Print to the PM:
+1. Read `_pipeline-state.json` from the feature folder. If it does not exist, start fresh.
+2. Run integrity verification (see State Tracking Rules above). Warn the PM about any unverified artifacts before proceeding.
+3. Read `_context-checkpoint.md` to reconstruct decisions and key context without loading full artifact files.
+4. Print to the PM:
 
 ```
-Resuming from [step number] — [step name].
-All previous artifacts are preserved.
+Resuming [feature-name] from [step number] — [step name].
+Pipeline: [type] | Mode: [Fast/Gated] | Phase: [N]
+
+Artifact integrity: [N] verified | [N] unverified (listed below if any)
+[List any unverified artifacts with paths]
+
+Gates: Gate 1 [status] | Gate 2 [status] | Gate 3 [status]
+
 Shall I continue from here? (yes / start over / pick a different step)
 ```
 
@@ -191,6 +280,8 @@ If the user describes their idea instead of choosing, infer and confirm: "This s
 Do not proceed until project type, pipeline, and mode are confirmed.
 
 After confirmation, ask for the **feature name** and run the Feature name confirmation block from OUTPUT CONVENTIONS above.
+
+Then ask about optional review lenses. Read `ai-framework/personas.md` — "Optional Review Lenses" section. Based on the product type and feature description, suggest relevant additional lenses and ask whether to activate them. Do not activate lenses without PM confirmation. Record activated lenses in `_pipeline-state.json` under a `review_lenses` array (always includes `"product"` and `"technical"`; add any optional ones the PM confirmed).
 
 ---
 
@@ -364,11 +455,26 @@ Progress:
 Also answer (optional):
 - Complex architecture needing a system design doc? (yes/no)
 
-Say "approved" (with answers) to continue, or give feedback to revise the PRD.
+Options:
+- Say "approved" to continue with no open items.
+- Say "approved with conditions: [list your conditions]" to advance the pipeline now and resolve these items before Gate 2.
+- Give feedback to revise the PRD before advancing.
 ━━━
 ```
 
-Update `_pipeline-state.md`. Mark Gate 1 as Approved with date.
+**If "approved with conditions":** Write the PM's conditions to `~/Desktop/Resources/PDLC Workflow Docs/[feature-name]/_open-conditions.md`:
+
+```markdown
+# Open Conditions
+
+## From Gate 1 — approved [YYYY-MM-DD]
+- [ ] [Condition 1 — what must be resolved before Gate 2]
+- [ ] [Condition 2]
+```
+
+Then proceed. The Gate 2 quality check will automatically verify all Gate 1 conditions are resolved before advancing.
+
+Update `_pipeline-state.json`. Mark Gate 1 as Approved with date.
 
 ---
 
@@ -441,6 +547,7 @@ Run all of the following checks automatically:
 - Does the visual diagram cover every user story approved at Gate 1? Flag any stories with no corresponding flow.
 - Did the compliance check surface any HIGH risk items that have not been addressed in the designs? If so, list them.
 - Do the design prompts or mockups cover all states: empty state, loading state, error state? Flag any missing states.
+- **Open conditions from Gate 1:** If `_open-conditions.md` exists and contains unchecked Gate 1 conditions, verify each one. For each condition, assess whether it has been addressed in the design or updated PRD. Flag any that remain unresolved as WARNING.
 
 Format and present per the Gate 1 quality check format.
 
@@ -455,6 +562,8 @@ What was produced:
 
 [QUALITY CHECK block]
 
+Open conditions from Gate 1: [N resolved / N unresolved — list any unresolved]
+
 Progress:
 [x] Step 1–4 — PRD (reviewed + fixed)
 [x] Step 5a/5b — System design (if applicable)
@@ -465,11 +574,21 @@ Progress:
 
 [Instructions for reviewing designs based on method used]
 
-Say "approved" to begin implementation, or give feedback to revise designs.
+Options:
+- Say "approved" to begin implementation with no open items.
+- Say "approved with conditions: [list]" to advance and resolve these before Gate 3.
+- Give feedback to revise designs before advancing.
 ━━━
 ```
 
-Update `_pipeline-state.md`. Mark Gate 2 as Approved with date.
+**If "approved with conditions":** Append to `_open-conditions.md`:
+
+```markdown
+## From Gate 2 — approved [YYYY-MM-DD]
+- [ ] [Condition 1 — what must be resolved before Gate 3]
+```
+
+Update `_pipeline-state.json`. Mark Gate 2 as Approved with date. Write context checkpoint to `_context-checkpoint.md`.
 
 ---
 
@@ -541,6 +660,7 @@ Run all of the following checks automatically:
 - Does every ticket have at least one edge case or error state documented? Flag any that do not.
 - (Work pipeline only) Are there any HIGH risks from the codebase review that do not appear in any ticket? Flag them.
 - Does the build sequence have any circular dependencies? Flag if found.
+- **Open conditions from Gate 2:** If `_open-conditions.md` exists and contains unchecked Gate 2 conditions, verify each one. Flag any that remain unresolved as WARNING.
 
 Format and present per the Gate 1 quality check format.
 
@@ -557,6 +677,8 @@ What was produced:
 - PRD synced with build
 
 [QUALITY CHECK block]
+
+Open conditions from prior gates: [N resolved / N unresolved — list any unresolved]
 
 Phase N+1 design prep: [available / not started]
 
@@ -900,10 +1022,77 @@ If anything changes after any gate, run /change-mode for safe propagation.
 
 ## State Tracking Rules
 
-- `_pipeline-state.md` is the source of truth for pipeline state. Update it at the end of every step.
-- Track pipeline, mode, current phase, all file paths created, key decisions, gate status, and next step.
-- If interrupted, user can run `/project-status` to see where they left off. The orchestrator reads `_pipeline-state.md` first on every new conversation and offers to resume.
+- `_pipeline-state.json` is the source of truth for pipeline state. Write it at the end of every step. It is machine-parseable JSON, not prose markdown.
+- On every new session start, read `_pipeline-state.json` before anything else. Verify artifact integrity before trusting the state (see "Integrity verification" below).
+- If interrupted, the user can run `/project-status` to see where they left off. The orchestrator reads `_pipeline-state.json` first and offers to resume.
 - If the user provides a previous research summary or PRD, treat those as completed steps and skip to the appropriate point.
+
+### `_pipeline-state.json` schema
+
+Write this file at the end of every step, overwriting the previous version:
+
+```json
+{
+  "feature_name": "string",
+  "pipeline": "Full | Medium | Light | Work",
+  "mode": "Fast | Gated",
+  "current_phase": 1,
+  "current_step": "string — step number and name, e.g. '3b — Technical Review'",
+  "next_step": "string — step number and name, e.g. '4 — Apply Fixes'",
+  "gates": {
+    "gate_1": "Approved YYYY-MM-DD | Pending | N/A",
+    "gate_2": "Approved YYYY-MM-DD | Pending | N/A",
+    "gate_3": "Approved YYYY-MM-DD | Pending | N/A"
+  },
+  "artifacts": {
+    "research": { "path": "string | null", "size_bytes": 0 },
+    "codebase_review": { "path": "string | null", "size_bytes": 0 },
+    "prd": { "path": "string | null", "size_bytes": 0 },
+    "product_review": { "path": "string | null", "size_bytes": 0 },
+    "technical_review": { "path": "string | null", "size_bytes": 0 },
+    "system_design": { "path": "string | null", "size_bytes": 0 },
+    "visual_diagram": { "path": "string | null", "size_bytes": 0 },
+    "design_catalogs": [
+      { "phase": 1, "path": "string", "size_bytes": 0 }
+    ],
+    "user_stories": { "path": "string | null", "size_bytes": 0 },
+    "validations": [
+      { "phase": 1, "path": "string", "size_bytes": 0 }
+    ],
+    "jira_manifest": { "path": "string | null", "size_bytes": 0 },
+    "learnings": [
+      { "phase": 1, "path": "string", "size_bytes": 0 }
+    ]
+  },
+  "export_urls": {
+    "jira_epic": "string | null",
+    "drive_folder": "string | null",
+    "confluence_page": "string | null",
+    "pr_urls": [
+      { "phase": 1, "pr_number": 1, "url": "string | null" }
+    ]
+  },
+  "open_conflicts": [],
+  "last_updated": "YYYY-MM-DDTHH:MM:SSZ"
+}
+```
+
+For `size_bytes`: after writing each artifact, record the file size in bytes. Use `wc -c [path]` or equivalent. Use `0` only if the file has not been written yet.
+
+### Integrity verification on session resumption
+
+When reading `_pipeline-state.json` at the start of a new session, verify each artifact that the state claims exists:
+
+1. Check that the file path actually exists on disk.
+2. Check that the recorded `size_bytes` is non-zero and plausible (> 100 bytes for any real document).
+3. If a file is missing or its size is 0, mark that step as `UNVERIFIED` in your working state and warn the PM:
+
+```
+⚠ State integrity issue: [artifact name] listed in _pipeline-state.json but file not found at [path].
+  This step may need to be re-run. Proceeding from the last verified step instead.
+```
+
+Do not trust a gate as approved if any artifact that gate depended on fails verification.
 
 ---
 

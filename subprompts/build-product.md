@@ -454,5 +454,5 @@ Phases completed: [list]
 - **Gated mode:** Pause after every step. Never auto-advance.
 - **Both modes:** Always read the referenced command or framework file at each step. Do not shortcut or summarize the process.
 - **Validation failures:** In fast mode, if validation finds failures (not just suggestions), fix them before proceeding to Gate 3. Print `⚠ [N] failures found — resolving` and resolve inline.
-- **Track state across the conversation.** Remember pipeline, mode, current phase, and all file paths created.
-- **If the conversation is interrupted** (new session), the user can run `/project-status` to see where they left off, then resume with `/build-product` by stating the pipeline, mode, and which step to pick up from.
+- **Track state across the conversation.** Write `_pipeline-state.json` at the end of every step per the schema in `SKILL.md`. Write `_context-checkpoint.md` after every gate approval.
+- **If the conversation is interrupted** (new session), read `_pipeline-state.json`, run integrity verification, read `_context-checkpoint.md`, and offer to resume. The user can also run `/project-status` to see where they left off.
