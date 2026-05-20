@@ -474,7 +474,16 @@ Options:
 
 Then proceed. The Gate 2 quality check will automatically verify all Gate 1 conditions are resolved before advancing.
 
-Update `_pipeline-state.json`. Mark Gate 1 as Approved with date.
+Update `_pipeline-state.json`. Mark Gate 1 as Approved with date. Write context checkpoint to `_context-checkpoint.md`.
+
+**Optional — share PRD for async review:**
+After Gate 1 approval, offer once:
+```
+The PRD is approved. Want to share it with stakeholders for async review before design starts?
+Run /share-for-review to post it to Slack with a Confluence link and tagged reviewers.
+(yes to run now / skip)
+```
+If yes, read and follow `subprompts/share-for-review.md`.
 
 ---
 
@@ -589,6 +598,15 @@ Options:
 ```
 
 Update `_pipeline-state.json`. Mark Gate 2 as Approved with date. Write context checkpoint to `_context-checkpoint.md`.
+
+**Optional — share designs for async review:**
+After Gate 2 approval, offer once:
+```
+Designs approved. Want to share the design catalog with the engineering lead for a quick
+technical review before implementation starts?
+Run /share-for-review to post it to Slack. (yes / skip)
+```
+If yes, read and follow `subprompts/share-for-review.md`.
 
 ---
 
@@ -887,7 +905,16 @@ Say "approved" to create tickets, or give feedback to revise.
 ━━━
 ```
 
-Update `_pipeline-state.md`. Mark Gate 3 as Approved with date.
+Update `_pipeline-state.json`. Mark Gate 3 as Approved with date.
+
+**Optional — share breakdown for engineering review:**
+After Gate 3 approval, offer once:
+```
+Breakdown approved. Want to share it with the engineering team for sizing and
+sequencing review before Jira tickets are created?
+Run /share-for-review to post it to Slack. (yes / skip)
+```
+If yes, read and follow `subprompts/share-for-review.md`.
 
 ### Step 11 — Export (parallel: Jira always + Drive optional + Confluence optional)
 
@@ -1073,6 +1100,20 @@ Write this file at the end of every step, overwriting the previous version:
     ]
   },
   "open_conflicts": [],
+  "review_requests": [
+    {
+      "artifact": "string — e.g. 'PRD', 'Design catalog Phase 1'",
+      "confluence_url": "string | null",
+      "slack_channel": "string | null",
+      "slack_ts": "string | null — Slack message timestamp, null if MCP unavailable",
+      "deadline": "string | null",
+      "reviewers": ["string"],
+      "posted_at": "YYYY-MM-DDTHH:MM:SSZ",
+      "feedback_read": false,
+      "feedback_applied_at": "YYYY-MM-DDTHH:MM:SSZ | null",
+      "edits_applied": 0
+    }
+  ],
   "last_updated": "YYYY-MM-DDTHH:MM:SSZ"
 }
 ```
