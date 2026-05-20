@@ -1,9 +1,9 @@
 ---
 name: build-product
-description: End-to-end product development pipeline. Use for new products, features, or bug fixes. Handles Personal (Full/Medium/Light) and Work pipelines with parallel reviews, validation, and exports. Starts with project type selection.
+description: Work pipeline for PM product workflows. Research → Codebase Review → PRD → dual review → designs → user stories → Jira export. Planning and design only, no implementation.
 ---
 
-# Build Product (Parallel Orchestrator)
+# Build Product (Work Pipeline Orchestrator)
 
 ---
 
@@ -37,7 +37,7 @@ Before any pipeline routing, run this check. It must run exactly once per sessio
 
 ---
 
-End-to-end product development pipeline with parallelized steps for maximum throughput. Handles Personal and Work projects across Full, Medium, and Light pipelines.
+Work pipeline for PM product workflows with parallelized review steps. Research → Codebase Review → PRD → dual review → designs → user stories → Jira export.
 
 **Pipeline routing is config-driven.** After the PM selects a pipeline type, read `ai-framework/pipeline-configs.yaml` to determine the exact steps, gates, quality checks, and conditions for that pipeline. Do not hardcode step logic — derive it from config. If a pipeline type the PM describes is not listed in the config file, say so and offer the closest match.
 
@@ -61,8 +61,8 @@ At any given step, load ONLY:
 Do NOT pre-load all framework files at the start of the session. Load other files on demand:
 - `ai-framework/05-parallel-rules.md` — load only when about to execute a parallel block
 - `ai-framework/personas.md` — load only when composing agent prompts for a review step
-- `ai-framework/03-design.md` / `subprompts/design-with-v0.md` — load only at Step 7
-- `ai-framework/06-user-stories.md` — load only at Step 10 (Work pipeline)
+- `subprompts/design-prompts.md` — load only at Step 8 (design)
+- `ai-framework/06-user-stories.md` — load only at Step 10
 - `ai-framework/07-drive-sync.md` — load only if Drive export was enabled at Step 11 pre-flight
 
 ### Gate context checkpoints — write after every gate approval
@@ -81,7 +81,7 @@ The checkpoint captures all decisions and artifact paths in compressed form so t
 Last updated: [YYYY-MM-DD] after Gate [N] approval
 
 ## Pipeline
-- Type: [Personal Full / Personal Medium / Personal Light / Work]
+- Type: Work
 - Mode: [Fast / Gated]
 - Current phase: [N]
 
@@ -105,7 +105,6 @@ Last updated: [YYYY-MM-DD] after Gate [N] approval
 | Visual diagram | [path or N/A] |
 | Design catalog Phase N | [path or N/A] |
 | User stories | [path or N/A] |
-| Validation Phase N | [path or N/A] |
 
 ## Gate status
 - Gate 1: [Approved YYYY-MM-DD / Pending]
@@ -155,15 +154,11 @@ Rules:
 ├── product-review/
 ├── technical-review/
 ├── user-stories/
-├── success-metrics/
 ├── diagrams/
 ├── design/
-├── validation/
 ├── jira-export/
-├── qa-scenarios/
 ├── stakeholders/
-├── changelog/
-└── learning/
+└── changelog/
 ```
 
 ### File paths per step
@@ -177,19 +172,13 @@ Rules:
 | `cto-review.md` | `technical-review/[feature]-technical-review.md` |
 | `system-design.md` | `technical-review/[feature]-system-design.md` |
 | `03c-visual-diagram.md` | `diagrams/[feature]-feature-diagram.md` |
-| `03-design.md` / `design-with-v0.md` | `design/[feature]-phase-[N]-designs.md` |
+| `design-prompts.md` | `design/[feature]-phase-[N]-designs.md` |
 | `03b-update-prd-from-designs.md` | `prd/[feature]-prd.md` (overwrite in place) |
-| `validate.md` | `validation/[feature]-phase-[N]-validation.md` |
-| `04b-update-prd-from-build.md` | `prd/[feature]-prd.md` (overwrite in place) |
 | `prd-to-jira.md` | `jira-export/[feature]-jira-export.md` |
 | `prd-to-jira.md` (manifest) | `jira-export/[feature]-jira-manifest.md` |
 | `06-user-stories.md` | `user-stories/[feature]-user-stories.md` |
 | `05-change-propagation.md` (changelog) | `changelog/[feature]-changelog.md` (append) |
 | `05-change-propagation.md` (summary) | `changelog/[feature]-change-[date]-summary.md` |
-| `learn.md` | `learning/[feature]-phase-[N]-learning.md` |
-| User stories | `user-stories/[feature]-user-stories.md` |
-| Success metrics | `success-metrics/[feature]-success-metrics.md` |
-| QA scenarios | `qa-scenarios/[feature]-qa-scenarios.md` |
 | Stakeholder list | `stakeholders/[feature]-stakeholders.md` |
 | Pipeline state | `_pipeline-state.json` (overwrite each step) |
 | Context checkpoint | `_context-checkpoint.md` (overwrite each gate) |
@@ -251,33 +240,18 @@ Reopen-gate behavior is defined in `ai-framework/error-handling.md` (Error Type 
 
 ---
 
-## Stage 0 — Project Type, Pipeline, and Mode Selection
+## Stage 0 — Mode Selection and Intake
 
-Ask the user: **"Personal or work project?"**
-
-| Type | Behavior |
-|------|----------|
-| **Personal** | Full implementation. AI executes, validates, ships. |
-| **Work** | Planning and design only. No implementation. User stories go to Jira. Ends after design approval. |
-
-Then for **Personal**, ask pipeline:
-
-| Pipeline | When to use |
-|----------|------------|
-| **Full** | New product, greenfield app, major feature with new data model |
-| **Medium** | New feature in existing app, significant scope |
-| **Light** | Bug fix, small UI change, config change |
-
-Then ask mode:
+Ask the user: **"Fast mode or gated mode?"**
 
 | Mode | Behavior |
 |------|----------|
-| **Fast** (default) | Chains all auto-steps without pausing. Stops only at 3 approval gates: PRD, Designs, Ship. |
+| **Fast** (default) | Chains all auto-steps without pausing. Stops only at 3 approval gates: PRD, Designs, User Stories Breakdown. |
 | **Gated** | Pauses after every step. Use when reviewing each output matters. |
 
-If the user describes their idea instead of choosing, infer and confirm: "This sounds like a [personal/work] [full/medium/light] project in fast mode. Correct?"
+Default to fast mode if the user does not specify.
 
-Do not proceed until project type, pipeline, and mode are confirmed.
+Do not proceed until mode is confirmed.
 
 After confirmation, ask for the **feature name** and run the Feature name confirmation block from OUTPUT CONVENTIONS above.
 
@@ -339,432 +313,6 @@ Say "continue" to proceed, or provide additional input.
 
 ---
 
-## Personal — Full Pipeline
-
-### Step 1 — Research Idea [AUTO after initial clarification]
-
-Read and follow: `ai-framework/01-research-idea.md`
-
-Ask the user to describe their idea. Run Stage 1 (clarification questions) — this requires user input. After the user answers, run Stages 2–5 (market scan, strategic evaluation, 10x test, decision gate) and proceed to PRD creation.
-
-Output path: `~/Desktop/Resources/PDLC Workflow Docs/[feature-name]/research/[feature-name]-research.md`
-
-If research was already completed in the current conversation (the user has already described and explored the idea in depth), confirm with the user: "We've covered a lot of research already — should I use this conversation as the research output, or do you want to run the full research stage?" If they confirm existing research is sufficient, save a research summary to the path above and proceed.
-
-**Fast mode:** `✓ Step 1 — Research complete → [path]`
-**Gated mode:** Pause. Next step: Step 2 — Create PRD.
-
-Update `_pipeline-state.md` at the end of this step.
-
----
-
-### Step 2 — Create PRD [AUTO]
-
-Read and follow: `ai-framework/02-create-prd.md` (includes Stage 0 Knowledge Base Check).
-
-Use research output from Step 1 as input. Run the full PRD generation process — clarification, generation, validation. Save to `~/Desktop/Resources/PDLC Workflow Docs/[feature-name]/prd/[feature-name]-prd.md`.
-
-**Fast mode:** `✓ Step 2 — PRD created → [path]`
-**Gated mode:** Pause. Next step: Step 3 — Dual Review.
-
-Update `_pipeline-state.md`.
-
----
-
-### Steps 3a + 3b — Dual Review [PARALLEL AUTO]
-
-Run both reviews simultaneously. See `ai-framework/05-parallel-rules.md` — Block 1.
-
-Spawn two agents at the same time:
-
-**Step 3a — Product Review:**
-Review the PRD from a product lens. Apply the **Product Reviewer** persona from `ai-framework/personas.md`. Cover document quality (structure, problem definition, success metrics, scope, user stories, AC) and product quality (problem-solution fit, workflows, edge cases, empty/error/loading states, onboarding, phasing). Save to `~/Desktop/Resources/PDLC Workflow Docs/[feature-name]/product-review/[feature-name]-product-review.md`.
-
-**Step 3b — Technical Review:**
-Review the PRD from a technical lens. Apply the **Technical Reviewer** persona from `ai-framework/personas.md`. In the Personal Full pipeline there is no codebase review file; proceed with the PRD only. Cover architecture, data model, API contracts, security, phasing, dependencies, technical risks, cost vs value. Save to `~/Desktop/Resources/PDLC Workflow Docs/[feature-name]/technical-review/[feature-name]-technical-review.md`.
-
-Wait for both to complete. Synthesize: identify agreements, conflicts, and single-source findings. Conflicts go to a structured conflict card per `error-handling.md` Error Type 2.
-
-**Fast mode:** `✓ Step 3a + 3b — Dual review complete (parallel) → product-review + technical-review | [N] agreements | [N] conflicts`
-**Gated mode:** Pause. Show synthesis summary. Next step: Step 4 — Apply Fixes.
-
-Update `_pipeline-state.md`.
-
----
-
-### Step 4 — Apply Fixes [AUTO → GATE 1]
-
-Read both review files. Apply all findings to the PRD:
-
-- Agreements (both reviews agree): apply immediately.
-- Single-source findings: apply with a decision log note.
-- Conflicts: present to user at Gate 1 as judgment calls (use the conflict card format from `error-handling.md`).
-
-From the product review: update user stories, add empty/error/loading states, fix UX gaps, add missing acceptance criteria.
-From the technical review: fix data model problems, update API contracts, address security concerns, correct architectural decisions.
-
-Update the PRD file in place at `~/Desktop/Resources/PDLC Workflow Docs/[feature-name]/prd/[feature-name]-prd.md`. Add entries to the decision log.
-
-Self-check (Error Type 3): does this output contradict any prior PRD decision? If yes, flag to PM before writing.
-
-**Gate 1 — Quality Check (before presenting the gate):**
-
-Run all of the following checks automatically:
-
-- Is the problem statement specific enough that two engineers would build the same thing? If not, flag it.
-- Does every user story have a measurable outcome? If not, flag which ones do not.
-- Did the Technical Review surface any HIGH risks that have not been resolved in the decision log? If so, list them.
-- Is the success metric a specific measurable metric with a current baseline, or is it a vague statement? If vague, flag it with a suggestion.
-- (Work pipeline only) Is the codebase review handoff note reflected in the PRD? If the codebase review flagged a HIGH risk and the PRD does not address it, flag it.
-
-Format the quality check output as:
-
-```
-━━━ QUALITY CHECK ━━━
-[list of flags with severity: WARNING or INFO]
-━━━ [N] flags found. You can approve anyway or address these first. ━━━
-```
-
-If zero flags are found, print: `Quality check passed. No issues found.`
-
-**Both modes — show Gate 1:**
-
-```
-━━━ APPROVAL NEEDED: Gate 1 — PRD ━━━
-
-What was produced:
-- PRD (reviewed + fixed): ~/Desktop/Resources/PDLC Workflow Docs/[feature-name]/prd/[feature-name]-prd.md
-- Product review: ~/Desktop/Resources/PDLC Workflow Docs/[feature-name]/product-review/[feature-name]-product-review.md
-- Technical review: ~/Desktop/Resources/PDLC Workflow Docs/[feature-name]/technical-review/[feature-name]-technical-review.md
-- Fixes applied: [N] from reviews
-
-[QUALITY CHECK block]
-
-Conflicts requiring your decision:
-[List each conflict card from Step 3a/3b synthesis]
-
-Progress:
-[x] Step 1 — Research
-[x] Step 2 — PRD
-[x] Step 3a + 3b — Dual review (parallel)
-[x] Step 4 — Apply fixes
-[ ] Step 5 — System design (optional)  ← next after approval
-[ ] Step 6 — Visual diagram
-[ ] Step 7 — Design
-
-Also answer (optional):
-- Complex architecture needing a system design doc? (yes/no)
-
-Options:
-- Say "approved" to continue with no open items.
-- Say "approved with conditions: [list your conditions]" to advance the pipeline now and resolve these items before Gate 2.
-- Give feedback to revise the PRD before advancing.
-━━━
-```
-
-**If "approved with conditions":** Write the PM's conditions to `~/Desktop/Resources/PDLC Workflow Docs/[feature-name]/_open-conditions.md`:
-
-```markdown
-# Open Conditions
-
-## From Gate 1 — approved [YYYY-MM-DD]
-- [ ] [Condition 1 — what must be resolved before Gate 2]
-- [ ] [Condition 2]
-```
-
-Then proceed. The Gate 2 quality check will automatically verify all Gate 1 conditions are resolved before advancing.
-
-Update `_pipeline-state.json`. Mark Gate 1 as Approved with date. Write context checkpoint to `_context-checkpoint.md`.
-
----
-
-### Steps 5a + 5b — System Design + Phase 1 Screen Inventory Prep [PARALLEL, if yes at Gate 1]
-
-Only if the user said yes at Gate 1.
-
-Spawn two agents simultaneously:
-
-**Step 5a — System Design:**
-Read and follow `subprompts/system-design.md`. Generate a system design document with: Overview, High-level Architecture, Data Structures, APIs, Feature-by-Feature Implementation, Key Algorithms, Tech Stack, Build Order, Open Technical Decisions. Save to `~/Desktop/Resources/PDLC Workflow Docs/[feature-name]/technical-review/[feature-name]-system-design.md`.
-
-**Step 5b — Phase 1 Screen Inventory Prep:**
-Read the PRD Phase 1 user stories. Produce a draft screen inventory: list of all distinct screens, the user story each maps to, and the states needed (empty / loading / error / populated). This is prep work for the design step — it is not final. Save as a note in the conversation context (do not write to file yet).
-
-Wait for both. Proceed to Step 6.
-
-**Fast mode:** `✓ Step 5a + 5b — System design + screen inventory prep complete (parallel) → [system design path]`
-
-Update `_pipeline-state.md`.
-
----
-
-### Step 6 — Visual Diagram [AUTO between Gate 1 and design]
-
-Read and follow: `ai-framework/03c-visual-diagram.md`
-
-Save to `~/Desktop/Resources/PDLC Workflow Docs/[feature-name]/diagrams/[feature-name]-feature-diagram.md`.
-
-**Fast mode:** `✓ Step 6 — Visual diagram complete → [path]`
-**Gated mode:** Pause. Next step: Step 7 — Design.
-
-Update `_pipeline-state.md`.
-
----
-
-### Step 7 — Design (Per Phase) [AUTO after mode selection]
-
-Ask:
-
-**"In-repo design (AI builds screens in code) or v0 (AI generates prompts for v0)?"**
-
-Then read and follow:
-- In-repo: `ai-framework/03-design.md`
-- v0: `subprompts/design-with-v0.md`
-
-Use the screen inventory from Step 5b if available — skip the screen discovery phase.
-
-After Phase 1: also create the design tokens file at `~/Desktop/Resources/PDLC Workflow Docs/[feature-name]/design/[feature-name]-design-tokens.md`.
-
-**Fast mode:** `✓ Step 7 — Design complete → ~/Desktop/Resources/PDLC Workflow Docs/[feature-name]/design/[feature-name]-phase-[N]-designs.md`
-**Gated mode:** Pause. Next step: Step 8 — Update PRD from Designs.
-
-Update `_pipeline-state.md`.
-
----
-
-### Step 8 — Update PRD from Designs (Per Phase) [AUTO → GATE 2]
-
-Read and follow: `ai-framework/03b-update-prd-from-designs.md`
-
-Sync the PRD with the finalized design catalog: design catalog reference, copy/flow changes, AC updates, decision log entries, frontend task list updates. Overwrite the PRD in place at `~/Desktop/Resources/PDLC Workflow Docs/[feature-name]/prd/[feature-name]-prd.md`.
-
-Self-check (Error Type 3): does this output contradict any prior PRD decision? If yes, flag to PM before writing.
-
-**Gate 2 — Quality Check (before presenting the gate):**
-
-Run all of the following checks automatically:
-
-- Does the visual diagram cover every user story approved at Gate 1? Flag any stories with no corresponding flow.
-- Did the compliance check surface any HIGH risk items that have not been addressed in the designs? If so, list them.
-- Do the design prompts or mockups cover all states: empty state, loading state, error state? Flag any missing states.
-- **Open conditions from Gate 1:** If `_open-conditions.md` exists and contains unchecked Gate 1 conditions, verify each one. For each condition, assess whether it has been addressed in the design or updated PRD. Flag any that remain unresolved as WARNING.
-
-Format and present per the Gate 1 quality check format.
-
-**Both modes — show Gate 2:**
-
-```
-━━━ APPROVAL NEEDED: Gate 2 — Designs ━━━
-
-What was produced:
-- Design catalog: ~/Desktop/Resources/PDLC Workflow Docs/[feature-name]/design/[feature-name]-phase-[N]-designs.md
-- PRD updated to reflect designs
-
-[QUALITY CHECK block]
-
-Open conditions from Gate 1: [N resolved / N unresolved — list any unresolved]
-
-Progress:
-[x] Step 1–4 — PRD (reviewed + fixed)
-[x] Step 5a/5b — System design (if applicable)
-[x] Step 6 — Visual diagram
-[x] Step 7 — Phase [N] designs
-[x] Step 8 — PRD synced with designs
-[ ] Step 9 — Execute Phase [N]  ← next after approval
-
-[Instructions for reviewing designs based on method used]
-
-Options:
-- Say "approved" to begin implementation with no open items.
-- Say "approved with conditions: [list]" to advance and resolve these before Gate 3.
-- Give feedback to revise designs before advancing.
-━━━
-```
-
-**If "approved with conditions":** Append to `_open-conditions.md`:
-
-```markdown
-## From Gate 2 — approved [YYYY-MM-DD]
-- [ ] [Condition 1 — what must be resolved before Gate 3]
-```
-
-Update `_pipeline-state.json`. Mark Gate 2 as Approved with date. Write context checkpoint to `_context-checkpoint.md`.
-
----
-
-### Step 9 — Execute (Per Phase) [AUTO with internal parallelism]
-
-Read and follow: `ai-framework/04-execute-plan.md`
-
-Execute the current phase. Implementation order:
-1. Data layer and migrations
-2. Backend services
-3. API endpoints
-4. Frontend screens (reference design catalog)
-5. Error handling and loading states
-6. Logging and observability
-7. Tests
-
-**Internal parallelism during execute:**
-After each layer is implemented, spawn a background agent to write tests for that layer while the main agent continues to the next layer. Do not wait for tests before continuing — tests are parallelized with the next implementation layer.
-
-**Phase pipelining (if multi-phase product):**
-After frontend implementation is complete but before tests finish, spawn a background agent to: read Phase N+1 scope from the PRD and draft the Phase N+1 screen inventory. This will be available at Gate 3.
-
-**Fast mode:** `✓ Step 9 — Phase [N] implementation complete`
-**Gated mode:** Pause. Next step: Step 10 — Validate.
-
-Update `_pipeline-state.md`.
-
----
-
-### Steps 10a + 10b + 10c — Validate (Per Phase) [PARALLEL AUTO]
-
-Run three validation checks simultaneously. See `ai-framework/05-parallel-rules.md` — Block 2.
-
-Spawn three agents at the same time:
-
-**Step 10a — AC Compliance:**
-Check every acceptance criterion in the PRD for the current phase. Verdict per criterion: PASS / PARTIAL / FAIL.
-
-**Step 10b — Design Match:**
-Check current UI against the design catalog. If no catalog exists, skip. Note structural deviations (not style preferences).
-
-**Step 10c — NFR Check:**
-Check performance thresholds, error states, loading states, empty states, auth enforcement, mobile layout, logging.
-
-Wait for all three. Merge into a single report at `~/Desktop/Resources/PDLC Workflow Docs/[feature-name]/validation/[feature-name]-phase-[N]-validation.md`.
-
-If any FAIL items: `⚠ [N] failures found — resolving` and fix inline before proceeding.
-
-**Fast mode:** `✓ Step 10a + 10b + 10c — Validation complete (parallel) → validation report | [N] pass | [N] notes | [N] failures`
-**Gated mode:** Pause. Show full report. Next step: Step 11 — Update PRD from Build.
-
-Update `_pipeline-state.md`.
-
----
-
-### Step 11 — Update PRD from Build (Per Phase) [AUTO → GATE 3]
-
-Read and follow: `ai-framework/04b-update-prd-from-build.md`
-
-Sync the PRD with what was actually built: data model changes, implementation notes, deferred scope, copy/flow changes, decision log entries. Overwrite the PRD in place.
-
-Self-check (Error Type 3): does this output contradict any prior PRD decision? If yes, flag to PM before writing.
-
-**Gate 3 — Quality Check (before presenting the gate):**
-
-Run all of the following checks automatically:
-
-- Does every ticket have at least 2 acceptance criteria? Flag any that do not.
-- Does every ticket have at least one edge case or error state documented? Flag any that do not.
-- (Work pipeline only) Are there any HIGH risks from the codebase review that do not appear in any ticket? Flag them.
-- Does the build sequence have any circular dependencies? Flag if found.
-- **Open conditions from Gate 2:** If `_open-conditions.md` exists and contains unchecked Gate 2 conditions, verify each one. Flag any that remain unresolved as WARNING.
-
-Format and present per the Gate 1 quality check format.
-
-**Both modes — show Gate 3:**
-
-```
-━━━ APPROVAL NEEDED: Gate 3 — Ship ━━━
-
-Phase [N] is built and validated.
-
-What was produced:
-- Implementation: Phase [N] complete
-- Validation: ~/Desktop/Resources/PDLC Workflow Docs/[feature-name]/validation/[feature-name]-phase-[N]-validation.md ([pass/fail])
-- PRD synced with build
-
-[QUALITY CHECK block]
-
-Open conditions from prior gates: [N resolved / N unresolved — list any unresolved]
-
-Phase N+1 design prep: [available / not started]
-
-Progress:
-[x] Step 7 — Phase [N] design
-[x] Step 9 — Phase [N] execute
-[x] Step 10a–c — Phase [N] validate
-[x] Step 11 — PRD synced
-[ ] Ship Phase [N]  ← you are here
-[ ] Step 12 — Learn
-
-Deployment: [guidance based on tech stack]
-
-Say "shipped" when deployed, or "skip ship" to go straight to the learning report.
-━━━
-```
-
-Update `_pipeline-state.md`. Mark Gate 3 as Approved with date.
-
----
-
-### Step 12 — Learn (Per Phase) [AUTO after "shipped"]
-
-Read and follow: `subprompts/learn.md` instructions.
-
-Collect feedback, check live app, review success metrics, identify what struggled and what worked. Save to `~/Desktop/Resources/PDLC Workflow Docs/[feature-name]/learning/[feature-name]-phase-[N]-learning.md`.
-
-After the learning report is written, the Knowledge Base Update section in `learn.md` appends a structured entry to `~/Desktop/Resources/PDLC Workflow Docs/_knowledge-base.md`.
-
-After the learning report, ask:
-
-```
-━━━ Phase [N] complete ━━━
-
-Learning report: ~/Desktop/Resources/PDLC Workflow Docs/[feature-name]/learning/[feature-name]-phase-[N]-learning.md
-Knowledge base updated: ~/Desktop/Resources/PDLC Workflow Docs/_knowledge-base.md
-
-What's next?
-- "continue" — Start Phase [N+1] (loops back to Step 7 — Phase N+1 screen inventory is already prepped)
-- "done" — End pipeline. Show final summary.
-- "revise PRD" — Update PRD based on learnings, then continue.
-━━━
-```
-
-Update `_pipeline-state.md`.
-
----
-
-## Personal — Medium Pipeline
-
-### Step 1 — Create PRD [AUTO after clarification]
-
-Read and follow: `ai-framework/02-create-prd.md`. Same as Full Pipeline Step 2.
-
-### Steps 2a + 2b — Dual Review [PARALLEL AUTO]
-
-Spawn parallel review agents (same as Full Pipeline Steps 3a + 3b — same persona files, same output paths). Synthesize.
-
-### Step 3 — Apply Fixes [AUTO → GATE 1]
-
-Same as Full Pipeline Step 4. Apply quality check, present Gate 1.
-
-### Step 4 — Execute [AUTO]
-
-Read and follow: `ai-framework/04-execute-plan.md`. Same as Full Pipeline Step 9 (with internal parallelism).
-
-### Steps 5a + 5b + 5c — Validate [PARALLEL AUTO]
-
-Run parallel validation (same as Full Pipeline Steps 10a + 10b + 10c).
-
-### Step 6 — Update PRD from Build [AUTO → end]
-
-Read and follow: `ai-framework/04b-update-prd-from-build.md`. After syncing, show final progress and end.
-
----
-
-## Personal — Light Pipeline
-
-### Step 1 — Execute
-
-Read and follow: `ai-framework/04-execute-plan.md`
-
-Ask the user to describe the bug fix or change. Lock scope and implement. When done, show final progress and end.
-
----
-
 ## Work Pipeline
 
 ### Step 1 — Research Idea [AUTO after initial clarification]
@@ -782,7 +330,7 @@ Pass the full codebase review output file path to Step 4b (Technical Review) as 
 
 **Fast mode:** `✓ Step 2 — Codebase review complete → [path]`
 
-Update `_pipeline-state.md`.
+Update `_pipeline-state.json`.
 
 ### Step 3 — Create PRD [AUTO]
 
@@ -814,7 +362,7 @@ Same as Personal Full Step 5a (without the Phase 1 screen inventory prep agent �
 
 **Fast mode:** `✓ Step 6 — System design complete → [path]` (or `✓ Step 6 — Skipped (no system design needed)`)
 
-Update `_pipeline-state.md`.
+Update `_pipeline-state.json`.
 
 ### Step 7 — Visual Diagram [AUTO]
 
@@ -822,15 +370,19 @@ Read and follow: `ai-framework/03c-visual-diagram.md`. Output: `~/Desktop/Resour
 
 **Fast mode:** `✓ Step 7 — Visual diagram complete → [path]`
 
-Update `_pipeline-state.md`.
+Update `_pipeline-state.json`.
 
-### Step 8 — Design (Per Phase) [AUTO after mode selection]
+### Step 8 — Design (Per Phase) [AUTO after tool selection]
 
-Same as Personal Full Step 7. Ask in-repo vs v0; follow `ai-framework/03-design.md` or `subprompts/design-with-v0.md`. Output: design catalog at `~/Desktop/Resources/PDLC Workflow Docs/[feature-name]/design/[feature-name]-phase-[N]-designs.md`.
+Ask the PM: **"v0 or Figma Make?"** — both use the same prompt format. Figma Make can additionally reference your team's Figma design system components directly.
+
+Read and follow: `subprompts/design-prompts.md`
+
+Output: design catalog at `~/Desktop/Resources/PDLC Workflow Docs/[feature-name]/design/[feature-name]-phase-[N]-designs.md`.
 
 **Fast mode:** `✓ Step 8 — Design complete → [path]`
 
-Update `_pipeline-state.md`.
+Update `_pipeline-state.json`.
 
 ### Step 9 — Update PRD from Designs [AUTO → GATE 2]
 
@@ -838,7 +390,7 @@ Same as Personal Full Step 8. Sync the PRD with design catalog: catalog referenc
 
 After Gate 2 approval, proceed to Step 10.
 
-Update `_pipeline-state.md`. Mark Gate 2 as Approved with date.
+Update `_pipeline-state.json`. Mark Gate 2 as Approved with date.
 
 ### Step 10 — User Stories Breakdown [AUTO → GATE 3]
 
@@ -991,7 +543,7 @@ After all enabled agents finish, the orchestrator returns a single summary:
 
 If any of the three failed, the failure is reported but the others still succeed independently — there is no global rollback.
 
-Update `_pipeline-state.md` with the export results, including the Drive folder URL and Confluence page URL if they were enabled.
+Update `_pipeline-state.json` with the export results, including the Drive folder URL and Confluence page URL if they were enabled.
 
 ### Work Pipeline Complete
 
@@ -1028,11 +580,7 @@ If anything changes after any gate, run /change-mode for safe propagation.
 
 **PM starting a product:** Run `/build-product` → Work pipeline → Jira tickets created automatically.
 
-**Engineer picking up a feature:** Run `/feature-kickoff [feature-name]` for a role-specific briefing, then `/execute-plan`.
-
 **Designer joining mid-pipeline:** Run `/feature-kickoff [feature-name]` with role = Designer, deliver in Figma, PM runs `/compare-figma-prd`.
-
-**QA validating a phase:** Run `/validate-parallel` directly, or `/feature-kickoff` with role = QA.
 
 **Seeing the full team's work:** Run `/team-status`.
 
@@ -1056,7 +604,7 @@ Write this file at the end of every step, overwriting the previous version:
 ```json
 {
   "feature_name": "string",
-  "pipeline": "Full | Medium | Light | Work",
+  "pipeline": "Work",
   "mode": "Fast | Gated",
   "current_phase": 1,
   "current_step": "string — step number and name, e.g. '3b — Technical Review'",
@@ -1078,22 +626,14 @@ Write this file at the end of every step, overwriting the previous version:
       { "phase": 1, "path": "string", "size_bytes": 0 }
     ],
     "user_stories": { "path": "string | null", "size_bytes": 0 },
-    "validations": [
-      { "phase": 1, "path": "string", "size_bytes": 0 }
-    ],
-    "jira_manifest": { "path": "string | null", "size_bytes": 0 },
-    "learnings": [
-      { "phase": 1, "path": "string", "size_bytes": 0 }
-    ]
+    "jira_manifest": { "path": "string | null", "size_bytes": 0 }
   },
   "export_urls": {
     "jira_epic": "string | null",
     "drive_folder": "string | null",
-    "confluence_page": "string | null — PRD page, created at Gate 1 share or Step 11c",
+    "confluence_page": "string | null — PRD page, created at Step 11c",
     "confluence_breakdown_page": "string | null — user stories breakdown page, created at Gate 3 share",
-    "pr_urls": [
-      { "phase": 1, "pr_number": 1, "url": "string | null" }
-    ]
+    "figma_diagram_url": "string | null — FigJam diagram URL, null if Mermaid fallback was used"
   },
   "open_conflicts": [],
   "review_requests": [
@@ -1140,7 +680,7 @@ When the pipeline ends, output:
 ```
 ━━━ Pipeline Complete ━━━
 
-Pipeline: [Full / Medium / Light / Work]
+Pipeline: Work
 Mode: [Fast / Gated]
 Feature: [Name]
 Output folder: ~/Desktop/Resources/PDLC Workflow Docs/[feature-name]/
@@ -1148,7 +688,7 @@ Owner: [Name]
 
 Documents created:
 - Research: [path]
-- Codebase Review: [path or N/A]
+- Codebase Review: [path]
 - PRD: [path]
 - Product Review: [path]
 - Technical Review: [path]
@@ -1156,18 +696,15 @@ Documents created:
 - Visual Diagram: [path]
 - Design Catalog(s): [paths per phase]
 - User Stories Breakdown: [path]
-- Validation Reports: [paths per phase]
-- Learning Reports: [paths per phase]
 - Jira tickets: [Epic URL or local fallback path]
 - Jira manifest: [path]
+- Google Drive folder: [URL or N/A]
+- Confluence page: [URL or N/A]
 - Changelog: [path if any change-mode runs occurred]
-
-Phases completed: [list]
-Phases remaining: [list or "none — product complete"]
 
 Gates:
 - Gate 1: [Approved YYYY-MM-DD]
-- Gate 2: [Approved YYYY-MM-DD or N/A]
-- Gate 3: [Approved YYYY-MM-DD or N/A]
+- Gate 2: [Approved YYYY-MM-DD]
+- Gate 3: [Approved YYYY-MM-DD]
 ━━━
 ```

@@ -89,7 +89,13 @@ Build the Confluence page in markdown (Confluence accepts markdown via the `cont
 [From PRD Section 11]
 ```
 
-If the PM also enabled inline diagrams, embed the Mermaid diagram from `~/Desktop/Resources/PDLC Workflow Docs/[feature-name]/diagrams/[feature-name]-feature-diagram.md` in the "Quick links" section. Confluence renders Mermaid natively.
+If a Figma diagram URL is available (check `_pipeline-state.json` → `export_urls.figma_diagram_url`), embed it in the "Quick links" section using an iframe embed:
+
+```html
+<iframe src="https://www.figma.com/embed?embed_host=confluence&url=[figma_diagram_url]" width="800" height="450" allowfullscreen></iframe>
+```
+
+If no Figma URL is available, omit the diagram embed. Do not embed Mermaid syntax — it does not render visually in Confluence without a third-party plugin.
 
 ---
 
