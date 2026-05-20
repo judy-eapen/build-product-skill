@@ -21,6 +21,43 @@ Do not proceed until mode is confirmed.
 
 ---
 
+## Stage 0.5 — Intake
+
+Before any pipeline step, walk through the 7 intake questions defined in `CLAUDE.md` → "Intake Parameters". Ask them in order. Persist every answer to `_pipeline-state.json` under an `intake` object — this is the source of truth that downstream steps (PRD generation, user stories, Jira export) will read.
+
+**Question 3 is open-ended and especially important** — it captures every per-ticket convention the team applies. Do not just ask for labels. Probe with examples so the PM thinks about all of:
+
+- **Labels** they always apply (pod tags, area tags, team names)
+- **Title format** (verb-first? prefix for BE/FE? Epic naming convention?)
+- **BE/FE split** (separate tickets per layer, or combined?)
+- **Default values for custom fields** (e.g., "Testable" = Yes/No on every ticket)
+- **Fields they intentionally leave blank** (e.g., Story Points)
+- **Link conventions** (e.g., BE↔FE pairs as "Relates to"; "Blocked by" with a note)
+
+Present the examples as a list in your question, so the PM can scan them and add anything else specific to their team. Accept the answer as free-text — bullets, prose, or "we don't have specific conventions yet" are all valid. Do not try to parse the answer into rigid fields; store it as a single string and let downstream steps interpret it at the right moment.
+
+Persist the full intake to `_pipeline-state.json`:
+
+```json
+{
+  "intake": {
+    "feature_name": "...",
+    "jira_project": "...",
+    "jira_ticket_conventions": "<verbatim free-text from PM>",
+    "tech_stack": "...",
+    "product_type": "...",
+    "permission_model": "yes | no | not_yet_decided",
+    "backend_api_surface": "yes | no | not_yet_decided"
+  }
+}
+```
+
+If the PM has run this skill before in the same workspace, look for a prior `_pipeline-state.json` (any feature folder) and offer: "I see you ran this for [other-feature] last time. Reuse the same Jira project, label conventions, and tech stack? (yes / show me the values first / start fresh)". Do not assume — confirm reuse explicitly.
+
+Do not proceed to Step 1 until all 7 answers are captured.
+
+---
+
 ## Output Patterns
 
 ### Fast mode: auto-step output (no pause)

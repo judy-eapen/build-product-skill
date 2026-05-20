@@ -94,6 +94,16 @@ Below the table, produce a one-paragraph **build-order summary** a PM could read
 
 ## Step 3 — Per-story sections
 
+### Apply intake-captured title conventions
+
+Before composing any story title, read `~/Desktop/Resources/PDLC Workflow Docs/[feature-name]/_pipeline-state.json` → `intake.jira_ticket_conventions`. If the PM specified a title format (e.g., "verb-first, `[BE]`/`[FE]` prefix"), apply it to every story title here. Examples:
+
+- Convention: "verb-first, `[BE]`/`[FE]` prefix" → BE story title becomes `[BE] Create notes endpoint`, FE story title becomes `[FE] Add note from listing card`.
+- Convention: "BE and FE always separate" → never produce a single story labeled `Type: both`; split into a BE story and an FE story linked as a pair.
+- Convention specifies an Epic naming format → apply it only when the Epic is named in Step 11a (Jira export), not here.
+
+If `intake.jira_ticket_conventions` is empty or silent on title format, use plain descriptive titles without prefixes.
+
 For each US-ID in the Sequence Map, write a section with this structure:
 
 ```markdown

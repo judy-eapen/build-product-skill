@@ -1,5 +1,5 @@
-v2.0.0 — 2026-05-20
+v2.1.0 — 2026-05-20
 
-Work pipeline only. Figma/v0 design prompts.
+Open-ended Jira ticket conventions probed at intake; conventions applied automatically at User Stories Breakdown and Jira Export.
 
 See CHANGELOG.md for full version history.

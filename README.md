@@ -2,7 +2,9 @@
 
 **A Claude skill that takes a PM from a feature idea → a Jira Epic with all linked tickets.** Research, codebase grounding, PRD, dual AI review, design prompts for v0 or Figma Make, exhaustive user stories with Gherkin acceptance criteria, and Jira ticket creation — in one continuous Work pipeline with three human approval gates.
 
-> **v2.0.0 — Work pipeline only.** The Personal pipeline (Full/Medium/Light) has been removed. This skill is built for product managers, not individual developers building personal projects.
+> **v2.1.0 — Open-ended Jira conventions at intake.** The intake step now probes for every per-ticket convention your team uses (labels, title format, BE/FE split, custom-field defaults, link conventions) and applies them automatically when generating user stories and creating Jira tickets. No need to encode conventions in a personal CLAUDE.md.
+>
+> **v2.0.0** — Work pipeline only. The Personal pipeline (Full/Medium/Light) was removed in 2.0.
 
 📄 **[View the interactive pipeline explainer →](https://judy-eapen.github.io/build-product-skill/)**
 
@@ -180,7 +182,7 @@ Common starting points:
 
 ## Version
 
-**v2.0.0** — See [CHANGELOG.md](./CHANGELOG.md) for full version history.
+**v2.1.0** — See [CHANGELOG.md](./CHANGELOG.md) for full version history.
 
 ## License
 

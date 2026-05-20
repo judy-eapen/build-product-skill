@@ -16,6 +16,26 @@ When the breakdown exists, do not re-infer FE/BE, do not re-write Gherkin, do no
 
 ---
 
+## Read intake conventions before composing any ticket
+
+Read `~/Desktop/Resources/PDLC Workflow Docs/[feature-name]/_pipeline-state.json` and pull `intake.jira_ticket_conventions`. This is the free-text the PM gave at intake describing every per-ticket convention their team applies.
+
+Interpret it carefully. Look for:
+
+- **Labels** to apply to every ticket (e.g., pod tag, area tag). Add them to the `labels` array on every Story and the Epic.
+- **Title format** rules. Apply them when composing the `summary` field. For example, "verb-first, `[BE]`/`[FE]` prefix" means a BE story becomes `[BE] Create notes endpoint` and an FE story becomes `[FE] Add note from listing card`.
+- **BE/FE split rule.** If the convention says BE and FE are always separate tickets, never combine them — even if the breakdown shows a single story that covers both, split it. If the convention says they're combined, do not split linked pairs.
+- **Custom field defaults.** If a field like "Testable" has a stated default (e.g., "always Yes"), set it on every ticket. Look up the custom field ID via `getJiraIssueTypeMetaWithFields` if you don't have it cached.
+- **Fields to leave blank.** If the convention says (e.g.) "don't fill in Story Points," omit that field from the payload entirely. Do not guess.
+- **Link conventions.** If the convention says (e.g.) "link BE↔FE pairs with 'Relates to'," do that explicitly after creating each pair. If it says "use 'Blocked by' with a note," apply that during sequencing.
+- **Anything else.** Conventions you don't recognize: ask the PM once before proceeding rather than guessing.
+
+If `intake.jira_ticket_conventions` is empty, missing, or says "we don't have specific conventions yet," fall back to sensible defaults (no special labels beyond what's on the breakdown stories, plain summary text, do not pre-fill custom fields).
+
+If the conventions are ambiguous or conflict with the breakdown (e.g., conventions say "combined BE+FE" but the breakdown has them split): surface the conflict to the PM and ask which to follow. Do not silently overrule the breakdown.
+
+---
+
 ## Knowledge Base Sizing Check
 
 Before creating tickets, check whether `~/Desktop/Resources/PDLC Workflow Docs/_knowledge-base.md` exists.
