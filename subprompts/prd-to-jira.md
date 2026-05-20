@@ -26,6 +26,74 @@ Before creating tickets, check whether `~/Desktop/Resources/PDLC Workflow Docs/_
 
 ---
 
+## Pre-flight: deduplication check
+
+Before creating any tickets, check whether tickets for this feature already exist in Jira. Running the pipeline twice without this check creates duplicate tickets.
+
+**Step 1 — Check the manifest file.**
+
+If `~/Desktop/Resources/PDLC Workflow Docs/[feature-name]/jira-export/[feature-name]-jira-manifest.md` exists and contains issue keys, a prior run has already created tickets.
+
+Read the manifest. For each US-ID with a Jira issue key, call `getJiraIssue` to confirm the ticket still exists.
+
+- If tickets exist and look correct: present a diff to the PM:
+  ```
+  ⚠ Existing Jira tickets found for this feature:
+  - [N] tickets already created (listed in manifest)
+  - [N] new stories in current breakdown not yet in Jira
+
+  Options:
+  1. Skip existing, create only new ones (safe default)
+  2. Update existing tickets with current breakdown content, create new ones
+  3. Create all tickets again (will create duplicates — use only if you deleted the old ones)
+
+  Which option? (1 / 2 / 3)
+  ```
+  Wait for PM decision before proceeding.
+
+- If manifest exists but all tickets return 404 (deleted): proceed with full creation.
+- If manifest does not exist: proceed with full creation.
+
+**Step 2 — Check Jira directly (if no manifest).**
+
+If no manifest exists, query Jira for any existing Epic whose summary matches the PRD title:
+```
+searchJiraIssuesUsingJql: project = [PROJECT] AND issuetype = Epic AND summary ~ "[feature name]"
+```
+If a matching Epic is found, surface it to the PM:
+```
+⚠ An Epic matching "[feature name]" already exists in Jira: [EPIC-KEY] — [summary]
+  Created: [date]
+
+  Do you want to add stories to this existing Epic, or create a new one?
+  (existing / new)
+```
+Wait for PM decision before proceeding.
+
+---
+
+## Pre-flight: write creation manifest before bulk creation
+
+Before creating any tickets, write a pre-creation manifest at:
+```
+~/Desktop/Resources/PDLC Workflow Docs/[feature-name]/jira-export/[feature-name]-jira-manifest.md
+```
+
+Use this format for each story that will be created:
+
+```markdown
+| US-ID | Title | Type | Jira issue key | Jira URL | Status |
+|---|---|---|---|---|---|
+| US-1.1 | [title] | FE | — | — | Pending |
+| US-1.2 | [title] | BE | — | — | Pending |
+```
+
+**Update the manifest row-by-row as each ticket is created.** Do not wait until all tickets are done. This makes the creation transactional: if the process is interrupted, re-running detects which tickets were created (via the deduplication check above) and resumes from the first `Pending` row.
+
+Replace `—` with the actual issue key and URL as each ticket succeeds. Change `Status` to `Created` or `Failed` after each attempt.
+
+---
+
 ## Pre-flight: validate custom field IDs
 
 Custom field IDs are Jira-instance-specific. Before bulk creation, validate them. Fail fast if wrong.

@@ -59,6 +59,8 @@ Each command runs one stage of the pipeline independently. Each asks for the inp
 - `/prd-to-jira` — Create Jira tickets from a user-stories breakdown or PRD.
 - `/drive-sync` — Sync a feature's pipeline artifacts to Google Drive (requires Google Drive MCP installed).
 - `/prd-to-confluence` — Publish a PRD as a Confluence page (requires Atlassian MCP connected).
+- `/share-for-review` — Post a Confluence artifact link to Slack with tagged reviewers and a deadline. Works with Slack MCP when connected; outputs formatted message for manual paste otherwise.
+- `/read-feedback` — Pull reviewer comments from a Confluence page, synthesize into suggested PRD edits, and apply approved changes. Re-syncs PRD to Confluence after edits.
 
 ### Design
 - `/design` — In-repo UI design: AI builds screens directly in code.
@@ -70,6 +72,8 @@ Each command runs one stage of the pipeline independently. Each asks for the inp
 - `/execute-plan` — Implement current phase (solo or team mode).
 - `/validate` — Smoke-test against PRD acceptance criteria and designs.
 - `/update-prd-from-build` — Sync PRD with what was actually implemented.
+- `/generate-tests` — Scaffold test stubs from a user-stories breakdown (Gherkin AC → test framework). Run after breakdown is approved, before execution.
+- `/lint-style` — Check any generated document against `ai-framework/style-preferences.md` and flag or fix style violations.
 
 ### Status & Utilities
 - `/team-status` — Portfolio dashboard: all products, phases, owners, blockers.

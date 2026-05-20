@@ -8,6 +8,62 @@ Do not collapse stages together.
 
 ---
 
+# Stage 0 — Knowledge Base Check (Mandatory)
+
+Before opening the discovery floor, check whether prior work is relevant to what the PM is about to describe.
+
+1. Check if `~/Desktop/Resources/PDLC Workflow Docs/_knowledge-base.md` exists.
+2. If it does, read it in full. Scan for entries related to:
+   - Similar feature types (e.g., search, onboarding, auth, notifications, dashboards)
+   - The same tech area (e.g., same database, same API pattern, same frontend framework)
+   - Features that touched the same data entities
+   - Patterns marked as "what struggled" or "failure modes" in prior learning reports
+
+3. If relevant entries are found, surface them to the PM **before** the discovery questions:
+
+   ```
+   Before we start: here is what we already know from prior features that may be relevant.
+
+   Related prior features:
+   - [Feature name] (shipped [date]): [one-line summary of what was built]
+     Key decisions: [bullet list of locked decisions from that feature]
+     What struggled: [bullet list from learning report]
+     Known risks not fully resolved: [if any]
+
+   [Repeat for each relevant prior feature]
+
+   These learnings will seed the research and PRD. Tell me if any are not applicable to what you are building.
+   ```
+
+4. Note which prior decisions are "already locked" for this feature area (e.g., "we always use cursor pagination for this entity"). These will be pre-populated in the PRD Decision Log later — do not re-debate them during discovery unless the PM explicitly raises a change.
+
+5. **Optional: query Jira for related existing work.** If the PM has provided a Jira project at intake (see CLAUDE.md Intake Parameters), ask:
+
+   "Should I check Jira for existing tickets or Epics in [project] that might be related to this feature? This takes 10 seconds and often surfaces scope the PRD should reference or avoid duplicating."
+
+   If yes, run:
+   ```
+   searchJiraIssuesUsingJql:
+   project = [PROJECT] AND (summary ~ "[feature keyword]" OR labels in ([relevant area label]))
+   ORDER BY created DESC
+   ```
+
+   Surface any matching Epics or Stories:
+   ```
+   Related existing Jira work found:
+   - [EPIC-KEY] — [Epic title] (status: [Open/Done], [date])
+     [One-line summary of what it covers]
+   - [STORY-KEY] — [Story title] (status, date)
+   ```
+
+   Ask the PM: "Are any of these related? If so, should this feature build on, replace, or avoid overlapping with them?"
+
+   If no Jira project is known, or PM says no, skip silently.
+
+6. If the knowledge base does not exist and no Jira results are found, skip this step silently and proceed to Stage 1.
+
+---
+
 # Stage 1 — Interactive Discovery (Mandatory)
 
 Goal: build a complete understanding of the idea before doing any research. The PM may not surface everything you need — your job is to probe for missing detail iteratively until you have enough.
@@ -185,9 +241,22 @@ All of the following must be true before transitioning to Stage 2:
 
 Identify whether competitors or similar solutions exist.
 
-If competitors exist:
+**Use web search for current competitive data.** Do not rely only on training knowledge, which has a cutoff date. Run targeted searches before building the comparison table:
 
-Produce a structured comparison table:
+```
+Search queries to run (adapt to the actual feature):
+1. "[feature name] competitors" OR "[feature name] alternatives"
+2. "[primary user type] [job to be done] tools [current year]"
+3. "[problem space] product comparison site:g2.com OR site:capterra.com"
+```
+
+Run these searches first. Use the results to populate the comparison table. Note the search date in the table caption so the PM knows the data is current.
+
+If search tools are unavailable (no web access), proceed with training knowledge and note: "Competitive data from training knowledge (no live web access). Verify before using in investor or stakeholder materials."
+
+---
+
+If competitors exist, produce a structured comparison table:
 
 | Competitor | Core Offering | Target User | Strengths | Weaknesses | Monetization Model | Opportunity Gap |
 

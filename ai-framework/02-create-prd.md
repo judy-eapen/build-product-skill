@@ -12,13 +12,33 @@ Do not collapse stages together.
 
 Before doing anything else, check whether `~/Desktop/Resources/PDLC Workflow Docs/_knowledge-base.md` exists.
 
-- If it does, read it and surface any past entries that are relevant to the current feature type or tech area. Present them to the PM as a brief context note:
+If it does, read it and extract four categories of relevant prior knowledge for this feature:
 
-  "Here is what we learned from past similar features that is worth keeping in mind as we write this PRD: [bullet list of relevant entries]."
+**Category A — Prior decisions to pre-populate in Decision Log**
+Decisions from prior similar features that apply here and should not be re-debated. Example: "We always use cursor-based pagination for this entity — decided in Feature X on [date]."
 
-- If the knowledge base does not exist or has no relevant entries, skip this step silently and proceed.
+**Category B — Known technical risks to pre-populate in Open Questions**
+Risks that were flagged in prior similar features and were not fully resolved. Example: "Feature X noted that [tech decision] had unresolved scaling implications beyond 10k records."
 
-Do not block on this step. If relevant entries are found, ask the PM whether to incorporate any lessons before proceeding to Stage 1.
+**Category C — Sizing patterns**
+Any "what struggled" entries where estimated size was significantly off from actual. Used to calibrate size estimates in the Phased Plan.
+
+**Category D — Relevant failure modes**
+What failed or underperformed after shipping a related feature. Use these to strengthen the Testing Notes and NFR sections.
+
+**Then:**
+
+1. Pre-populate the PRD **Decision Log (Section 10)** with any Category A entries. Mark each as `[Inherited from [feature name], [date] — confirm still applies]`. The PM reviews and can remove or override inherited decisions.
+
+2. Pre-populate the PRD **Open Questions (Section 11)** with any Category B entries. Mark each as `[Carried from [feature name] — unresolved]`.
+
+3. When generating the Phased Plan (Section 7), apply Category C sizing patterns. If a prior feature consistently underestimated work in a category, flag it at the first relevant story.
+
+4. When generating Testing Notes (Section 9), include Category D failure modes as specific test scenarios to prevent regression.
+
+If the knowledge base does not exist or has no relevant entries in any category, skip this step silently and proceed.
+
+Do not block on this step. Proceed to Stage 1 after pre-populating whatever was found.
 
 ---
 
@@ -208,4 +228,6 @@ Before finalizing, ask:
 - Any non-functional requirements missing?
 - Any cross-team dependencies not accounted for?
 
-Then finalize the PRD.
+Then run the style lint check (read and follow `subprompts/lint-style.md`) on the full PRD content before writing to disk. Fix any mechanical violations. Flag any judgment-call violations to the PM.
+
+Then finalize and write the PRD.

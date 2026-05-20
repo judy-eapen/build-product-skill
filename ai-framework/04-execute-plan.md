@@ -86,11 +86,17 @@ Generate branch name using convention:
 Example:
   feature/phase1-pr1-add-user-schema
 
+Present the branch name and ask:
+1. "Is this branch name correct, or do you want a different convention?"
+2. "Should I create this branch now in GitHub, or will you create it manually?"
+
+If the PM says to create it: use `mcp__github__create_branch` to create the branch from the current default branch. Confirm the branch was created before proceeding.
+
 Do not generate code until branch name is confirmed.
 
 **Solo mode:**
 
-Use a simple branch name (e.g., `phase1-foundation`) or work on main. No confirmation needed. Proceed to implementation.
+Use a simple branch name (e.g., `phase1-foundation`) or work on main. No confirmation needed. Proceed to implementation. Do not create the branch via API — solo mode handles this manually.
 
 ---
 
@@ -149,10 +155,10 @@ Stop and escalate.
 
 **Team mode:**
 
-Generate a full PR:
+Generate a full PR description:
 
 ## PR Title
-Clear, scoped, specific.
+`[Phase N] [short description]` — clear, scoped, specific.
 
 ## PR Description
 - Summary
@@ -163,6 +169,8 @@ Clear, scoped, specific.
 - Migration notes
 - Rollback strategy
 - Risk assessment
+- Link to PRD: `[PRD file path or title]`
+- Validation report: `[path to validation file if validation has run, or "pending — run /validate after merging"]`
 
 ## Checklist
 - [ ] Build passes
@@ -170,6 +178,14 @@ Clear, scoped, specific.
 - [ ] Lint passes
 - [ ] Feature flag applied (if needed)
 - [ ] No unrelated changes
+
+**After generating the description, ask the PM:**
+
+"Should I create this PR in GitHub now, or will you do it manually?"
+
+If yes: use `mcp__github__create_pull_request` with the title and description above. Set the base branch to the default branch (main or master). Set the head branch to the branch created in Stage 3.
+
+After creating the PR, print the PR URL and add it to `_pipeline-state.json` under `export_urls.pr_url`.
 
 **Solo mode:**
 
@@ -179,7 +195,7 @@ Generate a brief commit summary:
 - What to test manually
 - Any known issues or TODOs
 
-No PR template, no rollback strategy, no checklist.
+No PR template, no rollback strategy, no checklist. No GitHub PR creation.
 
 ---
 

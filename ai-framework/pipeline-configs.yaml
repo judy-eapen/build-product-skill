@@ -1,0 +1,420 @@
+# Pipeline Configurations
+#
+# Each pipeline is defined here declaratively. The build-product orchestrator reads
+# this file to determine which steps and gates apply, rather than using hardcoded
+# conditionals. To add a new pipeline type, add a new entry below — no changes to
+# SKILL.md or subprompts required.
+#
+# Field reference:
+#   steps[]
+#     id          - unique step identifier used in _pipeline-state.json
+#     name        - display name shown in progress trackers
+#     instruction - file the orchestrator reads and follows for this step
+#     mode        - "auto" (chains without pause in fast mode) | "gate" (always pauses)
+#     parallel    - if true, this step runs as a parallel block; see parallel_block
+#     parallel_block - reference to a block definition in parallel-rules.md
+#     condition   - optional expression; step is skipped if condition is false
+#                   supported: "gate_1.answer.system_design == true"
+#                              "pm.enabled.drive_sync == true"
+#                              "pipeline.phase_count > 1"
+#   gates[]
+#     after_step  - step id that triggers this gate
+#     name        - display name
+#     quality_checks - list of check IDs (see quality-checks section below)
+#     conditional_advance - whether "approved with conditions" is allowed (always true)
+#
+# ---
+
+pipelines:
+
+  # ─────────────────────────────────────────────────────────────────────────
+  personal_full:
+    display_name: "Personal — Full"
+    description: "New product, greenfield app, or major feature with new data model."
+    has_implementation: true
+    has_jira_export: false
+
+    steps:
+      - id: research
+        name: "Research Idea"
+        instruction: "ai-framework/01-research-idea.md"
+        mode: auto
+
+      - id: create_prd
+        name: "Create PRD"
+        instruction: "ai-framework/02-create-prd.md"
+        mode: auto
+
+      - id: dual_review
+        name: "Dual Review"
+        instruction: "ai-framework/05-parallel-rules.md#block_1"
+        mode: auto
+        parallel: true
+        parallel_block: block_1
+
+      - id: apply_fixes
+        name: "Apply Fixes"
+        instruction: "SKILL.md#step_4_apply_fixes"
+        mode: gate
+        gate: gate_1
+
+      - id: system_design
+        name: "System Design"
+        instruction: "subprompts/system-design.md"
+        mode: auto
+        condition: "gate_1.answer.system_design == true"
+
+      - id: visual_diagram
+        name: "Visual Diagram"
+        instruction: "ai-framework/03c-visual-diagram.md"
+        mode: auto
+
+      - id: design
+        name: "Design"
+        instruction: "ai-framework/03-design.md"
+        mode: auto
+        repeats_per_phase: true
+
+      - id: update_prd_from_designs
+        name: "Update PRD from Designs"
+        instruction: "ai-framework/03b-update-prd-from-designs.md"
+        mode: gate
+        gate: gate_2
+        repeats_per_phase: true
+
+      - id: execute
+        name: "Execute"
+        instruction: "ai-framework/04-execute-plan.md"
+        mode: auto
+        repeats_per_phase: true
+
+      - id: validate
+        name: "Validate"
+        instruction: "subprompts/validate.md"
+        mode: auto
+        parallel: true
+        parallel_block: block_2
+        repeats_per_phase: true
+
+      - id: update_prd_from_build
+        name: "Update PRD from Build"
+        instruction: "ai-framework/04b-update-prd-from-build.md"
+        mode: gate
+        gate: gate_3
+        repeats_per_phase: true
+
+      - id: learn
+        name: "Learn"
+        instruction: "subprompts/learn.md"
+        mode: auto
+        repeats_per_phase: true
+
+    gates:
+      gate_1:
+        after_step: apply_fixes
+        name: "PRD"
+        quality_checks:
+          - problem_statement_specific
+          - user_stories_measurable
+          - high_risks_resolved
+          - success_metrics_specific
+        optional_questions:
+          - id: system_design
+            text: "Complex architecture needing a system design doc? (yes/no)"
+        conditional_advance: true
+
+      gate_2:
+        after_step: update_prd_from_designs
+        name: "Designs"
+        quality_checks:
+          - diagram_covers_all_stories
+          - high_compliance_risks_addressed
+          - all_ui_states_covered
+          - open_conditions_from_gate_1
+        conditional_advance: true
+
+      gate_3:
+        after_step: update_prd_from_build
+        name: "Ship"
+        quality_checks:
+          - tickets_have_two_ac
+          - tickets_have_edge_case
+          - no_circular_dependencies
+          - open_conditions_from_gate_2
+        conditional_advance: true
+
+  # ─────────────────────────────────────────────────────────────────────────
+  personal_medium:
+    display_name: "Personal — Medium"
+    description: "New feature in an existing app with significant scope."
+    has_implementation: true
+    has_jira_export: false
+
+    steps:
+      - id: create_prd
+        name: "Create PRD"
+        instruction: "ai-framework/02-create-prd.md"
+        mode: auto
+
+      - id: dual_review
+        name: "Dual Review"
+        instruction: "ai-framework/05-parallel-rules.md#block_1"
+        mode: auto
+        parallel: true
+        parallel_block: block_1
+
+      - id: apply_fixes
+        name: "Apply Fixes"
+        instruction: "SKILL.md#step_4_apply_fixes"
+        mode: gate
+        gate: gate_1
+
+      - id: execute
+        name: "Execute"
+        instruction: "ai-framework/04-execute-plan.md"
+        mode: auto
+
+      - id: validate
+        name: "Validate"
+        instruction: "subprompts/validate.md"
+        mode: auto
+        parallel: true
+        parallel_block: block_2
+
+      - id: update_prd_from_build
+        name: "Update PRD from Build"
+        instruction: "ai-framework/04b-update-prd-from-build.md"
+        mode: auto
+
+    gates:
+      gate_1:
+        after_step: apply_fixes
+        name: "PRD"
+        quality_checks:
+          - problem_statement_specific
+          - user_stories_measurable
+          - high_risks_resolved
+          - success_metrics_specific
+        conditional_advance: true
+
+  # ─────────────────────────────────────────────────────────────────────────
+  personal_light:
+    display_name: "Personal — Light"
+    description: "Bug fix, small UI change, or config change."
+    has_implementation: true
+    has_jira_export: false
+
+    steps:
+      - id: execute
+        name: "Execute"
+        instruction: "ai-framework/04-execute-plan.md"
+        mode: auto
+
+    gates: {}
+
+  # ─────────────────────────────────────────────────────────────────────────
+  work:
+    display_name: "Work"
+    description: "Planning and design only. No implementation. Ends with Jira export."
+    has_implementation: false
+    has_jira_export: true
+
+    steps:
+      - id: research
+        name: "Research Idea"
+        instruction: "ai-framework/01-research-idea.md"
+        mode: auto
+
+      - id: codebase_review
+        name: "Codebase Review"
+        instruction: "ai-framework/00-codebase-review.md"
+        mode: auto
+
+      - id: create_prd
+        name: "Create PRD"
+        instruction: "ai-framework/02-create-prd.md"
+        mode: auto
+
+      - id: dual_review
+        name: "Dual Review"
+        instruction: "ai-framework/05-parallel-rules.md#block_1"
+        mode: auto
+        parallel: true
+        parallel_block: block_1
+
+      - id: apply_fixes
+        name: "Apply Fixes"
+        instruction: "SKILL.md#step_4_apply_fixes"
+        mode: gate
+        gate: gate_1
+
+      - id: system_design
+        name: "System Design"
+        instruction: "subprompts/system-design.md"
+        mode: auto
+        condition: "gate_1.answer.system_design == true"
+
+      - id: visual_diagram
+        name: "Visual Diagram"
+        instruction: "ai-framework/03c-visual-diagram.md"
+        mode: auto
+
+      - id: design
+        name: "Design"
+        instruction: "ai-framework/03-design.md"
+        mode: auto
+        repeats_per_phase: true
+
+      - id: update_prd_from_designs
+        name: "Update PRD from Designs"
+        instruction: "ai-framework/03b-update-prd-from-designs.md"
+        mode: gate
+        gate: gate_2
+        repeats_per_phase: true
+
+      - id: user_stories
+        name: "User Stories Breakdown"
+        instruction: "ai-framework/06-user-stories.md"
+        mode: gate
+        gate: gate_3
+
+      - id: export
+        name: "Export"
+        instruction: "SKILL.md#step_11_export"
+        mode: auto
+        parallel: true
+        parallel_block: block_3
+
+    gates:
+      gate_1:
+        after_step: apply_fixes
+        name: "PRD"
+        quality_checks:
+          - problem_statement_specific
+          - user_stories_measurable
+          - high_risks_resolved
+          - success_metrics_specific
+          - codebase_high_risks_in_prd
+        optional_questions:
+          - id: system_design
+            text: "Complex architecture needing a system design doc? (yes/no)"
+        conditional_advance: true
+
+      gate_2:
+        after_step: update_prd_from_designs
+        name: "Designs"
+        quality_checks:
+          - diagram_covers_all_stories
+          - high_compliance_risks_addressed
+          - all_ui_states_covered
+          - open_conditions_from_gate_1
+        conditional_advance: true
+
+      gate_3:
+        after_step: user_stories
+        name: "User Stories Breakdown"
+        quality_checks:
+          - all_prd_stories_in_breakdown
+          - every_story_has_unique_id
+          - every_story_has_two_scenarios
+          - every_story_has_edge_case
+          - fe_be_pairs_complete
+          - no_story_larger_than_l_without_split
+          - high_risks_in_testing_notes
+          - ux_state_coverage_per_fe_story
+          - open_conditions_from_gate_2
+        conditional_advance: true
+
+# ─────────────────────────────────────────────────────────────────────────
+# Quality check definitions
+# Each check ID referenced in a gate maps to a description here.
+# The orchestrator reads these to know what to verify.
+# ─────────────────────────────────────────────────────────────────────────
+
+quality_checks:
+
+  problem_statement_specific:
+    description: "Is the problem statement specific enough that two engineers would build the same thing?"
+    severity: WARNING
+
+  user_stories_measurable:
+    description: "Does every user story have a measurable outcome?"
+    severity: WARNING
+
+  high_risks_resolved:
+    description: "Did the Technical Review surface any HIGH risks that have not been resolved in the decision log?"
+    severity: WARNING
+
+  success_metrics_specific:
+    description: "Is the success metric a specific measurable metric with a current baseline, or is it a vague statement?"
+    severity: WARNING
+
+  codebase_high_risks_in_prd:
+    description: "(Work pipeline only) Is the codebase review handoff note reflected in the PRD? If the codebase review flagged a HIGH risk and the PRD does not address it, flag it."
+    severity: WARNING
+    pipeline_filter: [work]
+
+  diagram_covers_all_stories:
+    description: "Does the visual diagram cover every user story approved at Gate 1? Flag any stories with no corresponding flow."
+    severity: WARNING
+
+  high_compliance_risks_addressed:
+    description: "Did the compliance check surface any HIGH risk items that have not been addressed in the designs?"
+    severity: WARNING
+
+  all_ui_states_covered:
+    description: "Do the designs cover all states: empty state, loading state, error state?"
+    severity: INFO
+
+  tickets_have_two_ac:
+    description: "Does every ticket have at least 2 acceptance criteria?"
+    severity: WARNING
+
+  tickets_have_edge_case:
+    description: "Does every ticket have at least one edge case or error state documented?"
+    severity: INFO
+
+  no_circular_dependencies:
+    description: "Does the build sequence have any circular dependencies?"
+    severity: WARNING
+
+  all_prd_stories_in_breakdown:
+    description: "Every PRD user story appears in the breakdown (no drops)."
+    severity: WARNING
+
+  every_story_has_unique_id:
+    description: "Every story has a unique US-ID."
+    severity: WARNING
+
+  every_story_has_two_scenarios:
+    description: "Every story has at least 2 Gherkin scenarios."
+    severity: WARNING
+
+  every_story_has_edge_case:
+    description: "Every story has at least one edge-case or error-state scenario."
+    severity: INFO
+
+  fe_be_pairs_complete:
+    description: "Every linked FE/BE pair has both sides present."
+    severity: WARNING
+
+  no_story_larger_than_l_without_split:
+    description: "No story sized larger than L without a proposed split."
+    severity: INFO
+
+  high_risks_in_testing_notes:
+    description: "HIGH risks from the codebase review appear in at least one story's testing notes."
+    severity: WARNING
+    pipeline_filter: [work]
+
+  ux_state_coverage_per_fe_story:
+    description: "UX state coverage per FE story: empty / loading / error / populated."
+    severity: INFO
+
+  open_conditions_from_gate_1:
+    description: "All conditions set at Gate 1 approval have been resolved."
+    severity: WARNING
+
+  open_conditions_from_gate_2:
+    description: "All conditions set at Gate 2 approval have been resolved."
+    severity: WARNING
