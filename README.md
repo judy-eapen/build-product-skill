@@ -32,7 +32,7 @@ Plus `/change-mode` for propagating changes after a gate, `/reopen-gate-1/2/3` f
 Clone this repo into your local Claude skills directory:
 
 ```bash
-git clone https://github.com/[your-username]/build-product-skill.git ~/.claude/skills/build-product
+git clone https://github.com/judy-eapen/build-product-skill.git ~/.claude/skills/build-product
 ```
 
 That's it. Open Claude Code in any folder, type `/`, and `/build-product` will appear in the autocomplete.
