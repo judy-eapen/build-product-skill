@@ -476,14 +476,20 @@ Then proceed. The Gate 2 quality check will automatically verify all Gate 1 cond
 
 Update `_pipeline-state.json`. Mark Gate 1 as Approved with date. Write context checkpoint to `_context-checkpoint.md`.
 
-**Optional — share PRD for async review:**
+**Optional — publish PRD to Confluence and share for review:**
 After Gate 1 approval, offer once:
 ```
-The PRD is approved. Want to share it with stakeholders for async review before design starts?
-Run /share-for-review to post it to Slack with a Confluence link and tagged reviewers.
-(yes to run now / skip)
+The PRD is approved. Want to publish it to Confluence and share it with stakeholders
+for async review before design starts? (yes / skip)
 ```
-If yes, read and follow `subprompts/share-for-review.md`.
+
+If yes:
+1. First publish the PRD to Confluence — read and follow `subprompts/prd-to-confluence.md`.
+   Record the resulting page URL in `_pipeline-state.json` → `export_urls.confluence_page`.
+2. Then read and follow `subprompts/share-for-review.md` using that URL.
+
+If the PM skips, note that they can run `/prd-to-confluence` and `/share-for-review`
+manually at any time.
 
 ---
 
@@ -599,14 +605,21 @@ Options:
 
 Update `_pipeline-state.json`. Mark Gate 2 as Approved with date. Write context checkpoint to `_context-checkpoint.md`.
 
-**Optional — share designs for async review:**
+**Optional — publish updated PRD to Confluence and share designs for review:**
 After Gate 2 approval, offer once:
 ```
-Designs approved. Want to share the design catalog with the engineering lead for a quick
-technical review before implementation starts?
-Run /share-for-review to post it to Slack. (yes / skip)
+Designs approved. Want to update the Confluence PRD page (it now reflects the final
+designs) and share the design catalog with the engineering lead before implementation
+starts? (yes / skip)
 ```
-If yes, read and follow `subprompts/share-for-review.md`.
+
+If yes:
+1. Update the Confluence PRD page with the post-design PRD — call `updateConfluencePage`
+   using the page URL already in `_pipeline-state.json` → `export_urls.confluence_page`.
+   If no page exists yet (Gate 1 share was skipped), publish fresh via `subprompts/prd-to-confluence.md`.
+2. Then read and follow `subprompts/share-for-review.md` — the artifact to share is
+   the design catalog, not the PRD. Pass the design catalog file path; the command will
+   offer to publish it to Confluence as a separate page if needed.
 
 ---
 
@@ -907,14 +920,21 @@ Say "approved" to create tickets, or give feedback to revise.
 
 Update `_pipeline-state.json`. Mark Gate 3 as Approved with date.
 
-**Optional — share breakdown for engineering review:**
+**Optional — publish breakdown to Confluence and share for engineering review:**
 After Gate 3 approval, offer once:
 ```
-Breakdown approved. Want to share it with the engineering team for sizing and
-sequencing review before Jira tickets are created?
-Run /share-for-review to post it to Slack. (yes / skip)
+Breakdown approved. Want to publish it to Confluence and share it with the engineering
+team for sizing review before Jira tickets are created? (yes / skip)
 ```
-If yes, read and follow `subprompts/share-for-review.md`.
+
+If yes:
+1. Publish the user stories breakdown as a Confluence page — read and follow
+   `subprompts/prd-to-confluence.md` using the breakdown file as the source document.
+   Record the URL in `_pipeline-state.json` → `export_urls.confluence_breakdown_page`.
+2. Then read and follow `subprompts/share-for-review.md` using that URL.
+
+Note: Step 11c (Confluence publish) runs next and will publish or update the full PRD
+page. The breakdown page created here is a separate page, not a duplicate.
 
 ### Step 11 — Export (parallel: Jira always + Drive optional + Confluence optional)
 
@@ -979,7 +999,13 @@ Read and follow: `subprompts/prd-to-confluence.md`.
 
 Inputs: Confluence space + (optional) parent page collected at pre-flight.
 
-Publishes the PRD as a Confluence page in markdown format. Composes the page from PRD content with quick-links section pointing at the Jira Epic (when Step 11a completes) and the Drive folder (when Step 11b completes).
+**If a Confluence page already exists** (the PM used `/share-for-review` earlier and
+a page URL is recorded in `_pipeline-state.json` → `export_urls.confluence_page`):
+call `updateConfluencePage` to update the existing page rather than creating a new one.
+Add a quick-links section at the top pointing to the Jira Epic (Step 11a) and Drive
+folder (Step 11b) once those are available. Do not create a duplicate page.
+
+**If no page exists yet:** publish fresh — same behavior as before.
 
 If the Atlassian MCP is unavailable, applies Error Type 4: writes intended page content locally. Pipeline continues.
 
@@ -1094,7 +1120,8 @@ Write this file at the end of every step, overwriting the previous version:
   "export_urls": {
     "jira_epic": "string | null",
     "drive_folder": "string | null",
-    "confluence_page": "string | null",
+    "confluence_page": "string | null — PRD page, created at Gate 1 share or Step 11c",
+    "confluence_breakdown_page": "string | null — user stories breakdown page, created at Gate 3 share",
     "pr_urls": [
       { "phase": 1, "pr_number": 1, "url": "string | null" }
     ]
