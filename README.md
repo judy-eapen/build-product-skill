@@ -30,13 +30,21 @@ Plus `/change-mode` for propagating changes after a gate, `/reopen-gate-1/2/3` f
 
 ### Install the skill
 
-Clone this repo into your local Claude skills directory:
+**1. Clone this repo into your local Claude skills directory:**
 
 ```bash
 git clone https://github.com/judy-eapen/build-product-skill.git ~/.claude/skills/build-product
 ```
 
-That's it. Open Claude Code in any folder, type `/`, and `/build-product` will appear in the autocomplete.
+**2. Register the slash commands** (one-time setup; creates wrapper files in `~/.claude/commands/` for each command the skill exposes):
+
+```bash
+mkdir -p ~/.claude/commands && for f in ~/.claude/skills/build-product/subprompts/*.md; do n=$(basename "$f" .md); printf 'Read and follow `~/.claude/skills/build-product/subprompts/%s.md`.\n' "$n" > ~/.claude/commands/"$n.md"; done
+```
+
+Open Claude Code in any folder, type `/`, and `/build-product` plus 20+ standalone commands (`/change-mode`, `/research-idea`, `/codebase-review`, `/create-prd`, `/review-prd`, `/cto-review`, `/user-stories`, `/prd-to-jira`, etc.) will appear in the autocomplete.
+
+> **Why the second step?** Claude Code discovers slash commands from `~/.claude/commands/`, not from inside a skill's folder. The one-liner above creates a thin wrapper for each command in the skill's `subprompts/` folder so they all show up as top-level slash commands.
 
 ### Update to the latest version
 
