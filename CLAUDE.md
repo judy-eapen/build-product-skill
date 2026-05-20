@@ -116,3 +116,18 @@ Outputs land at `~/Desktop/Resources/PDLC Workflow Docs/[feature-name]/`. See `S
 ## Writing Style
 
 Writing style preferences live in a separate file at `ai-framework/style-preferences.md`. Edit that file to match your preferences. Leave it empty to use no style rules. The skill reads from that file and applies whatever rules are present.
+
+---
+
+## Release Checklist
+
+When making significant changes to this skill (new commands, pipeline changes, bug fixes), update these four files before committing:
+
+| File | What to update |
+|------|---------------|
+| `CHANGELOG.md` | Add a new version entry at the top following the existing format. Use semantic versioning: MAJOR for breaking changes, MINOR for new features, PATCH for bug fixes. |
+| `VERSION.md` | Update to the new version number and date. |
+| `README.md` | Update the pipeline table, commands table, or any section that reflects what changed. Update the version badge at the top. |
+| `docs/index.html` | Update the version comment on line 6, the `.version-badge` text, the stats if counts changed, step cards if pipeline steps changed, the commands section if commands changed, and add a new entry to the changelog section. |
+
+The HTML at `docs/index.html` is served via GitHub Pages at `https://judy-eapen.github.io/build-product-skill/`. It must always reflect the current version — update it in the same commit as the skill changes.
