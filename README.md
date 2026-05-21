@@ -73,7 +73,24 @@ mkdir -p ~/.claude/commands && for f in ~/.claude/skills/build-product/subprompt
 # 3. Open Claude Code, type `/build-product`
 ```
 
-To update later: `cd ~/.claude/skills/build-product && git pull`.
+---
+
+## Update to the latest version
+
+To pull the latest skill changes (and pick up any new slash commands added since your last install), paste this one-liner in your terminal:
+
+```bash
+cd ~/.claude/skills/build-product && git pull && mkdir -p ~/.claude/commands && for f in subprompts/*.md; do n=$(basename "$f" .md); printf 'Read and follow `~/.claude/skills/build-product/subprompts/%s.md`.\n' "$n" > ~/.claude/commands/"$n.md"; done
+```
+
+It does two things in sequence:
+
+1. Pulls the latest commits from GitHub into your local skill folder.
+2. Re-registers all slash commands so any new commands added in this version become available.
+
+Restart Claude Code after running it.
+
+To see what changed in this update, check [CHANGELOG.md](./CHANGELOG.md).
 
 ---
 

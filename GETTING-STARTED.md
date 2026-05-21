@@ -16,8 +16,9 @@ If you already use Claude Code and have downloaded other skills before, skip to 
 6. [Step 5 — Register the slash commands](#step-5--register-the-slash-commands)
 7. [Step 6 — Connect your team's tools (MCPs)](#step-6--connect-your-teams-tools-mcps)
 8. [Step 7 — Your first run](#step-7--your-first-run)
-9. [If something goes wrong](#if-something-goes-wrong)
-10. [Glossary](#glossary)
+9. [Updating to the latest version](#updating-to-the-latest-version)
+10. [If something goes wrong](#if-something-goes-wrong)
+11. [Glossary](#glossary)
 
 ---
 
@@ -303,6 +304,40 @@ There are three gates: PRD (Gate 1), Designs (Gate 2), and User Stories (Gate 3)
 For a small feature, expect 30 to 60 minutes. Larger features can take longer because of more rounds of revision at each gate.
 
 You can stop and resume at any time. The skill writes a state file (`_pipeline-state.json`) after every step. On your next Claude Code session, it offers to resume from where you left off.
+
+---
+
+## Updating to the latest version
+
+The skill is maintained as a GitHub repository. To pick up the latest changes (new commands, bug fixes, improved prompts), paste the following one-liner into your terminal and press Enter:
+
+```bash
+cd ~/.claude/skills/build-product && git pull && mkdir -p ~/.claude/commands && for f in subprompts/*.md; do n=$(basename "$f" .md); printf 'Read and follow `~/.claude/skills/build-product/subprompts/%s.md`.\n' "$n" > ~/.claude/commands/"$n.md"; done
+```
+
+This does two things in sequence:
+
+1. **Pulls the latest commits from GitHub** into your local skill folder.
+2. **Re-registers all slash commands** so any new commands added in this version become available the next time you start Claude Code.
+
+After running the one-liner, restart Claude Code so it picks up the changes.
+
+### What if `git pull` says my files are modified?
+
+If you have edited any skill files locally (for example, customized `style-preferences.md` or any of the subprompts), Git may refuse to pull because it does not want to overwrite your changes. Two options:
+
+- **Discard your local changes** and take the upstream version: `git stash && git pull`. Your local edits are saved in a stash you can restore later if needed.
+- **Keep your local changes and merge upstream on top**: `git pull --rebase`. Git replays your local edits on top of the latest upstream commits. If there are conflicts, Git will pause and ask you to resolve them.
+
+If you are not sure which to use, ask before running either.
+
+### Seeing what changed in this update
+
+Every update is documented in [CHANGELOG.md](./CHANGELOG.md) in the repository. Skim the top entry to see what is new before running through `/build-product` again — especially if a new intake question or new pipeline behavior was added.
+
+### Recommended cadence
+
+Check for updates roughly once a week, or any time you start a new feature. Updates are usually small and non-breaking. Major version bumps (e.g., v2.0.0 → v3.0.0) will be called out in CHANGELOG.md with an explicit "Breaking changes" section.
 
 ---
 
