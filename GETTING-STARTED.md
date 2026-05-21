@@ -78,6 +78,8 @@ Then press Enter. If you see a version number (for example, `0.5.x`), Claude Cod
 
 If you see `command not found` or a similar error, the install did not complete. Try restarting your terminal first. If that does not help, re-run the installer.
 
+> **Windows only:** If the installer printed a warning that `C:\Users\<yourname>\.local\bin` is not in your PATH, you need to add it manually before `claude --version` will work. Open **Start** → search "Environment Variables" → click **Edit the system environment variables** → click **Environment Variables** → under "User variables" select **Path** → click **Edit** → click **New** → paste `C:\Users\<yourname>\.local\bin` (replacing `<yourname>` with your actual Windows username) → click OK on every dialog. Then close PowerShell and open a fresh window before retrying `claude --version`.
+
 ---
 
 ## Step 2 — A primer on using Claude Code
@@ -347,6 +349,7 @@ Check for updates roughly once a week, or any time you start a new feature. Upda
 |---------|----------------------|-------------|
 | `/build-product` does not appear in the slash command list when you type `/` in Claude Code | The slash command registration in Step 5 did not run, or it ran before Claude Code was installed | Re-run the Step 5 command. Restart Claude Code. |
 | `command not found` when you type `git` or `claude` in the terminal | The tool is not installed, or your terminal session was opened before the install finished | Close the terminal window and open a fresh one. Re-run `git --version` or `claude --version`. |
+| `command not found` when typing `claude` on Windows, even after opening a fresh terminal | The installer ran but `C:\Users\<yourname>\.local\bin` was not added to your PATH | Follow the PATH fix in Step 1: open Environment Variables, add `C:\Users\<yourname>\.local\bin` to the User PATH, then open a new PowerShell window. |
 | The Atlassian OAuth flow returns "permission denied" | Your IT or Atlassian administrator has not approved the Atlassian Remote MCP for your workspace | Contact your administrator and ask them to allow the integration. |
 | The skill says an artifact is missing when you resume a session | A prior session crashed mid-step, leaving the state file out of sync with the artifacts on disk | The skill warns you about which step's output is missing. Re-run that specific step. |
 | Mermaid diagrams render as "Error loading the extension" on a Confluence page | The Confluence space does not have the Mermaid plugin installed | Connect the Figma MCP. The skill will produce FigJam boards instead, which Confluence renders natively. |
