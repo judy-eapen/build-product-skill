@@ -141,6 +141,7 @@ pipelines:
         quality_checks:
           - all_prd_stories_in_breakdown
           - every_story_has_unique_id
+          - every_story_has_epic
           - every_story_has_two_scenarios
           - every_story_has_edge_case
           - fe_be_pairs_complete
@@ -211,12 +212,16 @@ quality_checks:
     description: "Every story has a unique US-ID."
     severity: WARNING
 
+  every_story_has_epic:
+    description: "Every story is assigned to exactly one Epic from the Step 1.5 multi-epic grouping (v2.4.0+)."
+    severity: WARNING
+
   every_story_has_two_scenarios:
-    description: "Every story has at least 2 Gherkin scenarios."
+    description: "Every non-DRAFT story has at least 2 Gherkin scenarios. DRAFT stories aim for >=1 but are exempt (v2.4.0+)."
     severity: WARNING
 
   every_story_has_edge_case:
-    description: "Every story has at least one edge-case or error-state scenario."
+    description: "Every non-DRAFT story has at least one edge-case or error-state scenario. DRAFT stories exempt (v2.4.0+)."
     severity: INFO
 
   fe_be_pairs_complete:
@@ -233,7 +238,7 @@ quality_checks:
     pipeline_filter: [work]
 
   ux_state_coverage_per_fe_story:
-    description: "UX state coverage per FE story: empty / loading / error / populated."
+    description: "UX state coverage per non-DRAFT FE story: empty / loading / error / populated. DRAFT FE stories exempt and counted as known gaps in a Gate 3 info block (v2.4.0+)."
     severity: INFO
 
   open_conditions_from_gate_1:

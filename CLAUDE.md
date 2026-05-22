@@ -37,7 +37,7 @@ The skill will not proceed until these are answered.
 
 ### Pipeline Orchestration
 - `/build-product` — Work pipeline (research → PRD → design → Jira export). Planning only, no implementation.
-- `/change-mode` — Propagate a change after Gate 1 across every artifact for an existing feature.
+- `/change-mode` — Propagate a change after Gate 1 across every artifact for an existing feature. Seven trigger types; "Designs arrived" (v2.4.0+) is the trigger for refreshing DRAFT stories once finalized designs are available — refreshes AC, sizing, UX state coverage, and Jira tickets in place.
 - `/reopen-gate-1`, `/reopen-gate-2`, `/reopen-gate-3` — Re-open an approved gate.
 
 ### Standalone Pipeline Steps
@@ -50,7 +50,7 @@ Each command runs one stage of the pipeline independently. Each asks for the inp
 - `/cto-review` — Technical Reviewer pass on an existing PRD (also reads codebase review if available).
 - `/system-design` — Generate a system-design doc from a PRD.
 - `/visual-diagram` — Generate a Figma FigJam diagram from a PRD (falls back to Mermaid if Figma MCP is unavailable).
-- `/user-stories` — Generate the User Stories Breakdown (Gherkin AC + FE/BE pairing) from an approved PRD.
+- `/user-stories` — Generate the User Stories Breakdown (Gherkin AC + FE/BE pairing) from an approved PRD. Proposes a multi-Epic grouping (one Epic per phase by default, sub-epics for functional clusters) which the PM accepts or adjusts. Supports DRAFT mode for stories whose design details aren't finalized yet — DRAFT stories get `Status: DRAFT — needs design` at the top, no UX state coverage required, sized with `*` suffix. Refresh later via `/change-mode` → "Designs arrived".
 - `/timeline` — Generate a Gantt timeline (Figma FigJam + interactive HTML) at the Epic + Phase level from an approved user-stories breakdown. Hybrid estimation — skill proposes from sizing × velocity, PM tunes.
 - `/export-transcript` — Write the full back-and-forth between the PM and the model for a feature's pipeline run to two markdown files (clean reading version + full forensic version with tool calls). Auto-runs as Step 12 at the end of `/build-product`; also callable standalone any time.
 - `/pipeline-timing` — Generate a timing report for a feature's pipeline run with both wall-clock time and active-work time (gate waits excluded). Reads instrumented timestamps from `step_timings` in state; falls back to JSONL parsing for un-instrumented runs.

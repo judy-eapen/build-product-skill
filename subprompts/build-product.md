@@ -305,16 +305,32 @@ Update `_pipeline-state.json`.
 
 ### Step 9 — Update PRD from Designs [AUTO → GATE 2]
 
+**First, ask the PM:** do you have finalized designs to sync from?
+
+```
+Do you have a finalized design catalog for this feature?
+
+1. Yes — paste the catalog file path or describe the designs. I'll sync the PRD with them.
+2. Not yet — proceed to Gate 2 without syncing. Stories at Step 10 can be written in
+   DRAFT mode now and refreshed later via /change-mode → "Designs arrived".
+
+(default: Yes if `design/` folder has files; otherwise prompt)
+```
+
+**If the PM answers Yes (or design catalog files exist):**
 Read and follow: `ai-framework/03b-update-prd-from-designs.md`
 
 Sync the PRD with the finalized design catalog: design catalog reference, copy/flow changes, AC updates, decision log entries. Overwrite the PRD in place.
 
 Self-check (Error Type 3): does this output contradict any prior PRD decision? If yes, flag to PM before writing.
 
+**If the PM answers No (designs-pending):**
+Skip the PRD-from-designs sync. The PRD stays as it was post-Gate 1. Note in `_pipeline-state.json` → `user_stories.mode = "DRAFT"` so Step 10 knows to default to DRAFT mode. Gate 2 still runs but becomes a quick "proceed to user stories without finalized designs?" confirmation rather than a design-approval gate.
+
 **Gate 2 — Quality Check (run automatically before presenting):**
 
 - Does the visual diagram cover every user story approved at Gate 1? Flag any stories with no corresponding flow.
-- Do the design prompts cover all states: empty state, loading state, error state? Flag any missing states.
+- (If designs are finalized) Do the design prompts cover all states: empty state, loading state, error state? Flag any missing states. *Skipped in designs-pending mode.*
 - **Open conditions from Gate 1:** Verify each condition is resolved. Flag any that remain unresolved as WARNING.
 
 **Both modes — show Gate 2:**
@@ -323,8 +339,9 @@ Self-check (Error Type 3): does this output contradict any prior PRD decision? I
 ━━━ APPROVAL NEEDED: Gate 2 — Designs ━━━
 
 What was produced:
-- Design catalog: ~/Desktop/Resources/PDLC Workflow Docs/[feature-name]/design/[feature-name]-phase-[N]-designs.md
-- PRD updated to reflect designs
+- Design prompts: ~/Desktop/Resources/PDLC Workflow Docs/[feature-name]/design/[feature-name]-phase-[N]-designs.md
+- Design catalog: [path if finalized designs were synced, else "Not yet finalized — Step 10 will run in DRAFT mode"]
+- PRD updated to reflect designs (if designs were finalized; otherwise PRD unchanged from Gate 1)
 
 [QUALITY CHECK block]
 
@@ -334,8 +351,8 @@ Progress:
 [x] Steps 1–5 — PRD (reviewed + fixed)
 [x] Step 6 — System design (if applicable)
 [x] Step 7 — Visual diagram
-[x] Step 8 — Phase [N] design
-[x] Step 9 — PRD synced with designs
+[x] Step 8 — Phase [N] design prompts
+[x] Step 9 — PRD synced with designs [or: "Step 9 — Skipped (designs pending — Step 10 will run in DRAFT mode)"]
 [ ] Step 10 — User Stories Breakdown  ← next after approval
 
 Options:

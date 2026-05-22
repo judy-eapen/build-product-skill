@@ -421,11 +421,19 @@ Update `_pipeline-state.json`. Mark Gate 2 as Approved with date.
 
 Read and follow: `ai-framework/06-user-stories.md`.
 
-Inputs: the final design-informed PRD (post-Gate 2) + the design catalog + the codebase review.
+Inputs: the post-Gate-2 PRD + the design catalog (if finalized) + the codebase review.
+
+The step runs in one of three modes determined by design availability at Step 0.5:
+- **full** — designs are finalized; stories include exhaustive UX state coverage.
+- **DRAFT** — no finalized designs; design-dependent stories are marked `Status: ⚠ DRAFT — needs design`, sized with `*` suffix (e.g. `M*`), and recorded in `user_stories.draft_stories[]`. Refresh later via `/change-mode` → "Designs arrived".
+- **MIXED** — some phases have designs, others don't; DRAFT mode applies per-phase.
+
+The step also proposes a **multi-epic grouping** before writing stories (Step 1.5 in the underlying prompt). Default heuristic: one Epic per PRD phase, with sub-epics for clear functional clusters. PM accepts or adjusts (merge, split, rename, move stories between epics) before stories are composed. The accepted grouping is persisted to `user_stories.epics[]`.
 
 Output: `~/Desktop/Resources/PDLC Workflow Docs/[feature-name]/user-stories/[feature-name]-user-stories.md`. Standalone document with:
-- Build Sequence Map (every story, type FE/BE, phase, depends-on, related-to, size).
-- Per-story sections: As-a/I-want/So-that + exhaustive Gherkin AC (happy + negative + edge + error) + testing notes (coverage areas, cross-boundary verification, edge cases, data conditions).
+- Epic grouping table (multi-epic).
+- Build Sequence Map (every story, type FE/BE, **epic**, phase, depends-on, related-to, size, **DRAFT?** when applicable).
+- Per-story sections grouped under `## Epic [N]: [name]` headers.
 
 **Gate 3 — Breakdown approval — Quality Check (before presenting the gate):**
 
@@ -433,14 +441,15 @@ Run all of the following:
 
 - Every PRD user story appears in the breakdown (no drops).
 - Every story has a unique US-ID.
-- Every story has at least 2 Gherkin scenarios.
-- Every story has at least one edge-case or error-state scenario.
+- Every story is assigned to exactly one Epic from the Step 1.5 grouping.
+- Every **non-DRAFT** story has at least 2 Gherkin scenarios. (DRAFT stories aim for ≥1; counted but not required.)
+- Every **non-DRAFT** story has at least one edge-case or error-state scenario. (DRAFT exempt.)
 - Every linked FE/BE pair has both sides present.
-- No story sized larger than L without a proposed split.
+- No story sized larger than L without a proposed split (applies to DRAFT stories too — `L+*` gets the same treatment).
 - HIGH risks from the codebase review appear in at least one story's testing notes.
-- UX state coverage per FE story: empty / loading / error / populated.
+- UX state coverage per **non-DRAFT** FE story: empty / loading / error / populated. DRAFT FE stories are exempt and counted as known gaps (reported as an info block, not a failure).
 
-Format and present per the Gate 1 quality check format.
+Format and present per the Gate 1 quality check format. If any DRAFT stories exist, surface a Gate 3 info block listing them — these do not block approval.
 
 **Both modes — show Gate 3:**
 
@@ -538,9 +547,13 @@ Spawn up to three agents simultaneously based on what the PM enabled. Apply `ai-
 
 Read and follow: `subprompts/prd-to-jira.md`.
 
-Inputs: the approved user-stories breakdown from Step 10 (primary), the PRD (fallback).
+Inputs: the approved user-stories breakdown from Step 10 (primary), the PRD (fallback), and `user_stories.epics[]` + `user_stories.draft_stories[]` from `_pipeline-state.json`.
 
-Creates one Jira ticket per story in the breakdown. Composes the Epic description from PRD content (never local file paths). Attaches the PRD file to the Epic. Sets all custom fields (User Story ADF, Acceptance Criteria ADF with verbatim Gherkin, Testable, FE/BE labels, sequence labels `seq-01...`, size labels `size-S/M/L`, team labels). Parent: Epic key or created Epic. Relates-to: linked FE/BE pair counterpart.
+Creates **one Jira Epic per entry in `user_stories.epics[]`** (multi-epic mode introduced in v2.4.0; single-Epic fallback for pre-v2.4.0 breakdowns). Each Epic's description is scoped to its own stories — pulled from PRD content (never local file paths). Attaches the PRD and User Stories Breakdown files to every Epic.
+
+Creates one Jira Story per story in the breakdown. Sets all custom fields (User Story ADF, Acceptance Criteria ADF with verbatim Gherkin, Testable, FE/BE labels, sequence labels `seq-01...`, size labels `size-S/M/L`, team labels). Parent: the Epic key for that story (looked up by `epic_id`). Relates-to: linked FE/BE pair counterpart.
+
+**DRAFT stories** (those listed in `user_stories.draft_stories[]`) additionally get a `draft` label and a "⚠ DRAFT — needs design refresh" note in the Description. The `/change-mode` → "Designs arrived" trigger refreshes these tickets in place when designs arrive (removes the label and updates the AC/sizing/description).
 
 Writes a manifest file: `~/Desktop/Resources/PDLC Workflow Docs/[feature-name]/jira-export/[feature-name]-jira-manifest.md` mapping US-ID → Jira issue key. Used by `/change-mode` for future updates.
 
@@ -733,7 +746,29 @@ Write this file at the end of every step, overwriting the previous version:
     "design_catalogs": [
       { "phase": 1, "path": "string", "size_bytes": 0 }
     ],
-    "user_stories": { "path": "string | null", "size_bytes": 0 },
+    "user_stories": {
+      "path": "string | null",
+      "size_bytes": 0,
+      "mode": "full | DRAFT | MIXED | null — v2.4.0+, set at Step 0.5 of user-stories",
+      "epics": [
+        {
+          "epic_id": "string — e.g. 'E1'",
+          "title": "string — Jira Epic title (follows intake convention if specified)",
+          "phase": 1,
+          "theme": "string — one-line description",
+          "story_ids": ["string"],
+          "jira_key": "string | null — Jira Epic issue key, set at Step 11a"
+        }
+      ],
+      "draft_stories": [
+        {
+          "us_id": "string — e.g. 'US-1.1'",
+          "epic_id": "string — e.g. 'E1'",
+          "reason": "string — why this story is in DRAFT (e.g., 'no design catalog for Phase 1')"
+        }
+      ],
+      "draft_resolved_at": "ISO-8601 | null — set when /change-mode 'Designs arrived' clears the last DRAFT"
+    },
     "jira_manifest": { "path": "string | null", "size_bytes": 0 }
   },
   "export_urls": {

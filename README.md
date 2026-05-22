@@ -57,7 +57,7 @@ You approve at three gates (PRD, Designs, User Stories) before anything moves to
 | 7 | **Visual Diagram** — Figma FigJam via Figma MCP (falls back to Mermaid) | AUTO | `diagrams/` |
 | 8 | **Design Prompts** — Structured v0 or Figma Make prompts per screen, per state | AUTO | `design/` |
 | 9 | **Update PRD from Designs → Gate 2** — Surgical sync, your approval | **GATE** | `prd/` (updated) |
-| 10 | **User Stories Breakdown → Gate 3** — Exhaustive Gherkin AC, FE/BE pairs, quality checks | **GATE** | `user-stories/` |
+| 10 | **User Stories Breakdown → Gate 3** — Exhaustive Gherkin AC, FE/BE pairs, multi-epic grouping, optional DRAFT mode for stories without finalized designs | **GATE** | `user-stories/` |
 | 10.5 | **Timeline (Gantt)** — Figma FigJam + interactive HTML at Epic + Phase level; hybrid estimation (skill proposes, PM tunes) | AUTO | `timeline/` |
 | 11 | **Export** — Jira tickets always; Google Drive + Confluence (hub + child page per artifact) optional, parallel | PARALLEL | Jira + Drive + Confluence |
 | 12 | **Export Transcript** — Reads the live session JSONL and writes the full PM↔model conversation to two markdown files (clean + forensic) | AUTO | `transcript/` |
@@ -120,7 +120,7 @@ Any integration the skill cannot reach is skipped cleanly. It never blocks the r
 | Command | What it does |
 |---------|--------------|
 | `/build-product` | Full Work pipeline — research through Jira export |
-| `/change-mode` | Propagate a scope change after any gate across all artifacts |
+| `/change-mode` | Propagate a scope change after any gate across all artifacts. Seven trigger types including "Designs arrived" (refreshes DRAFT stories + Jira tickets) |
 | `/reopen-gate-1` | Unwind Gate 1 approval; re-run steps before it |
 | `/reopen-gate-2` | Unwind Gate 2 approval; re-run steps before it |
 | `/reopen-gate-3` | Unwind Gate 3 approval; re-run steps before it |
@@ -136,7 +136,7 @@ Any integration the skill cannot reach is skipped cleanly. It never blocks the r
 | `/cto-review` | Technical Reviewer pass on an existing PRD |
 | `/system-design` | System design doc from a PRD |
 | `/visual-diagram` | Figma FigJam diagram from a PRD (Mermaid fallback) |
-| `/user-stories` | User Stories Breakdown from an approved PRD |
+| `/user-stories` | User Stories Breakdown from an approved PRD. Multi-epic grouping (skill proposes, PM tunes). DRAFT mode for missing designs — refresh later via `/change-mode` → "Designs arrived" |
 | `/timeline` | Gantt timeline (Figma FigJam + interactive HTML) at Epic + Phase level |
 | `/prd-to-jira` | Create Jira tickets from a breakdown or PRD |
 | `/drive-sync` | Sync artifacts to Google Drive |
@@ -221,7 +221,7 @@ As of v2.1.0, Jira conventions (labels, title format, BE/FE split, custom field 
 
 ## Version
 
-**v2.3.0** — Three new features. (1) Confluence Publish now writes the **entire feature workspace** as a parent hub page + one numbered child page per artifact, with per-file mtime change detection. Command is `/publish-to-confluence` (the older `/prd-to-confluence` was removed in this release to avoid confusion — the command publishes nine artifacts, not just the PRD). (2) New **Step 12 / `/export-transcript`** writes the full PM↔model conversation for a pipeline run to two markdown files (clean reading version + full forensic version with tool calls). (3) **Pipeline timing instrumentation + `/pipeline-timing` report** — every step records start/end timestamps; report shows wall-clock total, active-work total (gate waits excluded), per-step breakdown, and per-gate wait time. Also embedded in the transcript and Confluence hub. See [CHANGELOG.md](./CHANGELOG.md) for full version history.
+**v2.4.0** — Two new features in the user-stories step. (1) **Multi-epic support** — the step proposes an Epic grouping (one per PRD phase by default, sub-epics for functional clusters); PM accepts or adjusts; Step 11a creates one Jira Epic per group with stories assigned correctly. (2) **DRAFT mode for stories without finalized designs** — if designs aren't ready, the PM can write stories from the PRD alone; design-dependent stories are tagged `Status: DRAFT — needs design`, sized with `*` suffix, exempt from UX state coverage at Gate 3, and labeled `draft` in Jira. New `/change-mode` trigger "Designs arrived" refreshes every DRAFT story (AC, sizing, UX coverage) and updates the Jira tickets in place when designs land. See [CHANGELOG.md](./CHANGELOG.md) for full version history.
 
 ## License
 

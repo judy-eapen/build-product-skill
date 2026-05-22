@@ -4,6 +4,49 @@ All notable changes are documented here. Follows [Semantic Versioning](https://s
 
 ---
 
+## v2.4.0 — 2026-05-21
+
+### Added
+
+- **Multi-epic support in the User Stories Breakdown.** Step 10 now proposes an Epic grouping for the PM at a new sub-step (Step 1.5 in `ai-framework/06-user-stories.md`):
+  - **Default heuristic:** one Epic per PRD phase, with sub-epics for clear functional clusters within a phase.
+  - **PM acceptance / tuning:** PM can merge, split, rename, or move stories between epics before the breakdown is composed.
+  - **Persisted to state:** the accepted grouping lives in `_pipeline-state.json` → `user_stories.epics[]`, each entry with `epic_id`, `title`, `phase`, `theme`, `story_ids`, and (after export) `jira_key`.
+  - **Step 11a Jira Export creates one Jira Epic per group** instead of a single Epic per feature. Each Epic's description is scoped to its own stories (not the entire PRD). The PRD + User Stories Breakdown files are attached to every Epic so each is self-contained. Existing-Epic detection runs per group so re-runs reuse the right Epics.
+  - **Single-Epic fallback** preserved for pre-v2.4.0 breakdowns without `user_stories.epics[]`.
+- **DRAFT mode for stories without finalized designs.** Step 10 begins with a new design-availability check (Step 0.5):
+  - If no finalized designs exist, the PM picks: **wait** (pause the pipeline), **write anyway in DRAFT mode**, or **cancel**.
+  - In DRAFT mode, design-dependent stories get `Status: ⚠ DRAFT — needs design` at the top, sized with `*` suffix (e.g., `M*`), and a `Known design gaps` block listing the deferred items.
+  - Gate 3 quality checks exempt DRAFT stories from UX state coverage requirements and ≥2-scenario requirements (counted as known gaps in a Gate 3 info block, not failures).
+  - Each DRAFT story is recorded in `_pipeline-state.json` → `user_stories.draft_stories[]` with `us_id`, `epic_id`, and `reason`.
+  - Step 11a Jira Export adds a `draft` label and a `⚠ DRAFT — needs design refresh` note in the Description for every DRAFT story.
+  - **MIXED mode** is automatic when only some phases have designs — full mode for phases with designs, DRAFT mode for phases without.
+- **New `/change-mode` trigger: "Designs arrived"** (seventh trigger type). When finalized designs land for a feature that has DRAFT stories:
+  - Reads `user_stories.draft_stories[]` and the new design catalog.
+  - Walks the PM through each DRAFT story with the design content in context, refreshing AC (full Gherkin including UX state coverage), sizing (removes `*` suffix), and Testing Notes.
+  - Updates the corresponding Jira ticket via `updateJiraIssue` — refreshed AC, refreshed sizing label, **`draft` label removed**, DRAFT note removed from Description.
+  - Skips the broader artifact-propagation order (PRD, system design, etc.) unless the PM says the designs imply scope changes.
+  - When the last DRAFT is cleared, `user_stories.mode` flips back to `full` and `user_stories.draft_resolved_at` is set.
+- **Step 9 (Update PRD from Designs) now branches on design availability.** If the design catalog exists, runs as before (sync PRD + Gate 2 design-approval). If not, skips the PRD-from-designs sync; Gate 2 becomes a quick "proceed to user stories without finalized designs?" confirmation; `user_stories.mode` is pre-set to `DRAFT`.
+
+### Changed
+
+- `_pipeline-state.json` schema: `user_stories` is now an object (was previously `{ "path": ..., "size_bytes": ... }`). New fields: `mode`, `epics[]`, `draft_stories[]`, `draft_resolved_at`. The `path` and `size_bytes` fields are preserved for backward compatibility.
+- `ai-framework/pipeline-configs.yaml`: Gate 3 quality_checks now includes `every_story_has_epic`. Existing checks (`every_story_has_two_scenarios`, `every_story_has_edge_case`, `ux_state_coverage_per_fe_story`) updated to note DRAFT exemptions.
+- `ai-framework/05-change-propagation.md`: seventh trigger type added, with focused propagation for the DRAFT-story refresh case.
+
+### Why this matters
+
+Two real-world frictions removed in one release. (1) PMs no longer have to wait on design to write tickets — they can lock in the BE work, behavioral FE work, and ticket structure early, and refresh design-dependent details later in one batched `/change-mode` run. (2) Larger features no longer pile every story under one Epic — they get a natural Epic grouping that matches how engineering and stakeholders actually consume work.
+
+### Not changed
+
+- Gates 1–3 banner formats, parallel Dual Review block, parallel Step 11 Export block.
+- Other intake parameters (feature name, Jira project, tech stack, product type, permission model, backend/API surface, Jira ticket conventions).
+- Confluence hub, transcript export, pipeline timing (all from v2.3.0) are unaffected.
+
+---
+
 ## v2.3.0 — 2026-05-21
 
 ### Added

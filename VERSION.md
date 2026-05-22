@@ -1,11 +1,9 @@
-v2.3.0 — 2026-05-21
+v2.4.0 — 2026-05-21
 
-Three new features:
+Two new features in the User Stories Breakdown step:
 
-1. Confluence Publish now writes the entire feature workspace — parent hub page + one numbered child page per artifact (Research, Codebase Review, PRD, Product/Technical Review, System Design, Visual Diagram, Design Catalog per phase, User Stories, Timeline). Per-file mtime change detection republishes only the pages whose source actually changed. The command is `/publish-to-confluence`; the older `/prd-to-confluence` was removed in this release.
+1. **Multi-epic support.** Step 10 proposes an Epic grouping (one Epic per PRD phase by default, sub-epics for functional clusters); PM accepts or adjusts. Step 11a Jira Export creates one Jira Epic per group with stories assigned correctly. Per-Epic descriptions scoped to that Epic's stories only.
 
-2. New Step 12 / `/export-transcript` writes the full back-and-forth between the PM and the model for a feature's pipeline run to two markdown files (clean reading version + full forensic version with tool calls). Reads the live Claude Code session JSONL on disk.
-
-3. Pipeline timing instrumentation + `/pipeline-timing` report. Every step records start/end timestamps; gate steps record presented/approved times. Report shows wall-clock total, active-work total (gate waits excluded), per-step breakdown, and per-gate wait time. Embedded in the transcript and Confluence hub page automatically.
+2. **DRAFT mode for stories without finalized designs.** New Step 0.5 design-availability check. If no finalized designs exist, the PM can write stories from the PRD alone — design-dependent stories tagged `Status: DRAFT — needs design`, sized with `*` suffix, exempt from UX state coverage at Gate 3, labeled `draft` in Jira. New `/change-mode` trigger "Designs arrived" refreshes every DRAFT story (AC, sizing, UX coverage) and updates the Jira tickets in place when designs land.
 
 See CHANGELOG.md for full version history.

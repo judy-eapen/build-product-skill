@@ -127,66 +127,111 @@ If validation fails, write the entire intended export to the local fallback file
 
 ---
 
-Create Jira Stories (and optionally an Epic) from the approved user-stories breakdown. Create tickets in the **Jira project provided at intake** (see Intake Parameters in `CLAUDE.md`). Fill the fields the PM uses when creating tickets manually.
+Create Jira Stories and one or more Epics from the approved user-stories breakdown. Create tickets in the **Jira project provided at intake** (see Intake Parameters in `CLAUDE.md`). Fill the fields the PM uses when creating tickets manually.
 
 ## When to use
 
 - Step 11 of the Work pipeline: input is the approved breakdown (Gate 3 already passed).
 - Standalone: a PM has a PRD and wants Jira tickets directly. In this case, infer from the PRD's Phased Plan.
 - Default: create tickets in the **Jira project name** the PM provided at intake, issue type **Story**. If the PM did not provide a project name, ask before creating any tickets.
-- If the user provides an existing **Epic** key or link, use it as Parent for all stories. Otherwise, create one Epic from the PRD title (if a parent is available), then create Stories under it. See the next section for what goes in the Epic description.
+
+---
+
+## Multi-epic mode — reading the epic grouping from state
+
+As of v2.4.0, the User Stories Breakdown step (`ai-framework/06-user-stories.md`) produces a multi-epic grouping. Read it from `_pipeline-state.json` → `user_stories.epics[]`:
+
+```json
+"epics": [
+  { "epic_id": "E1", "title": "Saved Searches - Listing",   "phase": 1, "theme": "...", "story_ids": ["US-1.1", "US-1.2"] },
+  { "epic_id": "E2", "title": "Saved Searches - Management", "phase": 1, "theme": "...", "story_ids": ["US-1.3", "US-1.4"] }
+]
+```
+
+**Create one Jira Epic per entry**, then create the listed stories under that Epic via `parent` = the new Epic's key.
+
+If `user_stories.epics` is missing or empty (pre-v2.4.0 breakdown), fall back to single-Epic mode: create one Epic from the PRD title and put every story under it.
+
+### Existing-Epic detection per group
+
+Before creating each Epic, query Jira for any existing Epic in the project whose summary matches the proposed title:
+
+```
+searchJiraIssuesUsingJql: project = [PROJECT] AND issuetype = Epic AND summary ~ "[epic title]"
+```
+
+If a matching Epic exists, surface it to the PM:
+
+```
+⚠ An Epic matching "[epic title]" already exists in Jira: [EPIC-KEY] — [summary]
+  Reuse this Epic for the [N] stories under it, or create a new one with a suffix?
+```
+
+Default to reuse. The PM can override per-Epic.
+
+### DRAFT story labeling
+
+Read `_pipeline-state.json` → `user_stories.draft_stories[]`. For every story listed there, add a `draft` label (in addition to the usual frontend/backend labels) when creating the Jira ticket. This makes the DRAFT subset queryable in Jira via `labels = "draft"`. When `/change-mode` → "Designs arrived" refreshes a story, it removes this label.
 
 ---
 
 ## Epic description — what to write (and what NOT to write)
 
-The Epic description is what every stakeholder sees first when they open the Epic in Jira. It must be **self-contained** — readable by someone who has no access to the PM's local filesystem.
+Every Epic created from the multi-epic grouping needs its own description. The Epic description is what every stakeholder sees first when they open the Epic in Jira. It must be **self-contained** — readable by someone who has no access to the PM's local filesystem.
 
 ### Rules
 
 - **Never include local file paths** (e.g., `~/Desktop/...`, `~/Documents/...`, `/Users/...`). They mean nothing to anyone except the PM who ran the pipeline. They are not shareable, not browsable, not useful in a ticket.
 - **Never include "Pipeline artifacts:" sections with file path listings.** That is the most common past failure mode of this prompt.
-- **Compose the description from PRD content**, not from references to files that produced the PRD.
+- **Compose each Epic's description from PRD content + the specific scope of that Epic**, not from references to files that produced the PRD.
 
-### What the Epic description should contain
+### What each Epic description should contain
 
-Pull these directly from the PRD content (not from file paths):
+Pull these directly from the PRD content + the specific story scope from the `user_stories.epics[]` entry being processed:
 
 ```markdown
 **Summary** (1–2 sentences, plain English)
-v1 of the [Feature Name] for [Product]. [One-sentence what it does.]
+[Theme from user_stories.epics[].theme]. Part of [Feature Name] for [Product].
+
+**Stories in this Epic** ([N])
+[Bulleted list of story_ids + titles in this Epic, e.g., "US-1.1 — View saved searches", ...]
 
 **Scope (in scope, v1)**
-[The In Scope bullet list from PRD Section 2, written as a paragraph or short bullets — not just "see PRD".]
+[The subset of PRD Section 2 In Scope items addressed by this Epic's stories. Do not paste the whole PRD scope into every Epic — narrow to this Epic.]
 
-**Out of scope (v1)**
-[The Out of Scope bullet list from PRD Section 2, same treatment.]
+**Out of scope (this Epic)**
+[Items that might be expected here but are addressed in a different Epic — e.g., "Saved search notifications: handled in Epic 3, not here."]
 
-**Build sequence**
-Phase 0: [N] verification tickets. Phase 1: [N] build tickets across [N] waves.
-[Optionally: one-paragraph build-order summary copied verbatim from the User Stories Breakdown's Sequence Map summary.]
+**Build sequence within this Epic**
+[Local build order — which stories depend on which. Pull from the Sequence Map for this Epic's stories only.]
 
 **Target user(s)**
-[From PRD Executive Summary — primary user role + size if known, e.g. "Logged-in [Product] users (consumers + agents), ~4,000 MAU".]
+[From PRD Executive Summary — primary user role + size if known.]
 
-**Success metric(s)**
-[From PRD Executive Summary success metrics — concrete numeric targets only.]
+**Success metric(s) this Epic contributes to**
+[Concrete numeric targets from PRD that this Epic's stories move the needle on.]
 
 **Owner**
-[PM name + team/pod, e.g., "Jane Doe (PM, Acme pod)".]
+[PM name + team/pod.]
+
+**Phase:** [N from user_stories.epics[].phase]
 ```
 
-That's a complete, self-contained Epic description. Anyone reading it gets the full picture from Jira alone.
+That's a complete, self-contained Epic description. Anyone reading it gets the full picture for *this specific Epic* from Jira alone, without needing to read the whole PRD.
 
-### Attach the PRD to the Epic
+If the breakdown has only one Epic (single-Epic mode), use the original PRD-wide description format — no need to scope to a subset.
 
-After creating the Epic, **attach the actual PRD file as an attachment** to the Epic so anyone who wants the full document can download it from Jira.
+### Attach the PRD to each Epic
+
+After creating each Epic, **attach the actual PRD file as an attachment** so anyone who wants the full document can download it from Jira regardless of which Epic they opened.
 
 1. Read the PRD file content from disk:
    `~/Desktop/Resources/PDLC Workflow Docs/[feature-name]/prd/[feature-name]-prd.md`
-2. Use the Jira MCP's attachment capability (e.g., `mcp__jira__upload-attachment` or the Atlassian-native equivalent) to attach it to the just-created Epic.
+2. Use the Jira MCP's attachment capability (e.g., `mcp__jira__upload-attachment` or the Atlassian-native equivalent) to attach it to each just-created Epic.
 3. If attachment fails or the MCP doesn't support it, fall back to: copy the full PRD content into a Jira comment on the Epic instead of attaching as a file. Still no local paths in the description.
-4. Optional: also attach the User Stories Breakdown file the same way — it's the source of truth for the tickets.
+4. Also attach the User Stories Breakdown file the same way — it's the source of truth for the tickets.
+
+When multiple Epics are created in one pipeline run, attach to each (the PRD is small text; the redundancy is worth the per-Epic self-containment).
 
 ### What NOT to do (anti-patterns to avoid)
 
@@ -274,21 +319,25 @@ Keep scenarios testable and specific.
    - Create `~/Desktop/Resources/PDLC Workflow Docs/[feature-name]/jira-export/[feature-name]-jira-export.md` with one section per PRD user story (Summary, User Story, Acceptance criteria in Gherkin, Description, Labels).
    - Tell the user the MCP is not connected and where the document was created. Stop.
 
-3. **Epic / Parent**  
-   - If the user gives an **existing Epic key or link** (e.g. PROJ-1200 or any Jira issue URL): extract the key and use it as Parent for all stories.  
-   - If not: try to create one **Epic** in the intake-supplied Jira project with summary = PRD title and description = PRD link/summary. If creation fails (e.g. "Field Parent is required"): **ask the user** for an Epic key or Jira link to use as parent for the new Epic or for the stories. Do not assume; ask once and use what they provide.
-   - Optional clarify: "Use Epic [key] as parent, or should I create a new Epic from the PRD?"
+3. **Epics — multi-Epic flow**
+   - Read `_pipeline-state.json` → `user_stories.epics[]`. This is the source of truth for how many Epics to create and which stories go under each.
+   - For each entry in `user_stories.epics[]`:
+     - **Existing-Epic check:** query Jira for `project = [PROJECT] AND issuetype = Epic AND summary ~ "[epic title]"`. If a match exists, surface it to the PM and default to reuse (the PM can override).
+     - If no match (or PM chose "create new"): create the Epic with summary = `epic.title`, description composed per the "Epic description" section above, scoped to the stories in this Epic's `story_ids`.
+     - Record the resulting Jira Epic key keyed by `epic_id` so step 4 can set the correct `parent` per story.
+   - If `user_stories.epics` is missing or empty (pre-v2.4.0 breakdown), fall back to single-Epic mode: create one Epic from the PRD title and use it as `parent` for every story.
+   - If creation fails (e.g. "Field Parent is required"): ask the user for an Epic key or Jira link to use as the parent of the new Epic. Do not assume; ask once and use what they provide.
 
-4. **For each user story in the PRD** (from "User stories & requirements" or equivalent):
-   - **Summary:** One line (story title).
-   - **User Story:** "As a… I want… So that…" from the PRD (for the **User Story** custom field — see custom field note in step 5).
-   - **Acceptance criteria:** Gherkin scenarios (for the **Acceptance criteria** custom field — see custom field note in step 5).
-   - **Description:** Short context only: what the ticket is, PRD section, dependencies (e.g. "PRD Section 6 (US-1). Depends on stats endpoint.").
-   - **Parent:** Epic key from step 3.
+4. **For each user story in the breakdown** (from the user-stories breakdown, `[feature-name]-user-stories.md`):
+   - **Summary:** One line (story title following intake title convention if specified).
+   - **User Story:** "As a… I want… So that…" from the breakdown (for the **User Story** custom field — see custom field note in step 5).
+   - **Acceptance criteria:** Gherkin scenarios verbatim from the breakdown (for the **Acceptance criteria** custom field — see custom field note in step 5).
+   - **Description:** Short context only: what the ticket is, PRD section, dependencies, and **"⚠ DRAFT — needs design refresh"** if this story is in `user_stories.draft_stories[]`.
+   - **Parent:** Epic key from step 3, looked up by `epic_id` for this story.
    - **Team:** Team/pod label provided at intake (leave blank if none).
-   - **Labels:** **frontend** and/or **backend** as appropriate plus any team labels from intake (infer FE/BE from the story; use both if it spans UI and API).
+   - **Labels:** **frontend** and/or **backend** as appropriate plus any team labels from intake (infer FE/BE from the story; use both if it spans UI and API). **Add `draft` label** if this story appears in `user_stories.draft_stories[]`.
    - **Testable:** Yes (or No only when clearly non-testable).
-   - **Linked work items:** Only if the user or PRD specifies related issue keys.
+   - **Linked work items:** Only if the user or PRD specifies related issue keys; also link FE/BE pairs (from the Sequence Map's "Related To" column) as "Relates to".
 
 5. **Create in Jira**  
    Use the Jira MCP to create each Story (and the Epic if you created one). **Set User Story and Acceptance criteria in ADF on create** via `additional_fields` so all fields are populated in one call. If the create API rejects the custom fields, use **editJiraIssue** immediately after create to set them.

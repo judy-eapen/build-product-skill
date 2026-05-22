@@ -9,12 +9,13 @@ Use this when something about an in-flight or shipped feature changes after Gate
 - Stakeholder input changes requirements
 - New user research reveals something
 - Scope addition or cut
+- **Designs arrived** for stories previously written in DRAFT mode (v2.4.0+) — refreshes every story listed in `user_stories.draft_stories[]` and updates the corresponding Jira tickets in place
 
 Read and follow `ai-framework/05-change-propagation.md`.
 
 ## What this command does
 
-1. **Change intake** — asks the PM to describe the change and pick one of six trigger types.
+1. **Change intake** — asks the PM to describe the change and pick one of seven trigger types.
 2. **Impact assessment** — reads every artifact for the feature and produces a blast-radius report. Each artifact is rated HIGH / MEDIUM / LOW / NOT AFFECTED.
 3. **Scope approval** — PM picks: update everything affected, update HIGH + MEDIUM only, or select specific artifacts.
 4. **Propagation in dependency order** — PRD → user stories → diagram → success metrics → designs → Jira tickets → AC → QA scenarios → stakeholders → changelog. Every change shown as a before/after diff.
@@ -28,9 +29,9 @@ The change-propagation prompt asks the PM for:
 
 - **Which feature** are we changing? Asks for the feature name if not in conversation context.
 - **What is the change?** Describe in detail or paste reference (e.g., a Figma link if it's a design update).
-- **Trigger type** — pick one of six.
+- **Trigger type** — pick one of seven.
 
-For Figma updates, the PM is asked to paste the Figma link or share the relevant frames before the impact assessment runs.
+For Figma updates and Designs-arrived triggers, the PM is asked to paste the Figma link / design catalog file path before the impact assessment runs. The Designs-arrived trigger uses a focused propagation that only touches DRAFT stories — see `ai-framework/05-change-propagation.md` Step 4 for the specific flow.
 
 ## What it will NOT do
 

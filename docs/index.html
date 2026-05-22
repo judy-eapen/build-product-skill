@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>/build-product — Work Pipeline v2.3.0</title>
-  <!-- Version: 2.3.0 | Updated: 2026-05-21 | Update this line and the badge/changelog below on every release -->
+  <title>/build-product — Work Pipeline v2.4.0</title>
+  <!-- Version: 2.4.0 | Updated: 2026-05-21 | Update this line and the badge/changelog below on every release -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
@@ -494,7 +494,7 @@
   <header>
     <div class="header-top">
       <span class="cmd-title">/build-product</span>
-      <span class="version-badge">v2.3.0</span>
+      <span class="version-badge">v2.4.0</span>
     </div>
     <p class="header-sub">A Claude Code skill that takes a PM from feature idea → Jira Epic with all linked tickets. Research · Codebase review · PRD · Dual AI review · Design prompts · User stories · Jira export.</p>
     <div class="header-links">
@@ -687,8 +687,9 @@
             <span class="badge gate">Gate</span>
           </div>
           <div class="gate-banner">⏸ Pipeline pauses here. <span>Review the breakdown. Once approved, Jira tickets are created.</span></div>
-          <p class="step-desc">Generates exhaustive Gherkin acceptance criteria, FE/BE story pairing, testing notes, and a Build Sequence Map. 8 automated quality checks: all PRD stories present, unique US-IDs, ≥2 scenarios per story, edge-case coverage, FE/BE pairs complete, no XL stories without splits, HIGH risks in testing notes, UX state coverage per FE story.</p>
+          <p class="step-desc">Generates exhaustive Gherkin acceptance criteria, FE/BE story pairing, testing notes, and a Build Sequence Map. <strong>Multi-epic grouping (v2.4.0+):</strong> proposes an Epic split (one per PRD phase by default, sub-epics for functional clusters); PM accepts or adjusts before stories are composed. <strong>DRAFT mode (v2.4.0+):</strong> if designs aren't finalized yet, the PM can write stories from the PRD alone — design-dependent stories tagged <code>Status: DRAFT — needs design</code>, sized with <code>*</code>, exempt from UX state coverage at Gate 3, labeled <code>draft</code> in Jira. 9 automated quality checks at Gate 3.</p>
           <p class="step-desc" style="margin-top:6px;"><strong>Optional after approval:</strong> publish breakdown to Confluence + share in Slack for engineering sizing review before Jira tickets are created.</p>
+          <p class="step-desc" style="margin-top:6px;"><strong>DRAFT refresh:</strong> when designs land later, <code>/change-mode</code> → "Designs arrived" walks through every DRAFT story with the new designs, refreshes AC + sizing + UX coverage, and updates the Jira tickets in place (removes the <code>draft</code> label).</p>
           <div class="step-meta">
             <div class="step-meta-item">📁 <code>user-stories/[feature]-user-stories.md</code></div>
           </div>
@@ -719,7 +720,7 @@
             <span class="step-name">Export</span>
             <span class="badge parallel">Parallel</span>
           </div>
-          <p class="step-desc">Three parallel export agents. <strong>Jira (always):</strong> creates Epic + one ticket per user story with ADF user story, verbatim Gherkin AC, Testable field, FE/BE labels, sequence labels (seq-01…), size labels, and Relates-to linking for FE/BE pairs. Deduplication check prevents re-runs from creating duplicates. <strong>Drive (optional):</strong> mirrors the entire feature folder, generates a <code>_FEATURE_SUMMARY.md</code>. <strong>Confluence (optional, v2.3.0+):</strong> publishes the entire feature workspace as a parent hub page + one numbered child page per artifact (Research, Codebase Review, PRD, Product/Technical Review, System Design, Visual Diagram, Design Catalog per phase, User Stories, Timeline). Per-file mtime change detection — only re-publishes pages whose source actually changed.</p>
+          <p class="step-desc">Three parallel export agents. <strong>Jira (always):</strong> creates <strong>one Epic per multi-epic grouping</strong> (v2.4.0+) with each Epic's description scoped to its own stories; the PRD + breakdown files attach to every Epic. Then creates one ticket per user story with ADF user story, verbatim Gherkin AC, Testable field, FE/BE labels, sequence labels (seq-01…), size labels, and Relates-to linking for FE/BE pairs. DRAFT stories get a <code>draft</code> label for downstream queryability. Deduplication check prevents re-runs from creating duplicates. <strong>Drive (optional):</strong> mirrors the entire feature folder, generates a <code>_FEATURE_SUMMARY.md</code>. <strong>Confluence (optional, v2.3.0+):</strong> publishes the entire feature workspace as a parent hub page + one numbered child page per artifact (Research, Codebase Review, PRD, Product/Technical Review, System Design, Visual Diagram, Design Catalog per phase, User Stories, Timeline). Per-file mtime change detection — only re-publishes pages whose source actually changed.</p>
           <div class="step-meta">
             <div class="step-meta-item">🎫 Jira Epic + tickets</div>
             <div class="step-meta-item">📁 <code>jira-export/[feature]-jira-manifest.md</code></div>
@@ -872,6 +873,24 @@
   <section>
     <p class="section-title">Recent Changes</p>
     <div class="changelog-list">
+
+      <div class="changelog-item">
+        <div class="changelog-header">
+          <span class="changelog-version">v2.4.0</span>
+          <span class="changelog-date">2026-05-21</span>
+          <span class="changelog-major-badge">MINOR</span>
+        </div>
+        <div class="changelog-body">
+          <ul>
+            <li><strong>Multi-epic support in the User Stories Breakdown.</strong> Step 10 proposes an Epic grouping (default: one Epic per PRD phase, sub-epics for clear functional clusters); PM accepts or adjusts. Step 11a Jira Export creates one Jira Epic per group with each Epic's description scoped to its own stories — not the whole PRD. The PRD and User Stories Breakdown files are attached to every Epic so each is self-contained. Existing-Epic detection runs per group so re-runs reuse the right Epics.</li>
+            <li><strong>DRAFT mode for stories without finalized designs.</strong> New Step 0.5 design-availability check at Step 10. PM picks: wait, write anyway in DRAFT mode, or cancel. In DRAFT mode, design-dependent stories get <code>Status: ⚠ DRAFT — needs design</code> at the top, sized with <code>*</code> suffix (e.g., <code>M*</code>), exempt from UX state coverage at Gate 3 (reported as known gaps, not failures), and labeled <code>draft</code> in Jira. MIXED mode applies per-phase when only some phases have designs.</li>
+            <li><strong>New <code>/change-mode</code> trigger: "Designs arrived"</strong> (seventh trigger type). Reads <code>user_stories.draft_stories[]</code> and the new design catalog, walks through each DRAFT story with the designs in context, refreshes AC + sizing + UX state coverage, and updates the corresponding Jira ticket in place (removes the <code>draft</code> label). When the last DRAFT is cleared, <code>user_stories.mode</code> flips back to <code>full</code>.</li>
+            <li><strong>Step 9 (Update PRD from Designs) now branches on design availability.</strong> If designs exist, runs as before. If not, skips the PRD-from-designs sync; Gate 2 becomes a quick "proceed without finalized designs?" confirmation; <code>user_stories.mode</code> is pre-set to <code>DRAFT</code>.</li>
+            <li>State schema: <code>user_stories</code> expanded to an object with <code>mode</code>, <code>epics[]</code>, <code>draft_stories[]</code>, <code>draft_resolved_at</code>. Gate 3 quality_checks gains <code>every_story_has_epic</code>.</li>
+          </ul>
+          <a class="changelog-link" href="https://github.com/judy-eapen/build-product-skill/blob/main/CHANGELOG.md" target="_blank">Full changelog →</a>
+        </div>
+      </div>
 
       <div class="changelog-item">
         <div class="changelog-header">

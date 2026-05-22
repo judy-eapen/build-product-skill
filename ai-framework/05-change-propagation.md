@@ -10,18 +10,24 @@ Read `ai-framework/rules.md` and `ai-framework/error-handling.md` before executi
 
 ## Step 1 — Change Intake
 
-Ask the PM to describe the change. Then ask where it came from. Present exactly six trigger types:
+Ask the PM to describe the change. Then ask where it came from. Present exactly seven trigger types:
 
 1. **Dev feedback** — an engineer flagged something during build.
-2. **Design change** — designs were updated after approval.
+2. **Design change** — designs were updated after approval (e.g., a finalized design swapped out for a new version).
 3. **Figma update** — a Figma file has been updated and tickets need to reflect it.
 4. **Stakeholder input** — leadership or a stakeholder changed requirements.
 5. **New user research** — new data or interviews changed the understanding of the problem.
 6. **Scope change** — something is being added or cut.
+7. **Designs arrived** — finalized designs are now available for stories previously written in DRAFT mode (v2.4.0+). Refreshes every story listed in `_pipeline-state.json` → `user_stories.draft_stories[]` and updates the corresponding Jira tickets in place.
 
-### If trigger type is Figma update
+### If trigger type is Figma update OR Designs arrived
 
-Do one additional thing at this step: ask the PM to paste the Figma link or share the relevant Figma frames. Confirm receipt before proceeding.
+Ask the PM to paste the Figma link or share the relevant Figma frames / design catalog file path. Confirm receipt before proceeding.
+
+For **Designs arrived** specifically, before proceeding to Step 2:
+- Read `_pipeline-state.json` → `user_stories.draft_stories[]` to know which stories need refresh. If the list is empty, tell the PM "No DRAFT stories on this feature — nothing to refresh. Did you mean 'Design change' instead?" and let them re-select.
+- Read the new design catalog file(s) (`design/[feature]-phase-*-designs.md`) — the source the refresh will draw from.
+- Present a summary: "Found [N] DRAFT stories across [N] Epics. I'll walk through each one with the new designs and refresh AC, sizing, UX state coverage, and the corresponding Jira ticket. Proceed? (yes / no)"
 
 ### For all other trigger types
 
@@ -95,6 +101,27 @@ Apply changes in strict dependency order:
 ### For Figma update triggers
 
 At the design artifacts step (step 5 of the propagation order), compare the Figma content provided in Step 1 against existing design descriptions and ticket acceptance criteria. List every specific difference. Apply only the differences the PM confirmed in Step 3.
+
+### For Designs arrived triggers (DRAFT story refresh)
+
+This trigger has a focused propagation that operates only on DRAFT stories. Skip the full propagation order. Instead:
+
+1. **For each story in `_pipeline-state.json` → `user_stories.draft_stories[]`:**
+   - Read the corresponding section of `user-stories/[feature]-user-stories.md`.
+   - Read the matching screens/components from the new design catalog (e.g., the design for US-1.1 from `design/[feature]-phase-1-designs.md`).
+   - Compose a refreshed version of the story:
+     - Change `Status: ⚠ DRAFT — needs design` → remove (story is now complete).
+     - Rewrite the Gherkin AC to include the full set of scenarios (happy path, negative, edge — including UX state coverage for FE: empty / loading / error / populated).
+     - Update the sizing — remove the `*` suffix (e.g., `M*` → `M`) and adjust if the design reveals more or less complexity than estimated.
+     - Update Testing Notes — fill in the UX state coverage row, refresh edge-case list, add design-specific data conditions.
+     - Remove the "Known design gaps" section from the story.
+2. **Show the refreshed version as a diff** in the standard Step 5 format. PM approves per-story.
+3. **For each approved story**, update the corresponding Jira ticket via `updateJiraIssue`:
+   - Update the **User Story** and **Acceptance criteria** custom fields with the refreshed ADF payloads.
+   - Update the **labels** array — **remove `draft`**.
+   - Update the **Description** — remove the "⚠ DRAFT — needs design refresh" note.
+4. **Update `_pipeline-state.json`**: remove each refreshed story from `user_stories.draft_stories[]`. When the list is empty, also update `user_stories.mode` from `DRAFT` (or `MIXED`) to `full` and record the timestamp under `user_stories.draft_resolved_at`.
+5. **Skip the broader artifact-propagation order** (PRD, system design, etc.) unless the PM explicitly says the designs imply scope changes — in that case, flag and ask if a separate `/change-mode` "Scope change" run is needed.
 
 ### Writing
 
