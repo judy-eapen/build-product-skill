@@ -66,17 +66,49 @@ If you do not know whether you have these permissions, the simplest test is to m
 
 ## Step 1 — Install Claude Code
 
-Follow the official installation guide at [https://docs.claude.com/en/docs/claude-code](https://docs.claude.com/en/docs/claude-code).
+The official installation guide is at [https://docs.claude.com/en/docs/claude-code](https://docs.claude.com/en/docs/claude-code). The quick path per OS is below.
 
-After installation, open your terminal (see [Step 2](#step-2--a-primer-on-using-claude-code) below for how to find it) and type:
+### On a Mac
+
+Open Terminal and paste:
+
+```bash
+curl -fsSL https://claude.ai/install.sh | bash
+```
+
+### On Windows
+
+Open PowerShell (Press `Win + R`, type `powershell`, press Enter) and paste:
+
+```powershell
+irm https://claude.ai/install.ps1 | iex
+```
+
+If your team blocks running scripts from the internet, the npm fallback works too — but it requires Node.js installed first ([https://nodejs.org](https://nodejs.org)):
+
+```powershell
+npm install -g @anthropic-ai/claude-code
+```
+
+### On Linux
+
+```bash
+curl -fsSL https://claude.ai/install.sh | bash
+```
+
+### Verify the install
+
+**Close the terminal window completely and open a fresh one.** This matters: the install adds Claude Code to your PATH, and existing terminal windows do not pick up PATH changes. On Windows, typing `powershell` inside an open PowerShell window opens a *nested* shell that inherits the old PATH — that will not work. Close the window with the X, then open a brand-new PowerShell.
+
+In the fresh terminal, type:
 
 ```
 claude --version
 ```
 
-Then press Enter. If you see a version number (for example, `0.5.x`), Claude Code is installed correctly.
+If you see a version number (for example, `0.5.x`), Claude Code is installed correctly.
 
-If you see `command not found` or a similar error, the install did not complete. Try restarting your terminal first. If that does not help, re-run the installer.
+If you see `claude: command not found` or `The term 'claude' is not recognized as the name of a cmdlet…`, see the [`claude` not recognized](#claude-not-recognized-after-install) entry under "If something goes wrong" below.
 
 ---
 
@@ -346,11 +378,33 @@ Check for updates roughly once a week, or any time you start a new feature. Upda
 | Symptom | What it usually means | What to try |
 |---------|----------------------|-------------|
 | `/build-product` does not appear in the slash command list when you type `/` in Claude Code | The slash command registration in Step 5 did not run, or it ran before Claude Code was installed | Re-run the Step 5 command. Restart Claude Code. |
-| `command not found` when you type `git` or `claude` in the terminal | The tool is not installed, or your terminal session was opened before the install finished | Close the terminal window and open a fresh one. Re-run `git --version` or `claude --version`. |
+| `claude: command not found` (Mac/Linux) or `The term 'claude' is not recognized…` (Windows PowerShell) | Claude Code is not installed, or it is installed but the executable is not on your terminal's PATH | See [`claude` not recognized after install](#claude-not-recognized-after-install) below. |
+| `git: command not found` | Git is not installed, or the terminal was opened before the install finished | Close the terminal window completely and open a fresh one. Re-run `git --version`. If still missing, re-run the installer from [Step 3](#step-3--install-git). |
 | The Atlassian OAuth flow returns "permission denied" | Your IT or Atlassian administrator has not approved the Atlassian Remote MCP for your workspace | Contact your administrator and ask them to allow the integration. |
 | The skill says an artifact is missing when you resume a session | A prior session crashed mid-step, leaving the state file out of sync with the artifacts on disk | The skill warns you about which step's output is missing. Re-run that specific step. |
 | Mermaid diagrams render as "Error loading the extension" on a Confluence page | The Confluence space does not have the Mermaid plugin installed | Connect the Figma MCP. The skill will produce FigJam boards instead, which Confluence renders natively. |
 | Jira tickets are created with the wrong labels or in the wrong format | Intake question #3 (Jira ticket conventions) was skipped or under-answered | Re-run the export with the conventions corrected. For an existing run, use `/change-mode` to propagate the corrected conventions. |
+
+### `claude` not recognized after install
+
+If `claude --version` returns `command not found` (Mac/Linux) or `The term 'claude' is not recognized as the name of a cmdlet…` (Windows PowerShell), work through these in order. Stop as soon as `claude --version` returns a version number.
+
+**1. Open a truly fresh terminal.** PATH changes from the installer only take effect in *new* terminal windows. On Windows, typing `powershell` inside an existing PowerShell window opens a nested shell that inherits the old PATH and will keep failing. Close the window with the X, then open a new PowerShell from the Start menu. On Mac, quit Terminal entirely (Cmd+Q) and reopen.
+
+**2. Confirm the install actually ran.** Re-run the install command from [Step 1](#step-1--install-claude-code). On Windows, watch for any "execution policy" or "blocked by administrator" errors — those mean the install never completed. If you see one, the npm fallback is `npm install -g @anthropic-ai/claude-code` (requires Node.js from [https://nodejs.org](https://nodejs.org)).
+
+**3. On Windows, try `claude.cmd`.** PowerShell sometimes only resolves `.cmd` shims explicitly. If `claude.cmd --version` works but `claude --version` does not, the install location is on PATH but PowerShell's command resolution needs the extension — sign out of Windows and back in to fully refresh the environment.
+
+**4. Check where the install put the executable.**
+
+- **Windows (PowerShell):** `Get-Command claude` — if it returns nothing, also try `Test-Path "$env:USERPROFILE\.claude\bin\claude.exe"` and `Test-Path "$env:APPDATA\npm\claude.cmd"`. If either exists, add that folder to your PATH (search "Edit environment variables for your account" in the Start menu).
+- **Mac/Linux:** `which claude`, then `ls ~/.claude/bin/ 2>/dev/null` and `ls $(npm config get prefix)/bin/claude 2>/dev/null`. If the file exists but `which` does not find it, add the folder to PATH in `~/.zshrc` or `~/.bash_profile`.
+
+**5. Run `claude doctor`.** If `claude --version` works but anything downstream is broken, `claude doctor` reports install health and PATH issues.
+
+If none of these work, file a bug at the GitHub issues page below — include the OS, the exact install command you ran, and the full text of the error message.
+
+---
 
 If you cannot resolve an issue from this table, file a question or bug report on the GitHub issues page: [https://github.com/judy-eapen/build-product-skill/issues](https://github.com/judy-eapen/build-product-skill/issues).
 
