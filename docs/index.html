@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>/build-product — Work Pipeline v2.1.0</title>
-  <!-- Version: 2.1.0 | Updated: 2026-05-20 | Update this line and the badge/changelog below on every release -->
+  <title>/build-product — Work Pipeline v2.2.0</title>
+  <!-- Version: 2.2.0 | Updated: 2026-05-21 | Update this line and the badge/changelog below on every release -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
@@ -494,7 +494,7 @@
   <header>
     <div class="header-top">
       <span class="cmd-title">/build-product</span>
-      <span class="version-badge">v2.1.0</span>
+      <span class="version-badge">v2.2.0</span>
     </div>
     <p class="header-sub">A Claude Code skill that takes a PM from feature idea → Jira Epic with all linked tickets. Research · Codebase review · PRD · Dual AI review · Design prompts · User stories · Jira export.</p>
     <div class="header-links">
@@ -510,7 +510,7 @@
 
   <!-- STATS -->
   <div class="stats">
-    <div class="stat"><div class="stat-number">11</div><div class="stat-label">Pipeline steps</div></div>
+    <div class="stat"><div class="stat-number">12</div><div class="stat-label">Pipeline steps</div></div>
     <div class="stat"><div class="stat-number">3</div><div class="stat-label">Approval gates</div></div>
     <div class="stat"><div class="stat-number">2</div><div class="stat-label">Parallel blocks</div></div>
     <div class="stat"><div class="stat-number">25+</div><div class="stat-label">Slash commands</div></div>
@@ -696,6 +696,23 @@
       </div>
 
       <div class="step-card">
+        <div class="step-num auto">10½</div>
+        <div class="step-body auto">
+          <div class="step-header">
+            <span class="step-name">Timeline (Gantt)</span>
+            <span class="badge auto">Auto</span>
+          </div>
+          <p class="step-desc">Produces a Gantt-style timeline at the <strong>Epic + Phase</strong> level (not story level). Hybrid estimation: the skill proposes durations from the user-stories breakdown's <code>Size</code> column × default velocity (8 person-days per dev per sprint), then the PM tunes any epic or phase. Two outputs every run: <strong>Figma FigJam timeline</strong> (via Figma MCP — URL stored in <code>_pipeline-state.json</code>) and an <strong>interactive HTML Gantt</strong> (self-contained, opens offline, hover details per bar, today and target-launch markers, print stylesheet). Honest target-gap math: if the computed end exceeds a PM-supplied target launch, the step surfaces the gap and offers scope cut / team increase / slip — it does not silently shrink durations.</p>
+          <div class="step-meta">
+            <div class="step-meta-item">📁 <code>timeline/[feature]-timeline.html</code></div>
+            <div class="step-meta-item">📁 <code>timeline/[feature]-timeline.md</code></div>
+            <div class="step-meta-item">🎨 Figma FigJam timeline</div>
+            <div class="step-meta-item">⭐ New in v2.2.0</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="step-card">
         <div class="step-num par">11</div>
         <div class="step-body par">
           <div class="step-header">
@@ -742,6 +759,7 @@
           <div class="cmd-item"><span class="cmd-name">/system-design</span><span class="cmd-desc">System design doc from a PRD</span></div>
           <div class="cmd-item"><span class="cmd-name">/visual-diagram</span><span class="cmd-desc">Figma FigJam diagram (Mermaid fallback)</span></div>
           <div class="cmd-item"><span class="cmd-name">/user-stories</span><span class="cmd-desc">User Stories Breakdown from an approved PRD</span></div>
+          <div class="cmd-item"><span class="cmd-name">/timeline</span><span class="cmd-desc">Gantt timeline (Figma FigJam + interactive HTML) at Epic + Phase level</span></div>
           <div class="cmd-item"><span class="cmd-name">/prd-to-jira</span><span class="cmd-desc">Create Jira tickets from a breakdown or PRD</span></div>
           <div class="cmd-item"><span class="cmd-name">/drive-sync</span><span class="cmd-desc">Sync artifacts to Google Drive</span></div>
           <div class="cmd-item"><span class="cmd-name">/prd-to-confluence</span><span class="cmd-desc">Publish PRD as a Confluence page</span></div>
@@ -836,6 +854,24 @@
   <section>
     <p class="section-title">Recent Changes</p>
     <div class="changelog-list">
+
+      <div class="changelog-item">
+        <div class="changelog-header">
+          <span class="changelog-version">v2.2.0</span>
+          <span class="changelog-date">2026-05-21</span>
+          <span class="changelog-major-badge">MINOR</span>
+        </div>
+        <div class="changelog-body">
+          <ul>
+            <li><strong>New /timeline step.</strong> Generates a Gantt-style timeline at the Epic + Phase level after Gate 3 (User Stories Breakdown approval) and before Step 11 (Export). Same prompt is callable standalone via <code>/timeline</code>.</li>
+            <li><strong>Two outputs every run.</strong> A <strong>Figma FigJam timeline</strong> via the Figma MCP (URL persisted to <code>_pipeline-state.json</code> → <code>export_urls.figma_timeline_url</code>) and a <strong>self-contained interactive HTML Gantt</strong> with per-bar hover details, today marker, target-launch marker, and a print stylesheet — no CDN dependencies, opens offline.</li>
+            <li><strong>Hybrid estimation.</strong> The skill proposes durations from the user-stories breakdown's <code>Size</code> column × default velocity (8 person-days per dev per sprint), then the PM tunes any epic or phase before the visuals are rendered.</li>
+            <li><strong>Honest target-gap math.</strong> If the PM provides a target launch date and the computed end exceeds it, the step surfaces the gap and offers scope cut / team increase / slip — it does not silently shrink durations to fit.</li>
+            <li>Pipeline step count moves from 11 to 12. New folder per feature: <code>timeline/</code>.</li>
+          </ul>
+          <a class="changelog-link" href="https://github.com/judy-eapen/build-product-skill/blob/main/CHANGELOG.md" target="_blank">Full changelog →</a>
+        </div>
+      </div>
 
       <div class="changelog-item">
         <div class="changelog-header">

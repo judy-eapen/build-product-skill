@@ -63,6 +63,7 @@ Do NOT pre-load all framework files at the start of the session. Load other file
 - `ai-framework/personas.md` — load only when composing agent prompts for a review step
 - `subprompts/design-prompts.md` — load only at Step 8 (design)
 - `ai-framework/06-user-stories.md` — load only at Step 10
+- `ai-framework/06b-timeline.md` — load only at Step 10.5 (Timeline)
 - `ai-framework/07-drive-sync.md` — load only if Drive export was enabled at Step 11 pre-flight
 
 ### Gate context checkpoints — write after every gate approval
@@ -177,6 +178,8 @@ Rules:
 | `prd-to-jira.md` | `jira-export/[feature]-jira-export.md` |
 | `prd-to-jira.md` (manifest) | `jira-export/[feature]-jira-manifest.md` |
 | `06-user-stories.md` | `user-stories/[feature]-user-stories.md` |
+| `06b-timeline.md` (HTML) | `timeline/[feature]-timeline.html` |
+| `06b-timeline.md` (sidecar) | `timeline/[feature]-timeline.md` |
 | `05-change-propagation.md` (changelog) | `changelog/[feature]-changelog.md` (append) |
 | `05-change-propagation.md` (summary) | `changelog/[feature]-change-[date]-summary.md` |
 | Stakeholder list | `stakeholders/[feature]-stakeholders.md` |
@@ -456,6 +459,27 @@ If yes:
 
 Note: Step 11c (Confluence publish) runs next and will publish or update the full PRD
 page. The breakdown page created here is a separate page, not a duplicate.
+
+### Step 10.5 — Timeline (Gantt) [AUTO]
+
+Read and follow: `ai-framework/06b-timeline.md`.
+
+Inputs: the approved user-stories breakdown from Step 10 (primary), the PRD (for phase order and any committed milestones), and `_pipeline-state.json` (for prior timeline parameters if re-running).
+
+The step gathers timeline parameters from the PM in one turn (start date, sprint length, team composition, velocity, buffer, optional target launch and off-time), proposes durations at the Epic + Phase level using a hybrid estimation model (sizing × velocity, PM tunes), and produces two outputs:
+
+- **Figma FigJam timeline** — via Figma MCP `generate_diagram`. URL stored in `_pipeline-state.json` → `export_urls.figma_timeline_url`. If the Figma MCP is unavailable, the step skips this output, notes it in the markdown sidecar, and continues.
+- **Interactive HTML Gantt** — self-contained HTML file at `timeline/[feature-name]-timeline.html`. Opens offline. Hover details on every bar.
+
+Granularity is Epic + Phase, not story-level. A 60-story feature produces a roadmap with one bar per epic grouped under phase headers, not 60 bars.
+
+Math is honest: if the PM provided a target launch date and the computed end exceeds it, the step surfaces the gap and offers scope cut / team increase / slip — it does not silently shrink durations.
+
+No gate. After the PM accepts the timeline ("yes" at Step 8 of the underlying prompt), proceed to Step 11.
+
+Update `_pipeline-state.json`:
+- `timeline.parameters`, `timeline.computed`, `timeline.outputs.html_path`, `timeline.outputs.markdown_path`.
+- `export_urls.figma_timeline_url` (only if Figma succeeded).
 
 ### Step 11 — Export (parallel: Jira always + Drive optional + Confluence optional)
 

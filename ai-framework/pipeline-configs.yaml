@@ -93,6 +93,11 @@ pipelines:
         mode: gate
         gate: gate_3
 
+      - id: timeline
+        name: "Timeline (Gantt)"
+        instruction: "ai-framework/06b-timeline.md"
+        mode: auto
+
       - id: export
         name: "Export"
         instruction: "SKILL.md#step_11_export"

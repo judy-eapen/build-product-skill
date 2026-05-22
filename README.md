@@ -1,6 +1,6 @@
 # /build-product
 
-A Claude Code skill for product managers. It takes a feature idea through research, a PRD, dual AI review, system design, visual diagrams, screen design prompts, an exhaustive user-stories breakdown, and finally to a complete set of Jira tickets — in one continuous Work pipeline with three human approval gates.
+A Claude Code skill for product managers. It takes a feature idea through research, a PRD, dual AI review, system design, visual diagrams, screen design prompts, an exhaustive user-stories breakdown, a Gantt timeline, and finally to a complete set of Jira tickets — in one continuous Work pipeline with three human approval gates.
 
 > **New to Claude Code or this skill?** Read [GETTING-STARTED.md](./GETTING-STARTED.md) for the full setup walkthrough. It assumes no prior experience with terminals, Git, or MCP integrations.
 
@@ -33,6 +33,7 @@ Full setup instructions are in [GETTING-STARTED.md](./GETTING-STARTED.md).
 | Visual diagram (Figma FigJam if connected, Mermaid otherwise) | Figma + your computer |
 | Screen design prompts for v0 or Figma Make | Your computer |
 | User Stories Breakdown with Gherkin AC, FE/BE pairs, sizing | Your computer |
+| Gantt timeline (Figma FigJam + interactive HTML) at Epic + Phase level | Figma + your computer |
 | Jira Epic + Stories with labels, links, and custom fields | Your team's Jira |
 | Optional: Confluence page mirroring the PRD | Your team's Confluence |
 | Optional: Google Drive folder mirroring everything | Your team's Drive |
@@ -41,7 +42,7 @@ You approve at three gates (PRD, Designs, User Stories) before anything moves to
 
 ---
 
-## The 11-step pipeline at a glance
+## The 12-step pipeline at a glance
 
 | # | Step | Mode | Output |
 |---|------|------|--------|
@@ -55,6 +56,7 @@ You approve at three gates (PRD, Designs, User Stories) before anything moves to
 | 8 | **Design Prompts** — Structured v0 or Figma Make prompts per screen, per state | AUTO | `design/` |
 | 9 | **Update PRD from Designs → Gate 2** — Surgical sync, your approval | **GATE** | `prd/` (updated) |
 | 10 | **User Stories Breakdown → Gate 3** — Exhaustive Gherkin AC, FE/BE pairs, quality checks | **GATE** | `user-stories/` |
+| 10.5 | **Timeline (Gantt)** — Figma FigJam + interactive HTML at Epic + Phase level; hybrid estimation (skill proposes, PM tunes) | AUTO | `timeline/` |
 | 11 | **Export** — Jira tickets always; Google Drive + Confluence optional, parallel | PARALLEL | Jira + Drive + Confluence |
 
 ---
@@ -132,6 +134,7 @@ Any integration the skill cannot reach is skipped cleanly. It never blocks the r
 | `/system-design` | System design doc from a PRD |
 | `/visual-diagram` | Figma FigJam diagram from a PRD (Mermaid fallback) |
 | `/user-stories` | User Stories Breakdown from an approved PRD |
+| `/timeline` | Gantt timeline (Figma FigJam + interactive HTML) at Epic + Phase level |
 | `/prd-to-jira` | Create Jira tickets from a breakdown or PRD |
 | `/drive-sync` | Sync artifacts to Google Drive |
 | `/prd-to-confluence` | Publish a PRD as a Confluence page |
@@ -174,6 +177,7 @@ Any integration the skill cannot reach is skipped cleanly. It never blocks the r
     ├── diagrams/
     ├── design/
     ├── user-stories/
+    ├── timeline/
     ├── jira-export/
     ├── changelog/
     ├── stakeholders/
@@ -210,7 +214,7 @@ As of v2.1.0, Jira conventions (labels, title format, BE/FE split, custom field 
 
 ## Version
 
-**v2.1.0** — Open-ended Jira ticket conventions probed at intake; conventions applied automatically downstream. See [CHANGELOG.md](./CHANGELOG.md) for full version history.
+**v2.2.0** — New Timeline (Gantt) step. Hybrid-estimated Epic + Phase Gantt as Figma FigJam and a self-contained interactive HTML file. Runs after Gate 3 in the pipeline and as standalone `/timeline`. See [CHANGELOG.md](./CHANGELOG.md) for full version history.
 
 ## License
 

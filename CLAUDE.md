@@ -51,6 +51,7 @@ Each command runs one stage of the pipeline independently. Each asks for the inp
 - `/system-design` — Generate a system-design doc from a PRD.
 - `/visual-diagram` — Generate a Figma FigJam diagram from a PRD (falls back to Mermaid if Figma MCP is unavailable).
 - `/user-stories` — Generate the User Stories Breakdown (Gherkin AC + FE/BE pairing) from an approved PRD.
+- `/timeline` — Generate a Gantt timeline (Figma FigJam + interactive HTML) at the Epic + Phase level from an approved user-stories breakdown. Hybrid estimation — skill proposes from sizing × velocity, PM tunes.
 - `/prd-to-jira` — Create Jira tickets from a user-stories breakdown or PRD.
 - `/drive-sync` — Sync a feature's pipeline artifacts to Google Drive (requires Google Drive MCP installed).
 - `/prd-to-confluence` — Publish a PRD as a Confluence page (requires Atlassian MCP connected).

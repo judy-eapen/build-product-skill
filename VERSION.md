@@ -1,5 +1,5 @@
-v2.1.0 — 2026-05-20
+v2.2.0 — 2026-05-21
 
-Open-ended Jira ticket conventions probed at intake; conventions applied automatically at User Stories Breakdown and Jira Export.
+New Timeline (Gantt) step at Step 10.5 — Figma FigJam timeline + self-contained interactive HTML Gantt at the Epic + Phase level. Hybrid estimation: skill proposes from sizing × velocity, PM tunes. Standalone command `/timeline` is also available.
 
 See CHANGELOG.md for full version history.
