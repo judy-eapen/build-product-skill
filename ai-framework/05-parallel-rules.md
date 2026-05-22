@@ -245,8 +245,10 @@ INPUTS:
 - Confluence space: [space key]
 - Parent page (optional): [page title or ID]
 
-TASK: Read and follow subprompts/prd-to-confluence.md exactly. Publish the PRD as a
-Confluence page. Include quick-links to the Jira Epic and Drive folder when available.
+TASK: Read and follow subprompts/publish-to-confluence.md exactly. Publish the entire
+feature workspace as a parent hub page + one numbered child page per artifact. Include
+quick-links to the Jira Epic and Drive folder when available. Apply per-file mtime
+change detection so only artifacts whose source changed are re-published.
 If Confluence MCP is unavailable, apply Error Type 4 from ai-framework/error-handling.md.
 
 OUTPUT:

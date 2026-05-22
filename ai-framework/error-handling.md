@@ -87,7 +87,7 @@ If only some tickets fail (mid-batch), write the failed tickets to the local fil
    ~/Desktop/Resources/PDLC Workflow Docs/[feature-name]/jira-export/[feature-name]-confluence-export.md
    ```
 2. Notify the PM. Include the original error.
-3. State: "The PM can retry by running `/prd-to-confluence` standalone, or publish manually from the fallback file."
+3. State: "The PM can retry by running `/publish-to-confluence` standalone, or publish manually from the fallback file."
 4. Do not block Jira or Drive agents.
 
 ### General rules

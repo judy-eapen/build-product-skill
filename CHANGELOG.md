@@ -4,6 +4,51 @@ All notable changes are documented here. Follows [Semantic Versioning](https://s
 
 ---
 
+## v2.3.0 — 2026-05-21
+
+### Added
+- **Pipeline timing instrumentation + `/pipeline-timing` report.** Every pipeline step now records `started_at` and `completed_at` to `_pipeline-state.json` → `step_timings[step_id]`; gate steps additionally record `presented_at` and `approved_at` (so we know how long the PM took to approve each gate). The new `/pipeline-timing` standalone command — and the timing block automatically included in the Step 12 transcript and the Confluence parent hub — reports:
+  - **Wall-clock total** = `pipeline_completed_at - pipeline_started_at` (includes all gate waits, breaks, overnight pauses).
+  - **Active-work total** = wall-clock minus the sum of all gate-wait times (what the model was actually working on).
+  - **Per-step breakdown** with each step's duration and notes on which parts were gate wait.
+  - **Per-gate table** showing how long each of Gate 1 / 2 / 3 sat waiting on PM approval.
+  - If a step is missing instrumented timestamps (older runs or interrupted instrumentation), the report falls back to parsing the session JSONL for that step and marks the inferred row with `~`. Both data sources can be mixed in a single report.
+- **State schema additions:** top-level `pipeline_started_at`, `pipeline_completed_at`, `step_timings` dict, and `timing_report` cache (last generated totals so downstream consumers don't have to re-run the report).
+- **Step 12: Export Conversation Transcript** — new pipeline step that runs automatically at the end of every `/build-product` run, and is also callable standalone via `/export-transcript`. Reads the current Claude Code session's JSONL file (`~/.claude/projects/-Users-judydarvin/[session-uuid].jsonl`), filters to messages within the feature's pipeline window (using `_pipeline-state.json` → `pipeline_started_at` as the lower bound), and writes two markdown files to `[feature]/transcript/`:
+  - `[feature]-transcript-clean.md` — user messages + assistant text only, the readable back-and-forth.
+  - `[feature]-transcript-full.md` — same conversation plus tool calls and tool results (truncated to first 10 + last 5 lines per result, with collapsible `<details>` blocks). System reminders and permission-mode events included for forensic debugging.
+  - The model's `thinking` blocks are excluded from both files (private reasoning, never part of the visible conversation).
+  - Prior exports are timestamp-suffix-renamed rather than overwritten, so every run is preserved.
+- **Confluence Publish now publishes the entire feature workspace, not just the PRD.** Step 11c (and the standalone command, now also callable as `/publish-to-confluence`) creates a parent **feature hub** page with one numbered child page per artifact:
+  - `Step 1: Research`
+  - `Step 2: Codebase Review`
+  - `Step 3: PRD`
+  - `Step 4a: Product Review` · `Step 4b: Technical Review`
+  - `Step 6: System Design` (only if generated)
+  - `Step 7: Visual Diagram` (Figma iframe embed when available)
+  - `Step 8: Design Catalog — Phase [N]` (one page per phase file)
+  - `Step 10: User Stories Breakdown`
+  - `Step 10½: Timeline` (Figma embed + link to the local HTML Gantt)
+  - The parent hub holds owner, pipeline status, Jira Epic + Drive links, decision log summary, open questions, and a table of all child pages with their status.
+- **Per-file mtime change detection.** Each artifact's source-file modification time is compared to the last published mtime in `_pipeline-state.json` → `confluence_hub.artifacts.[key].source_mtime`. Only artifacts whose source actually changed are re-published; unchanged artifacts are skipped (existing page version preserved). The parent hub is always updated to keep status fresh.
+- **New `/publish-to-confluence` slash command** registered at `~/.claude/commands/publish-to-confluence.md`. The older `/prd-to-confluence` slash command and its underlying `subprompts/prd-to-confluence.md` file were **removed** in this release — the command publishes nine artifacts, not just the PRD, so the old name was actively misleading. The subprompt file was renamed to `subprompts/publish-to-confluence.md`.
+- **Legacy migration.** Features with a pre-v2.3.0 single-PRD Confluence page (recorded as `export_urls.confluence_page`) are offered a one-time migration on the next publish run: the legacy page is reparented under the new hub as `Step 3: PRD`, preserving its URL so existing bookmarks keep working.
+
+### Changed
+- `subprompts/read-feedback.md` now defaults to scanning **every** child page in `confluence_hub.artifacts` when the PM chooses "scan everything", and groups comments by source page (so PRD comments edit the PRD file, design comments edit the design catalog, etc.). Legacy single-PRD pages still work via a Path C fallback.
+- `subprompts/share-for-review.md` defaults to sharing the parent hub URL ("reviewers see the full picture and can comment on any page") and lets the PM narrow to one specific child page when needed.
+- The Confluence publish subprompt was substantially rewritten and renamed from `subprompts/prd-to-confluence.md` → `subprompts/publish-to-confluence.md` to match the new behavior (hub + children, not just PRD).
+- `_pipeline-state.json` schema: added `confluence_hub` (space, parent ID/URL, last_published_at, per-artifact records with page_id / page_url / source_mtime / last_published_at). Added `export_urls.confluence_hub` and `export_urls.figma_timeline_url`. `export_urls.confluence_page` is now marked DEPRECATED but still set, pointing at the `Step 3: PRD` child page for backward-compat with anything still reading that field.
+
+### Why this matters
+A stakeholder opening a feature in Confluence now sees the entire product record — research, reviews, designs, user stories, the Gantt — not just the PRD. They can comment on any step (e.g., a tech lead can comment on the codebase review directly), and `/read-feedback` will pull those comments back to the correct source file. PMs no longer have to manually export research / reviews / designs to a separate Confluence page; one publish step does it all.
+
+### Not changed
+- Jira ticket creation, Drive sync, Figma diagram + timeline generation, all gates, all intake parameters.
+- Existing Confluence page URLs from prior pipeline runs are preserved across the migration to the hub model.
+
+---
+
 ## v2.2.0 — 2026-05-21
 
 ### Added

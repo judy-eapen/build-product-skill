@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>/build-product — Work Pipeline v2.2.0</title>
-  <!-- Version: 2.2.0 | Updated: 2026-05-21 | Update this line and the badge/changelog below on every release -->
+  <title>/build-product — Work Pipeline v2.3.0</title>
+  <!-- Version: 2.3.0 | Updated: 2026-05-21 | Update this line and the badge/changelog below on every release -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
@@ -494,7 +494,7 @@
   <header>
     <div class="header-top">
       <span class="cmd-title">/build-product</span>
-      <span class="version-badge">v2.2.0</span>
+      <span class="version-badge">v2.3.0</span>
     </div>
     <p class="header-sub">A Claude Code skill that takes a PM from feature idea → Jira Epic with all linked tickets. Research · Codebase review · PRD · Dual AI review · Design prompts · User stories · Jira export.</p>
     <div class="header-links">
@@ -510,7 +510,7 @@
 
   <!-- STATS -->
   <div class="stats">
-    <div class="stat"><div class="stat-number">12</div><div class="stat-label">Pipeline steps</div></div>
+    <div class="stat"><div class="stat-number">13</div><div class="stat-label">Pipeline steps</div></div>
     <div class="stat"><div class="stat-number">3</div><div class="stat-label">Approval gates</div></div>
     <div class="stat"><div class="stat-number">2</div><div class="stat-label">Parallel blocks</div></div>
     <div class="stat"><div class="stat-number">25+</div><div class="stat-label">Slash commands</div></div>
@@ -719,12 +719,28 @@
             <span class="step-name">Export</span>
             <span class="badge parallel">Parallel</span>
           </div>
-          <p class="step-desc">Three parallel export agents. <strong>Jira (always):</strong> creates Epic + one ticket per user story with ADF user story, verbatim Gherkin AC, Testable field, FE/BE labels, sequence labels (seq-01…), size labels, and Relates-to linking for FE/BE pairs. Deduplication check prevents re-runs from creating duplicates. <strong>Drive (optional):</strong> mirrors the entire feature folder, generates a <code>_FEATURE_SUMMARY.md</code>. <strong>Confluence (optional):</strong> publishes or updates the PRD page with Figma diagram embed.</p>
+          <p class="step-desc">Three parallel export agents. <strong>Jira (always):</strong> creates Epic + one ticket per user story with ADF user story, verbatim Gherkin AC, Testable field, FE/BE labels, sequence labels (seq-01…), size labels, and Relates-to linking for FE/BE pairs. Deduplication check prevents re-runs from creating duplicates. <strong>Drive (optional):</strong> mirrors the entire feature folder, generates a <code>_FEATURE_SUMMARY.md</code>. <strong>Confluence (optional, v2.3.0+):</strong> publishes the entire feature workspace as a parent hub page + one numbered child page per artifact (Research, Codebase Review, PRD, Product/Technical Review, System Design, Visual Diagram, Design Catalog per phase, User Stories, Timeline). Per-file mtime change detection — only re-publishes pages whose source actually changed.</p>
           <div class="step-meta">
             <div class="step-meta-item">🎫 Jira Epic + tickets</div>
             <div class="step-meta-item">📁 <code>jira-export/[feature]-jira-manifest.md</code></div>
             <div class="step-meta-item">☁️ Drive folder (if enabled)</div>
             <div class="step-meta-item">📖 Confluence page (if enabled)</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="step-card">
+        <div class="step-num auto">12</div>
+        <div class="step-body auto">
+          <div class="step-header">
+            <span class="step-name">Export Conversation Transcript</span>
+            <span class="badge auto">Auto</span>
+          </div>
+          <p class="step-desc">Reads the live Claude Code session JSONL (<code>~/.claude/projects/-Users-judydarvin/[session-uuid].jsonl</code>) and writes the full PM↔model conversation for this feature's pipeline window to two markdown files. <strong>Clean version:</strong> user messages + assistant text only — the readable back-and-forth. <strong>Full version:</strong> same conversation plus tool calls and (truncated) tool results, with system reminders and permission events included for forensic debugging. Model <code>thinking</code> blocks are excluded from both files (private reasoning). Prior transcript exports are timestamp-suffix-renamed rather than overwritten, so every run is preserved. Skippable per-run via "skip transcript" at the end of Step 11; also callable any time via <code>/export-transcript</code>.</p>
+          <div class="step-meta">
+            <div class="step-meta-item">📁 <code>transcript/[feature]-transcript-clean.md</code></div>
+            <div class="step-meta-item">📁 <code>transcript/[feature]-transcript-full.md</code></div>
+            <div class="step-meta-item">⭐ New in v2.3.0</div>
           </div>
         </div>
       </div>
@@ -762,7 +778,9 @@
           <div class="cmd-item"><span class="cmd-name">/timeline</span><span class="cmd-desc">Gantt timeline (Figma FigJam + interactive HTML) at Epic + Phase level</span></div>
           <div class="cmd-item"><span class="cmd-name">/prd-to-jira</span><span class="cmd-desc">Create Jira tickets from a breakdown or PRD</span></div>
           <div class="cmd-item"><span class="cmd-name">/drive-sync</span><span class="cmd-desc">Sync artifacts to Google Drive</span></div>
-          <div class="cmd-item"><span class="cmd-name">/prd-to-confluence</span><span class="cmd-desc">Publish PRD as a Confluence page</span></div>
+          <div class="cmd-item"><span class="cmd-name">/publish-to-confluence</span><span class="cmd-desc">Publish whole feature workspace: hub + child page per artifact; re-publishes only changed pages</span></div>
+          <div class="cmd-item"><span class="cmd-name">/export-transcript</span><span class="cmd-desc">Write the full PM↔model conversation for a feature's pipeline run to clean + full markdown files</span></div>
+          <div class="cmd-item"><span class="cmd-name">/pipeline-timing</span><span class="cmd-desc">Wall-clock + active-work timing report (per-step breakdown + per-gate wait time)</span></div>
           <div class="cmd-item"><span class="cmd-name">/share-for-review</span><span class="cmd-desc">Post Confluence link to Slack with reviewers + deadline</span></div>
           <div class="cmd-item"><span class="cmd-name">/read-feedback</span><span class="cmd-desc">Pull Confluence comments, synthesize edits, re-sync</span></div>
         </div>
@@ -805,7 +823,7 @@
       <div class="integration-card">
         <div class="integration-name">Confluence <span class="req-badge optional">Optional</span></div>
         <div class="integration-via">Atlassian MCP</div>
-        <div class="integration-use">Step 11c publish, /prd-to-confluence, /share-for-review, /read-feedback</div>
+        <div class="integration-use">Step 11c publishes feature hub + child page per artifact (Research, Codebase Review, PRD, Reviews, System Design, Diagram, Designs, User Stories, Timeline) with per-file mtime change detection. Used by /publish-to-confluence, /share-for-review, /read-feedback</div>
       </div>
       <div class="integration-card">
         <div class="integration-name">Google Drive <span class="req-badge optional">Optional</span></div>
@@ -854,6 +872,26 @@
   <section>
     <p class="section-title">Recent Changes</p>
     <div class="changelog-list">
+
+      <div class="changelog-item">
+        <div class="changelog-header">
+          <span class="changelog-version">v2.3.0</span>
+          <span class="changelog-date">2026-05-21</span>
+          <span class="changelog-major-badge">MINOR</span>
+        </div>
+        <div class="changelog-body">
+          <ul>
+            <li><strong>Pipeline timing instrumentation + <code>/pipeline-timing</code> report.</strong> Every step now records <code>started_at</code> and <code>completed_at</code> to <code>_pipeline-state.json</code> → <code>step_timings</code>; gate steps additionally record <code>presented_at</code> / <code>approved_at</code> so the report can quantify how long each gate sat waiting on the PM. The report distinguishes <strong>wall-clock total</strong> (full elapsed, includes gate waits and breaks) from <strong>active-work total</strong> (model working time, gate waits excluded), and includes a per-step breakdown plus a per-gate table. Automatically embedded at the top of the Step 12 transcript and on the Confluence parent hub page; also callable standalone via <code>/pipeline-timing</code>. Falls back to JSONL parsing for un-instrumented steps and marks inferred rows with <code>~</code>.</li>
+            <li><strong>New Step 12: Export Conversation Transcript.</strong> Reads the live Claude Code session JSONL and writes the full PM↔model conversation for the feature's pipeline window to two markdown files: <code>[feature]-transcript-clean.md</code> (readable back-and-forth) and <code>[feature]-transcript-full.md</code> (with tool calls + system events for forensic debugging). Model <code>thinking</code> blocks are excluded. Prior exports are timestamp-suffix-renamed rather than overwritten. Auto-runs at end of <code>/build-product</code>; also callable any time via <code>/export-transcript</code>.</li>
+            <li><strong>Confluence Publish now writes the entire feature workspace.</strong> Parent hub page + one numbered child page per artifact: <code>Step 1: Research</code>, <code>Step 2: Codebase Review</code>, <code>Step 3: PRD</code>, <code>Step 4a/4b: Product / Technical Review</code>, <code>Step 6: System Design</code>, <code>Step 7: Visual Diagram</code> (Figma embed), <code>Step 8: Design Catalog — Phase [N]</code>, <code>Step 10: User Stories Breakdown</code>, <code>Step 10½: Timeline</code> (Figma embed + link to HTML Gantt).</li>
+            <li><strong>Per-file mtime change detection.</strong> Each artifact's source-file modification time is compared to the last published mtime in <code>_pipeline-state.json</code> → <code>confluence_hub.artifacts</code>. Only pages whose source actually changed are re-published; unchanged pages are skipped (existing version preserved). The parent hub is always updated to keep status fresh.</li>
+            <li><strong>New <code>/publish-to-confluence</code> command.</strong> The older <code>/prd-to-confluence</code> slash command and its underlying subprompt file were <strong>removed</strong> in this release — the command publishes nine artifacts, not just the PRD, so the old name was actively misleading. The subprompt was renamed to <code>subprompts/publish-to-confluence.md</code>.</li>
+            <li><strong>Legacy migration on first run.</strong> Features with a pre-v2.3.0 single-PRD Confluence page are offered a one-time migration: the legacy page is reparented under the new hub as <code>Step 3: PRD</code>, preserving its URL so existing bookmarks keep working.</li>
+            <li><strong><code>/read-feedback</code> and <code>/share-for-review</code> adapted.</strong> Feedback can now be pulled from every child page (grouped by source page so PRD comments edit the PRD file, design comments edit the design catalog, etc.). Share defaults to the hub URL with an option to narrow to one specific child.</li>
+          </ul>
+          <a class="changelog-link" href="https://github.com/judy-eapen/build-product-skill/blob/main/CHANGELOG.md" target="_blank">Full changelog →</a>
+        </div>
+      </div>
 
       <div class="changelog-item">
         <div class="changelog-header">

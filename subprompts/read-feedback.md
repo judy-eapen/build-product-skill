@@ -1,33 +1,35 @@
 # Read Feedback
 
-Pull reviewer comments from a Confluence page, synthesize them into actionable
-suggestions, and apply approved changes to the PRD. Closes the async review loop
-opened by `/share-for-review`.
+Pull reviewer comments from one or more Confluence pages in the feature's hub, synthesize them into actionable suggestions, and apply approved changes to the relevant source files (most commonly the PRD). Closes the async review loop opened by `/share-for-review`.
 
 ---
 
-## Step 0 — Identify the Confluence page
+## Step 0 — Identify which pages to read
 
-Check `_pipeline-state.json` → `review_requests[]` for any entries where
-`feedback_read = false`.
+There are three ways comments could be waiting:
+
+**Path A — Open review requests in state.** Check `_pipeline-state.json` → `review_requests[]` for any entries where `feedback_read = false`.
 
 If one or more unread review requests exist, present them:
 
 ```
 Pending review requests:
 
-1. PRD — [Confluence URL] — posted [date] — deadline [deadline]
+1. Step 3: PRD — [Confluence URL] — posted [date] — deadline [deadline]
    Reviewers: [names]
    [N days since posted]
 
-2. Design catalog — [Confluence URL] — posted [date]
+2. Step 8: Design Catalog — Phase 1 — [Confluence URL] — posted [date]
    ...
 
-Which review are you reading feedback for? (number or "all")
+Which review are you reading feedback for? (number, "all", or "scan everything")
 ```
 
-If no review requests are in state (PM ran `/share-for-review` in a prior session or
-manually), ask:
+**Path B — Scan the entire feature hub.** If the PM chose "scan everything" above, or if no review requests are pending but a `confluence_hub.parent_page_id` exists in state, iterate over every published artifact in `confluence_hub.artifacts` and call `getConfluencePageInlineComments` + `getConfluencePageFooterComments` on each. Aggregate the comments and continue at Step 1 with all of them grouped by source page.
+
+**Path C — Legacy single-PRD page.** If state has only `export_urls.confluence_page` (no `confluence_hub`), this is a pre-v2.3.0 feature. Read comments from that single page and treat them all as PRD comments. Suggest the PM run `/publish-to-confluence` afterward to migrate to the hub model.
+
+**Path D — Manual URL.** If none of the above apply, ask:
 
 ```
 Which Confluence page should I read feedback from?
@@ -70,25 +72,30 @@ Slack MCP detection logic used in `/share-for-review`.
 
 ## Step 2 — Attribute and group comments
 
-Group comments by the PRD section they relate to. Use the anchor text (for inline
-comments) to identify the relevant section. For footer comments with no clear anchor,
-group under "General."
+Group comments first by **source page** (which child page in the feature hub), then by section within that page. Use the anchor text (for inline comments) to identify the relevant section. For footer comments with no clear anchor, group under "General" on that page.
 
 Build a comment map:
 
 ```
-Section 1 — Executive Summary
-  @sarah (2 days ago): "Success metric feels vague — what's the current baseline?"
-  @tech-lead (1 day ago): "Agreed on the metric. Also — is 10% conversion realistic given current funnel?"
+PAGE — Step 3: PRD
+  Section 1 — Executive Summary
+    @sarah (2 days ago): "Success metric feels vague — what's the current baseline?"
+    @tech-lead (1 day ago): "Agreed on the metric. Also — is 10% conversion realistic given current funnel?"
 
-Section 4 — Data Model
-  @tech-lead (1 day ago): "We don't have an index on user_id + created_at for this table.
-   Queries will be slow at scale."
+  Section 4 — Data Model
+    @tech-lead (1 day ago): "We don't have an index on user_id + created_at for this table.
+     Queries will be slow at scale."
 
-General
-  @design-lead (3 days ago): "Looks good overall. One question on Section 7 phasing —
-   why is Phase 2 before Phase 1b?"
+  General
+    @design-lead (3 days ago): "Looks good overall. One question on Section 7 phasing —
+     why is Phase 2 before Phase 1b?"
+
+PAGE — Step 8: Design Catalog — Phase 1
+  Screen 3 — Empty state
+    @design-lead (1 day ago): "Empty state copy is too long — try cutting the second sentence."
 ```
+
+Each comment is later applied to its corresponding source file — PRD comments edit `prd/[feature]-prd.md`, Design Catalog comments edit `design/[feature]-phase-[N]-designs.md`, etc.
 
 ---
 
@@ -196,16 +203,17 @@ After all edits are applied:
 Ask:
 
 ```
-Re-sync the updated PRD to Confluence so reviewers see the final version?
+Re-sync the updated source files to Confluence so reviewers see the final version?
 (yes / no)
 ```
 
-If yes: call `updateConfluencePage` with the updated PRD content. If the MCP is
-unavailable, apply Error Type 4 from `ai-framework/error-handling.md`.
+If yes: invoke `subprompts/publish-to-confluence.md` (or `/publish-to-confluence` standalone) which will detect the changed source files via mtime comparison and re-publish only the affected child pages — preserving URLs and only bumping versions on pages that actually changed.
 
-After syncing, resolve the addressed comments on the Confluence page where possible.
-If `resolveConfluenceComment` (or equivalent) is available, resolve each comment
-whose corresponding PRD edit was approved.
+For pre-v2.3.0 features still using `export_urls.confluence_page` (legacy single-PRD model), call `updateConfluencePage` directly on that page.
+
+If the MCP is unavailable, apply Error Type 4 from `ai-framework/error-handling.md`.
+
+After syncing, resolve the addressed comments on the Confluence page where possible. If `resolveConfluenceComment` (or equivalent) is available, resolve each comment whose corresponding source-file edit was approved.
 
 ---
 

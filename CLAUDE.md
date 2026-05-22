@@ -52,9 +52,11 @@ Each command runs one stage of the pipeline independently. Each asks for the inp
 - `/visual-diagram` — Generate a Figma FigJam diagram from a PRD (falls back to Mermaid if Figma MCP is unavailable).
 - `/user-stories` — Generate the User Stories Breakdown (Gherkin AC + FE/BE pairing) from an approved PRD.
 - `/timeline` — Generate a Gantt timeline (Figma FigJam + interactive HTML) at the Epic + Phase level from an approved user-stories breakdown. Hybrid estimation — skill proposes from sizing × velocity, PM tunes.
+- `/export-transcript` — Write the full back-and-forth between the PM and the model for a feature's pipeline run to two markdown files (clean reading version + full forensic version with tool calls). Auto-runs as Step 12 at the end of `/build-product`; also callable standalone any time.
+- `/pipeline-timing` — Generate a timing report for a feature's pipeline run with both wall-clock time and active-work time (gate waits excluded). Reads instrumented timestamps from `step_timings` in state; falls back to JSONL parsing for un-instrumented runs.
 - `/prd-to-jira` — Create Jira tickets from a user-stories breakdown or PRD.
 - `/drive-sync` — Sync a feature's pipeline artifacts to Google Drive (requires Google Drive MCP installed).
-- `/prd-to-confluence` — Publish a PRD as a Confluence page (requires Atlassian MCP connected).
+- `/publish-to-confluence` — Publish the whole feature workspace to Confluence as a parent hub + one numbered child page per artifact (Research, Codebase Review, PRD, Product Review, Technical Review, System Design, Visual Diagram, Design Catalog per phase, User Stories, Timeline). Per-file mtime change detection — only re-publishes pages whose source actually changed. Requires Atlassian MCP connected.
 - `/share-for-review` — Post a Confluence artifact link to Slack with tagged reviewers and a deadline. Works with Slack MCP when connected; outputs formatted message for manual paste otherwise.
 - `/read-feedback` — Pull reviewer comments from a Confluence page, synthesize into suggested PRD edits, and apply approved changes. Re-syncs PRD to Confluence after edits.
 

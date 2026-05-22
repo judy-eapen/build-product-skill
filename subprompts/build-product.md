@@ -404,7 +404,7 @@ team for sizing review before Jira tickets are created? (yes / skip)
 
 If yes:
 1. Publish the user stories breakdown as a Confluence page — read and follow
-   `subprompts/prd-to-confluence.md` using the breakdown file as the source document.
+   `subprompts/publish-to-confluence.md` using the breakdown file as the source document.
    Record the URL in `_pipeline-state.json` → `export_urls.confluence_breakdown_page`.
 2. Then read and follow `subprompts/share-for-review.md` using that URL.
 
@@ -424,7 +424,7 @@ Two optional exporters can run in parallel:
 [ ] Sync all artifacts to Google Drive
     (Mirrors the local feature folder. Useful for stakeholder sharing.)
 
-[ ] Publish PRD as a Confluence page
+[ ] Publish feature workspace as a Confluence hub (one numbered child page per artifact)
     (For teams that read documentation in Confluence.)
 
 Enable either, both, or neither. (Type "jira only" / "jira + drive" /
@@ -446,9 +446,9 @@ Read and follow: `subprompts/prd-to-jira.md`
 Only if enabled. Read and follow: `ai-framework/07-drive-sync.md`
 
 **Step 11c — Confluence Publish (optional)**
-Only if enabled. Read and follow: `subprompts/prd-to-confluence.md`
+Only if enabled. Read and follow: `subprompts/publish-to-confluence.md`
 
-If a Confluence page URL already exists in `_pipeline-state.json` → `export_urls.confluence_page`, call `updateConfluencePage` instead of creating a new one.
+Publishes the entire feature workspace as a parent hub page + one numbered child page per artifact. Per-file mtime detection ensures only changed pages are re-published; existing URLs are preserved.
 
 After all agents finish:
 

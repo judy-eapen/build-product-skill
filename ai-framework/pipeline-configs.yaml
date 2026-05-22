@@ -105,6 +105,11 @@ pipelines:
         parallel: true
         parallel_block: block_3
 
+      - id: export_transcript
+        name: "Export Conversation Transcript"
+        instruction: "ai-framework/08-export-transcript.md"
+        mode: auto
+
     gates:
       gate_1:
         after_step: apply_fixes

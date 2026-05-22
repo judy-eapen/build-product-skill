@@ -35,14 +35,16 @@ Full setup instructions are in [GETTING-STARTED.md](./GETTING-STARTED.md).
 | User Stories Breakdown with Gherkin AC, FE/BE pairs, sizing | Your computer |
 | Gantt timeline (Figma FigJam + interactive HTML) at Epic + Phase level | Figma + your computer |
 | Jira Epic + Stories with labels, links, and custom fields | Your team's Jira |
-| Optional: Confluence page mirroring the PRD | Your team's Confluence |
+| Optional: Confluence feature hub with a numbered child page per artifact (Research, Codebase Review, PRD, Product/Technical Review, System Design, Visual Diagram, Design Catalog per phase, User Stories, Timeline) | Your team's Confluence |
 | Optional: Google Drive folder mirroring everything | Your team's Drive |
+| Conversation transcript — clean reading version + full forensic version of every message you sent and reply you got during the pipeline run | Your computer |
+| Pipeline timing report — wall-clock total, active-work total, per-step breakdown, per-gate wait time | Your computer |
 
 You approve at three gates (PRD, Designs, User Stories) before anything moves to external systems.
 
 ---
 
-## The 12-step pipeline at a glance
+## The 13-step pipeline at a glance
 
 | # | Step | Mode | Output |
 |---|------|------|--------|
@@ -57,7 +59,8 @@ You approve at three gates (PRD, Designs, User Stories) before anything moves to
 | 9 | **Update PRD from Designs → Gate 2** — Surgical sync, your approval | **GATE** | `prd/` (updated) |
 | 10 | **User Stories Breakdown → Gate 3** — Exhaustive Gherkin AC, FE/BE pairs, quality checks | **GATE** | `user-stories/` |
 | 10.5 | **Timeline (Gantt)** — Figma FigJam + interactive HTML at Epic + Phase level; hybrid estimation (skill proposes, PM tunes) | AUTO | `timeline/` |
-| 11 | **Export** — Jira tickets always; Google Drive + Confluence optional, parallel | PARALLEL | Jira + Drive + Confluence |
+| 11 | **Export** — Jira tickets always; Google Drive + Confluence (hub + child page per artifact) optional, parallel | PARALLEL | Jira + Drive + Confluence |
+| 12 | **Export Transcript** — Reads the live session JSONL and writes the full PM↔model conversation to two markdown files (clean + forensic) | AUTO | `transcript/` |
 
 ---
 
@@ -101,7 +104,7 @@ To see what changed in this update, check [CHANGELOG.md](./CHANGELOG.md).
 | Integration | MCP | Used for |
 |-------------|-----|----------|
 | **Jira** | Atlassian MCP | Step 11a — ticket creation (required for the export step) |
-| **Confluence** | Atlassian MCP | Step 11c, `/prd-to-confluence`, `/read-feedback` |
+| **Confluence** | Atlassian MCP | Step 11c (publishes feature hub + child page per artifact, per-file mtime change detection), `/publish-to-confluence`, `/read-feedback` |
 | **Google Drive** | Drive MCP | Step 11b, `/drive-sync` |
 | **Figma** | Figma MCP | Step 7 — FigJam diagram generation |
 | **Slack** | Slack MCP | `/share-for-review` — post review links with reviewers tagged |
@@ -137,7 +140,9 @@ Any integration the skill cannot reach is skipped cleanly. It never blocks the r
 | `/timeline` | Gantt timeline (Figma FigJam + interactive HTML) at Epic + Phase level |
 | `/prd-to-jira` | Create Jira tickets from a breakdown or PRD |
 | `/drive-sync` | Sync artifacts to Google Drive |
-| `/prd-to-confluence` | Publish a PRD as a Confluence page |
+| `/publish-to-confluence` | Publish the whole feature workspace as a Confluence hub + one numbered child page per artifact. Per-file mtime tracking — only re-publishes pages whose source actually changed. |
+| `/export-transcript` | Write the full PM↔model conversation for a feature's pipeline run to two markdown files (clean reading version + full forensic version). |
+| `/pipeline-timing` | Wall-clock + active-work timing report for a feature's pipeline run. Reads instrumented timestamps; JSONL fallback. |
 | `/share-for-review` | Post a Confluence link to Slack with reviewers and a deadline |
 | `/read-feedback` | Pull Confluence comments, synthesize into PRD edits, re-sync |
 
@@ -178,6 +183,8 @@ Any integration the skill cannot reach is skipped cleanly. It never blocks the r
     ├── design/
     ├── user-stories/
     ├── timeline/
+    ├── transcript/
+    ├── timing/
     ├── jira-export/
     ├── changelog/
     ├── stakeholders/
@@ -214,7 +221,7 @@ As of v2.1.0, Jira conventions (labels, title format, BE/FE split, custom field 
 
 ## Version
 
-**v2.2.0** — New Timeline (Gantt) step. Hybrid-estimated Epic + Phase Gantt as Figma FigJam and a self-contained interactive HTML file. Runs after Gate 3 in the pipeline and as standalone `/timeline`. See [CHANGELOG.md](./CHANGELOG.md) for full version history.
+**v2.3.0** — Three new features. (1) Confluence Publish now writes the **entire feature workspace** as a parent hub page + one numbered child page per artifact, with per-file mtime change detection. Command is `/publish-to-confluence` (the older `/prd-to-confluence` was removed in this release to avoid confusion — the command publishes nine artifacts, not just the PRD). (2) New **Step 12 / `/export-transcript`** writes the full PM↔model conversation for a pipeline run to two markdown files (clean reading version + full forensic version with tool calls). (3) **Pipeline timing instrumentation + `/pipeline-timing` report** — every step records start/end timestamps; report shows wall-clock total, active-work total (gate waits excluded), per-step breakdown, and per-gate wait time. Also embedded in the transcript and Confluence hub. See [CHANGELOG.md](./CHANGELOG.md) for full version history.
 
 ## License
 

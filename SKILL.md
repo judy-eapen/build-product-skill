@@ -65,6 +65,8 @@ Do NOT pre-load all framework files at the start of the session. Load other file
 - `ai-framework/06-user-stories.md` — load only at Step 10
 - `ai-framework/06b-timeline.md` — load only at Step 10.5 (Timeline)
 - `ai-framework/07-drive-sync.md` — load only if Drive export was enabled at Step 11 pre-flight
+- `ai-framework/08-export-transcript.md` — load only at Step 12 (Export Transcript)
+- `ai-framework/09-pipeline-timing.md` — load only when generating the timing report (end of Step 11, or `/pipeline-timing` standalone)
 
 ### Gate context checkpoints — write after every gate approval
 
@@ -145,6 +147,23 @@ Rules:
 - `_pipeline-state.json` is read at the start of every new conversation before anything else. Integrity verification runs before any step routing.
 - Knowledge base lives at the root (not inside any feature folder): `~/Desktop/Resources/PDLC Workflow Docs/_knowledge-base.md`. Append-only.
 
+### Pipeline timing instrumentation
+
+Every step in every pipeline must record its start and end timestamps to `_pipeline-state.json` → `step_timings[step_id]`. This data drives the timing report (`ai-framework/09-pipeline-timing.md`) which is included in the end-of-pipeline summary, the Step 12 transcript, and the Confluence hub page.
+
+Required writes:
+
+- **At pipeline kickoff** (Stage 0 / Intake): write `pipeline_started_at` (ISO-8601, UTC) if not already set.
+- **At the start of every step** (auto or gate): write `step_timings[step_id].started_at`.
+- **At the end of every auto step**: write `step_timings[step_id].completed_at` and `duration_seconds`.
+- **For every gate**: write `step_timings[gate_step_id].presented_at` when the gate banner is shown to the PM, and `step_timings[gate_step_id].approved_at` when the PM says "approved" (or equivalent). Also compute and write `gate_wait_seconds = approved_at - presented_at`.
+- **For parallel blocks**: the block's `started_at` is the earliest sub-agent start; `completed_at` is the latest sub-agent finish. Per-agent timestamps may be recorded under `step_timings[block_id].agents[agent_id]` but are optional.
+- **At final pipeline completion**: write `pipeline_completed_at`.
+
+All timestamps are ISO-8601 UTC strings (`2026-05-21T13:23:00Z`). Durations are integers in seconds. The orchestrator writes these silently — do not surface timestamps to the PM during normal step execution; they appear only in the timing report.
+
+If an instrumentation write fails or is skipped, the timing report falls back to JSONL parsing for that step (less precise but functional). Never block a step on a failed timing write.
+
 ### Subfolder structure within each feature folder
 
 ```
@@ -180,6 +199,9 @@ Rules:
 | `06-user-stories.md` | `user-stories/[feature]-user-stories.md` |
 | `06b-timeline.md` (HTML) | `timeline/[feature]-timeline.html` |
 | `06b-timeline.md` (sidecar) | `timeline/[feature]-timeline.md` |
+| `08-export-transcript.md` (clean) | `transcript/[feature]-transcript-clean.md` |
+| `08-export-transcript.md` (full) | `transcript/[feature]-transcript-full.md` |
+| `09-pipeline-timing.md` | `timing/[feature]-timing.md` |
 | `05-change-propagation.md` (changelog) | `changelog/[feature]-changelog.md` (append) |
 | `05-change-propagation.md` (summary) | `changelog/[feature]-change-[date]-summary.md` |
 | Stakeholder list | `stakeholders/[feature]-stakeholders.md` |
@@ -453,7 +475,7 @@ team for sizing review before Jira tickets are created? (yes / skip)
 
 If yes:
 1. Publish the user stories breakdown as a Confluence page — read and follow
-   `subprompts/prd-to-confluence.md` using the breakdown file as the source document.
+   `subprompts/publish-to-confluence.md` using the breakdown file as the source document.
    Record the URL in `_pipeline-state.json` → `export_urls.confluence_breakdown_page`.
 2. Then read and follow `subprompts/share-for-review.md` using that URL.
 
@@ -540,19 +562,31 @@ If the Drive MCP is unavailable, skips cleanly with a notification. Pipeline con
 
 Only runs if the PM enabled Confluence at the pre-flight.
 
-Read and follow: `subprompts/prd-to-confluence.md`.
+Read and follow: `subprompts/publish-to-confluence.md` (callable as `/publish-to-confluence`).
 
-Inputs: Confluence space + (optional) parent page collected at pre-flight.
+Inputs: Confluence space + (optional) parent location collected at pre-flight.
 
-**If a Confluence page already exists** (the PM used `/share-for-review` earlier and
-a page URL is recorded in `_pipeline-state.json` → `export_urls.confluence_page`):
-call `updateConfluencePage` to update the existing page rather than creating a new one.
-Add a quick-links section at the top pointing to the Jira Epic (Step 11a) and Drive
-folder (Step 11b) once those are available. Do not create a duplicate page.
+**Publishes the entire feature workspace as a parent hub page + one numbered child page per artifact.** Hierarchy:
 
-**If no page exists yet:** publish fresh — same behavior as before.
+```
+[Feature Name]                                          ← parent hub
+  ├─ Step 1: Research
+  ├─ Step 2: Codebase Review
+  ├─ Step 3: PRD
+  ├─ Step 4a: Product Review
+  ├─ Step 4b: Technical Review
+  ├─ Step 6: System Design                              (only if generated)
+  ├─ Step 7: Visual Diagram                             (Figma iframe embed)
+  ├─ Step 8: Design Catalog — Phase [N]                 (one page per phase)
+  ├─ Step 10: User Stories Breakdown
+  └─ Step 10½: Timeline                                 (Figma embed + link to HTML Gantt)
+```
 
-If the Atlassian MCP is unavailable, applies Error Type 4: writes intended page content locally. Pipeline continues.
+**Per-artifact change detection.** Each artifact's source-file mtime is compared against the last published mtime in `_pipeline-state.json` → `confluence_hub.artifacts.[key].source_mtime`. Only artifacts whose source has changed are republished; unchanged artifacts are skipped (existing page version preserved). The parent hub is always updated to keep status fresh.
+
+**Legacy migration.** If a feature has the old `export_urls.confluence_page` (single-PRD model from pre-v2.3.0) but no `confluence_hub.parent_page_id`, the publish prompt offers a one-time migration: the legacy page is reparented under a new hub as "Step 3: PRD" (URL preserved so bookmarks keep working).
+
+If the Atlassian MCP is unavailable, applies Error Type 4: writes the entire hub-and-children content to a local fallback file as one markdown document with `## Page: [title]` separators. Pipeline continues.
 
 ### Synthesis
 
@@ -568,6 +602,23 @@ After all enabled agents finish, the orchestrator returns a single summary:
 If any of the three failed, the failure is reported but the others still succeed independently — there is no global rollback.
 
 Update `_pipeline-state.json` with the export results, including the Drive folder URL and Confluence page URL if they were enabled.
+
+### Step 12 — Export Conversation Transcript [AUTO]
+
+Read and follow: `ai-framework/08-export-transcript.md`.
+
+Runs automatically at the end of every pipeline. Reads the current Claude Code session's JSONL file (`~/.claude/projects/-Users-judydarvin/[session-uuid].jsonl`), filters to messages from this feature's pipeline window, and writes two markdown files:
+
+- `transcript/[feature-name]-transcript-clean.md` — user + assistant text only, the readable conversation.
+- `transcript/[feature-name]-transcript-full.md` — same conversation plus tool calls and (truncated) tool results, with system reminders and permission-mode events included.
+
+The model's `thinking` blocks are excluded from both files (private reasoning).
+
+If a prior transcript export exists for this feature, the older files are renamed with a timestamp suffix before the new ones are written — every run is preserved.
+
+To skip this step for a single pipeline run, the PM can say "skip transcript" at the end of Step 11. Standalone `/export-transcript` can be run any time afterward.
+
+Update `_pipeline-state.json` → `transcript` with `last_exported_at`, `session_id`, paths, window timestamps, and counts.
 
 ### Work Pipeline Complete
 
@@ -586,10 +637,17 @@ What was produced:
 - Visual diagram: ~/Desktop/Resources/PDLC Workflow Docs/[feature-name]/diagrams/[feature-name]-feature-diagram.md
 - Design catalog: ~/Desktop/Resources/PDLC Workflow Docs/[feature-name]/design/[feature-name]-phase-[N]-designs.md
 - User stories breakdown: ~/Desktop/Resources/PDLC Workflow Docs/[feature-name]/user-stories/[feature-name]-user-stories.md
+- Timeline (Gantt): ~/Desktop/Resources/PDLC Workflow Docs/[feature-name]/timeline/[feature-name]-timeline.html + .md sidecar
 - Jira tickets: [Epic URL or local fallback path]
 - Jira manifest: ~/Desktop/Resources/PDLC Workflow Docs/[feature-name]/jira-export/[feature-name]-jira-manifest.md
 - Google Drive folder: [Drive URL]   (if Drive sync was enabled)
-- Confluence page: [Confluence URL]    (if Confluence publishing was enabled)
+- Confluence hub + child pages: [hub URL]   (if Confluence publishing was enabled)
+- Conversation transcript: ~/Desktop/Resources/PDLC Workflow Docs/[feature-name]/transcript/[feature-name]-transcript-clean.md (+ -full.md companion)
+- Timing report: ~/Desktop/Resources/PDLC Workflow Docs/[feature-name]/timing/[feature-name]-timing.md
+
+Pipeline timing:
+  Wall-clock: [Xh Ym]   (start [time] → end [time])
+  Active work: [Xh Ym]   (excludes [Xh Ym] of gate-wait time)
 
 Next step:
 When the designer delivers Figma updates, run /compare-figma-prd to sync Figma with the PRD and Jira.
@@ -629,6 +687,8 @@ Write this file at the end of every step, overwriting the previous version:
 {
   "feature_name": "string",
   "pipeline": "Work",
+  "pipeline_started_at": "ISO-8601 UTC | null — set at Stage 0/Intake",
+  "pipeline_completed_at": "ISO-8601 UTC | null — set at final pipeline completion",
   "mode": "Fast | Gated",
   "current_phase": 1,
   "current_step": "string — step number and name, e.g. '3b — Technical Review'",
@@ -637,6 +697,30 @@ Write this file at the end of every step, overwriting the previous version:
     "gate_1": "Approved YYYY-MM-DD | Pending | N/A",
     "gate_2": "Approved YYYY-MM-DD | Pending | N/A",
     "gate_3": "Approved YYYY-MM-DD | Pending | N/A"
+  },
+  "step_timings": {
+    "research":               { "started_at": "ISO-8601|null", "completed_at": "ISO-8601|null", "duration_seconds": 0 },
+    "codebase_review":        { "started_at": "ISO-8601|null", "completed_at": "ISO-8601|null", "duration_seconds": 0 },
+    "create_prd":             { "started_at": "ISO-8601|null", "completed_at": "ISO-8601|null", "duration_seconds": 0 },
+    "dual_review":            { "started_at": "ISO-8601|null", "completed_at": "ISO-8601|null", "duration_seconds": 0 },
+    "apply_fixes_gate_1":     { "started_at": "ISO-8601|null", "completed_at": "ISO-8601|null", "duration_seconds": 0, "presented_at": "ISO-8601|null", "approved_at": "ISO-8601|null", "gate_wait_seconds": 0 },
+    "system_design":          { "started_at": "ISO-8601|null", "completed_at": "ISO-8601|null", "duration_seconds": 0 },
+    "visual_diagram":         { "started_at": "ISO-8601|null", "completed_at": "ISO-8601|null", "duration_seconds": 0 },
+    "design":                 { "started_at": "ISO-8601|null", "completed_at": "ISO-8601|null", "duration_seconds": 0 },
+    "update_prd_gate_2":      { "started_at": "ISO-8601|null", "completed_at": "ISO-8601|null", "duration_seconds": 0, "presented_at": "ISO-8601|null", "approved_at": "ISO-8601|null", "gate_wait_seconds": 0 },
+    "user_stories_gate_3":    { "started_at": "ISO-8601|null", "completed_at": "ISO-8601|null", "duration_seconds": 0, "presented_at": "ISO-8601|null", "approved_at": "ISO-8601|null", "gate_wait_seconds": 0 },
+    "timeline":               { "started_at": "ISO-8601|null", "completed_at": "ISO-8601|null", "duration_seconds": 0 },
+    "export":                 { "started_at": "ISO-8601|null", "completed_at": "ISO-8601|null", "duration_seconds": 0 },
+    "export_transcript":      { "started_at": "ISO-8601|null", "completed_at": "ISO-8601|null", "duration_seconds": 0 }
+  },
+  "timing_report": {
+    "last_generated_at": "ISO-8601 | null",
+    "wall_clock_seconds": 0,
+    "active_work_seconds": 0,
+    "total_gate_wait_seconds": 0,
+    "report_path": "string | null",
+    "instrumented_entries": 0,
+    "jsonl_inferred_entries": 0
   },
   "artifacts": {
     "research": { "path": "string | null", "size_bytes": 0 },
@@ -655,9 +739,30 @@ Write this file at the end of every step, overwriting the previous version:
   "export_urls": {
     "jira_epic": "string | null",
     "drive_folder": "string | null",
-    "confluence_page": "string | null — PRD page, created at Step 11c",
+    "confluence_hub": "string | null — parent hub URL, set at Step 11c (v2.3.0+)",
+    "confluence_page": "string | null — DEPRECATED: legacy single-PRD URL. v2.3.0+ also writes here pointing at the Step 3: PRD child page for backward-compat with anything still reading this field",
     "confluence_breakdown_page": "string | null — user stories breakdown page, created at Gate 3 share",
-    "figma_diagram_url": "string | null — FigJam diagram URL, null if Mermaid fallback was used"
+    "figma_diagram_url": "string | null — FigJam diagram URL, null if Mermaid fallback was used",
+    "figma_timeline_url": "string | null — FigJam timeline URL, null if Figma MCP unavailable at Step 10.5"
+  },
+  "confluence_hub": {
+    "space_id": "string | null",
+    "space_name": "string | null",
+    "parent_page_id": "string | null",
+    "parent_page_url": "string | null",
+    "last_published_at": "ISO-8601 | null",
+    "artifacts": {
+      "step_1_research":          { "page_id": "string|null", "page_url": "string|null", "source_path": "string", "source_mtime": "number|null", "last_published_at": "string|null" },
+      "step_2_codebase_review":   { "page_id": "string|null", "page_url": "string|null", "source_path": "string", "source_mtime": "number|null", "last_published_at": "string|null" },
+      "step_3_prd":               { "page_id": "string|null", "page_url": "string|null", "source_path": "string", "source_mtime": "number|null", "last_published_at": "string|null" },
+      "step_4a_product_review":   { "page_id": "string|null", "page_url": "string|null", "source_path": "string", "source_mtime": "number|null", "last_published_at": "string|null" },
+      "step_4b_technical_review": { "page_id": "string|null", "page_url": "string|null", "source_path": "string", "source_mtime": "number|null", "last_published_at": "string|null" },
+      "step_6_system_design":     { "page_id": "string|null", "page_url": "string|null", "source_path": "string", "source_mtime": "number|null", "last_published_at": "string|null" },
+      "step_7_visual_diagram":    { "page_id": "string|null", "page_url": "string|null", "source_path": "string", "source_mtime": "number|null", "last_published_at": "string|null" },
+      "step_8_design_catalog":    [{ "phase": 1, "page_id": "string|null", "page_url": "string|null", "source_path": "string", "source_mtime": "number|null", "last_published_at": "string|null" }],
+      "step_10_user_stories":     { "page_id": "string|null", "page_url": "string|null", "source_path": "string", "source_mtime": "number|null", "last_published_at": "string|null" },
+      "step_10_5_timeline":       { "page_id": "string|null", "page_url": "string|null", "source_path": "string", "source_mtime": "number|null", "last_published_at": "string|null" }
+    }
   },
   "open_conflicts": [],
   "review_requests": [
@@ -674,6 +779,18 @@ Write this file at the end of every step, overwriting the previous version:
       "edits_applied": 0
     }
   ],
+  "transcript": {
+    "last_exported_at": "ISO-8601 | null",
+    "session_id": "string | null — Claude Code session UUID",
+    "source_jsonl": "string | null — path to the session JSONL on disk",
+    "clean_path": "string | null",
+    "full_path": "string | null",
+    "window_start": "ISO-8601 | null",
+    "window_end": "ISO-8601 | null",
+    "message_count_user": 0,
+    "message_count_assistant": 0,
+    "tool_call_count": 0
+  },
   "last_updated": "YYYY-MM-DDTHH:MM:SSZ"
 }
 ```

@@ -177,7 +177,7 @@ The summary must include:
 
 If Google Drive was enabled for this feature when Step 11 originally ran, re-sync the changed files to Drive now. The Drive sync prompt (`ai-framework/07-drive-sync.md`) supports a surgical mode where it takes the list of changed paths and re-uploads only those — no full-folder walk.
 
-If Confluence was enabled and the PRD was among the changed artifacts, re-publish the Confluence page in place via `subprompts/prd-to-confluence.md` (uses `updateConfluencePage` so the URL stays the same — important for stakeholder bookmarks).
+If Confluence was enabled and any artifact was changed, re-publish the affected pages in place via `subprompts/publish-to-confluence.md` (uses per-file mtime detection to update only the changed child pages, preserving URLs — important for stakeholder bookmarks).
 
 If neither was enabled originally, skip this step.
 

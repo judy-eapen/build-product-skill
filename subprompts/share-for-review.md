@@ -28,37 +28,52 @@ this to the PM yet — wait until after composing the message.
 
 ## Step 1 — What to share
 
+Read `_pipeline-state.json` → `confluence_hub.artifacts` to see what's already published.
+
 Ask the PM:
 
 ```
 What do you want to share for review?
 
-1. PRD (the full product requirements doc)
-2. Design catalog (Phase N designs)
-3. User stories breakdown
-4. System design doc
-5. All of the above (separate Confluence links per artifact)
+1. The whole feature hub (recommended — reviewers see the full picture and can comment on any page)
+   → [Parent hub URL from confluence_hub.parent_page_url]
 
-Which? (number or name)
+2. One specific artifact:
+   [list each published child page from confluence_hub.artifacts, e.g.:]
+     a. Step 3: PRD                         — [child URL]
+     b. Step 8: Design Catalog — Phase 1    — [child URL]
+     c. Step 10: User Stories Breakdown     — [child URL]
+     d. Step 10½: Timeline                  — [child URL]
+
+3. Multiple artifacts (one Slack post per artifact)
+
+Which? (1, 2[letter], 3, or describe)
 ```
 
-For each selected artifact, check if a Confluence page already exists for it by reading
-`_pipeline-state.json` → `export_urls.confluence_page`.
+If the PM chose option 1 (whole hub), use the parent hub URL for the share. The Slack message will include just one link.
 
-If a Confluence page exists: use that URL.
+If the PM chose option 2 (one artifact), use that child page URL.
 
-If no Confluence page exists yet:
+If the PM chose option 3 (multiple), repeat the share request flow once per selected artifact.
+
+### If no hub exists yet
+
+If `confluence_hub.parent_page_id` is null (Confluence has never been published for this feature):
+
 ```
-No Confluence page found for [artifact]. Options:
-1. Publish it to Confluence now, then share (recommended)
-2. Share the local file path as a plain link (less useful for reviewers)
-3. Skip this artifact
+No Confluence pages found for this feature. Options:
+1. Publish everything to Confluence now, then share the hub URL (recommended)
+2. Share the local file paths as plain text (less useful for reviewers — they can't comment)
+3. Cancel
 
 Which? (1 / 2 / 3)
 ```
 
-If the PM chooses to publish: read and follow `subprompts/prd-to-confluence.md` for that
-artifact, then continue with the resulting URL.
+If the PM chooses to publish: read and follow `subprompts/publish-to-confluence.md`, then return here with the resulting hub URL.
+
+### Legacy single-PRD page
+
+If state has only `export_urls.confluence_page` (pre-v2.3.0 feature), treat that URL as the PRD page and offer to share it. Also suggest the PM run `/publish-to-confluence` to migrate to the hub model so reviewers can see research, reviews, designs, etc.
 
 ---
 
