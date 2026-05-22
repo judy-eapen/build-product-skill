@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>/build-product — Work Pipeline v2.7.0</title>
-  <!-- Version: 2.7.0 | Updated: 2026-05-22 | Update this line and the badge/changelog below on every release -->
+  <title>/build-product — Work Pipeline v2.8.0</title>
+  <!-- Version: 2.8.0 | Updated: 2026-05-22 | Update this line and the badge/changelog below on every release -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
@@ -494,7 +494,7 @@
   <header>
     <div class="header-top">
       <span class="cmd-title">/build-product</span>
-      <span class="version-badge">v2.7.0</span>
+      <span class="version-badge">v2.8.0</span>
     </div>
     <p class="header-sub">A Claude Code skill that takes a PM from feature idea → Jira Epic with all linked tickets. Research · Codebase review · PRD · Dual AI review · Design prompts · User stories · Jira export.</p>
     <div class="header-links">
@@ -721,7 +721,7 @@
             <span class="step-name">Export</span>
             <span class="badge parallel">Parallel</span>
           </div>
-          <p class="step-desc">Three parallel export agents. <strong>Jira (always):</strong> creates <strong>one Epic per multi-epic grouping</strong> (v2.4.0+) with each Epic's description scoped to its own stories; the PRD + breakdown files attach to every Epic. Then creates one ticket per user story with ADF user story, verbatim Gherkin AC, Testable field, FE/BE labels, sequence labels (seq-01…), size labels, and Relates-to linking for FE/BE pairs. DRAFT stories get a <code>draft</code> label for downstream queryability. Deduplication check prevents re-runs from creating duplicates. <strong>Drive (optional):</strong> mirrors the entire feature folder, generates a <code>_FEATURE_SUMMARY.md</code>. <strong>Confluence (optional, v2.3.0+):</strong> publishes the entire feature workspace as a parent hub page + one numbered child page per artifact (Research, Codebase Review, PRD, Product/Technical Review, System Design, Visual Diagram, Design Catalog per phase, User Stories, Timeline). Per-file mtime change detection — only re-publishes pages whose source actually changed.</p>
+          <p class="step-desc">Three parallel export agents. <strong>Jira (always):</strong> creates <strong>one Epic per multi-epic grouping</strong> (v2.4.0+) with each Epic's description scoped to its own stories; the PRD + breakdown files attach to every Epic. Then creates one ticket per user story with ADF user story, verbatim Gherkin AC, Testable field, FE/BE labels, sequence labels (seq-01…), size labels, and Relates-to linking for FE/BE pairs. DRAFT stories get a <code>draft</code> label for downstream queryability. Deduplication check prevents re-runs from creating duplicates. <strong>Drive (optional):</strong> mirrors the entire feature folder, generates a <code>_FEATURE_SUMMARY.md</code>. <strong>Confluence (optional, v2.8.0+):</strong> publishes the stakeholder-relevant artifacts as a parent hub page + numbered child pages: Research, Codebase Review, PRD, System Design, Visual Diagram, Design Catalog (per phase), <em>lightweight</em> User Stories index (links to each Jira Epic — no full Gherkin), and Timeline. Per-file mtime change detection. Product/Technical Reviews and the full Gherkin breakdown stay local.</p>
           <div class="step-meta">
             <div class="step-meta-item">🎫 Jira Epic + tickets</div>
             <div class="step-meta-item">📁 <code>jira-export/[feature]-jira-manifest.md</code></div>
@@ -826,7 +826,7 @@
       <div class="integration-card">
         <div class="integration-name">Confluence <span class="req-badge optional">Optional</span></div>
         <div class="integration-via">Atlassian MCP</div>
-        <div class="integration-use">Step 11c publishes feature hub + child page per artifact (Research, Codebase Review, PRD, Reviews, System Design, Diagram, Designs, User Stories, Timeline) with per-file mtime change detection. Used by /publish-to-confluence, /share-for-review, /read-feedback</div>
+        <div class="integration-use">Step 11c publishes feature hub + child pages for stakeholder-relevant artifacts (Research, Codebase Review, PRD, System Design, Visual Diagram, Design Catalog, lightweight User Stories index linking to Jira Epics, Timeline) with per-file mtime change detection. Product/Technical Reviews and the full Gherkin breakdown stay local (v2.8.0+). Used by /publish-to-confluence, /share-for-review, /read-feedback</div>
       </div>
       <div class="integration-card">
         <div class="integration-name">Google Drive <span class="req-badge optional">Optional</span></div>
@@ -875,6 +875,23 @@
   <section>
     <p class="section-title">Recent Changes</p>
     <div class="changelog-list">
+
+      <div class="changelog-item">
+        <div class="changelog-header">
+          <span class="changelog-version">v2.8.0</span>
+          <span class="changelog-date">2026-05-22</span>
+          <span class="changelog-major-badge">MINOR</span>
+        </div>
+        <div class="changelog-body">
+          <ul>
+            <li><strong>Confluence publish scope tightened.</strong> Three artifacts are no longer published as Confluence child pages: <code>Step 4a: Product Review</code> (internal, kept local), <code>Step 4b: Technical Review</code> (internal, kept local), and the <strong>full User Stories Breakdown</strong> with Gherkin AC (too large; already attached to each Jira Epic).</li>
+            <li><strong>Step 10 on Confluence is now a lightweight Jira-index page</strong> instead of the full breakdown. Per-Epic block with title, phase, theme, story count, Jira Epic URL, and story titles only (no Gherkin AC, no per-story detail). Composed from <code>_pipeline-state.json</code> → <code>user_stories.epics[]</code>. Stakeholders use it for navigation; the full detail lives in Jira.</li>
+            <li><strong>Parent hub page gains a "Kept local — not published" subsection</strong> listing the three excluded artifacts with their local paths, so stakeholders see they exist without being able to click through.</li>
+            <li><strong>Migration is gentle.</strong> Existing pre-v2.8.0 Confluence pages for the three excluded artifacts are <strong>not</strong> auto-deleted (bookmarks preserved). The first <code>/publish-to-confluence</code> after upgrading replaces the previously-published full User Stories Breakdown page (same URL, via <code>updateConfluencePage</code>) with the new lightweight Jira-index content. Legacy state entries (<code>step_4a_product_review</code> etc.) are silently ignored on subsequent runs.</li>
+          </ul>
+          <a class="changelog-link" href="https://github.com/judy-eapen/build-product-skill/blob/main/CHANGELOG.md" target="_blank">Full changelog →</a>
+        </div>
+      </div>
 
       <div class="changelog-item">
         <div class="changelog-header">

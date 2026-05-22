@@ -4,6 +4,39 @@ All notable changes are documented here. Follows [Semantic Versioning](https://s
 
 ---
 
+## v2.8.0 — 2026-05-22
+
+### Changed
+
+- **Confluence publish scope tightened.** Three artifacts are no longer published as their own Confluence child pages:
+  - **Step 4a: Product Review** — internal review artifact, kept local in `product-review/`.
+  - **Step 4b: Technical Review** — internal review artifact, kept local in `technical-review/`.
+  - **Full User Stories Breakdown** (with Gherkin AC) — too large for Confluence; the full doc lives at `user-stories/[feature]-user-stories.md` and is also attached to each Jira Epic.
+- **Step 10: User Stories is now a lightweight Jira-index page** instead of the full breakdown. The page contains:
+  - A brief explanation that the full breakdown is local + attached to each Jira Epic.
+  - One section per Epic with title, phase, theme, story count (FE/BE split), and Jira Epic URL.
+  - Story titles listed under each Epic (no Gherkin AC, no testing notes, no per-story detail).
+  - Composed from `_pipeline-state.json` → `user_stories.epics[]`, not from the breakdown file directly. The breakdown file's mtime is still used for change detection (so editing the breakdown triggers a re-publish of the index).
+- **Parent hub page gains a "Kept local — not published" subsection** listing the three excluded artifacts with their local paths, so stakeholders can see they exist without being able to click through.
+
+### Why this matters
+
+PMs in stakeholder meetings get the page that's actually useful — a navigable index of the work tracked in Jira — without Confluence being polluted with 50+ pages of Gherkin scenarios that stakeholders don't read. Internal review artifacts (Product/Technical Review) stay where they belong: in the local workspace and in the PRD's decision log when their findings ended up shaping the spec.
+
+### Migration
+
+- **Existing pre-v2.8.0 Confluence pages for the three excluded artifacts are NOT deleted automatically.** This preserves any stakeholder bookmarks. If you want to delete them after upgrading, do so manually in Confluence.
+- **Legacy state entries** (`confluence_hub.artifacts.step_4a_product_review` etc.) from pre-v2.8.0 runs are ignored on subsequent publishes — no errors, just skipped.
+- The first `/publish-to-confluence` run after upgrading will replace the previously-published full User Stories Breakdown page (at the same URL — `updateConfluencePage`) with the new lightweight Jira-index content. Page URL preserved; content reflects the new format.
+
+### Not changed
+
+- Per-file mtime change detection still works the same way (only changed pages re-publish).
+- Parent hub page format, the per-Epic publishes for multi-epic features, the Figma embeds for Visual Diagram and Timeline pages, the migration path for pre-v2.3.0 single-PRD pages — all unchanged.
+- The PRD attachment per-Epic in Jira is unchanged. Stakeholders who want the full Gherkin can open the Jira Epic and download the attached PRD + breakdown.
+
+---
+
 ## v2.7.0 — 2026-05-22
 
 ### Added

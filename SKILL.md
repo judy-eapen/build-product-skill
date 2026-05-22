@@ -605,21 +605,21 @@ Read and follow: `subprompts/publish-to-confluence.md` (callable as `/publish-to
 
 Inputs: Confluence space + (optional) parent location collected at pre-flight.
 
-**Publishes the entire feature workspace as a parent hub page + one numbered child page per artifact.** Hierarchy:
+**Publishes the entire feature workspace as a parent hub page + one numbered child page per artifact.** Hierarchy (v2.8.0+):
 
 ```
 [Feature Name]                                          ← parent hub
   ├─ Step 1: Research
   ├─ Step 2: Codebase Review
   ├─ Step 3: PRD
-  ├─ Step 4a: Product Review
-  ├─ Step 4b: Technical Review
   ├─ Step 6: System Design                              (only if generated)
   ├─ Step 7: Visual Diagram                             (Figma iframe embed)
   ├─ Step 8: Design Catalog — Phase [N]                 (one page per phase)
-  ├─ Step 10: User Stories Breakdown
+  ├─ Step 10: User Stories                              (lightweight — Jira Epic index, not full Gherkin)
   └─ Step 10½: Timeline                                 (Figma embed + link to HTML Gantt)
 ```
+
+**Intentionally NOT published (v2.8.0+):** Product Review (Step 4a), Technical Review (Step 4b), and the full User Stories Breakdown with Gherkin AC. These stay local. The Step 10 page in Confluence is a lightweight Jira-index instead — links to each Jira Epic with stories listed by title only.
 
 **Per-artifact change detection.** Each artifact's source-file mtime is compared against the last published mtime in `_pipeline-state.json` → `confluence_hub.artifacts.[key].source_mtime`. Only artifacts whose source has changed are republished; unchanged artifacts are skipped (existing page version preserved). The parent hub is always updated to keep status fresh.
 
@@ -853,15 +853,16 @@ Write this file at the end of every step, overwriting the previous version:
       "step_1_research":          { "page_id": "string|null", "page_url": "string|null", "source_path": "string", "source_mtime": "number|null", "last_published_at": "string|null" },
       "step_2_codebase_review":   { "page_id": "string|null", "page_url": "string|null", "source_path": "string", "source_mtime": "number|null", "last_published_at": "string|null" },
       "step_3_prd":               { "page_id": "string|null", "page_url": "string|null", "source_path": "string", "source_mtime": "number|null", "last_published_at": "string|null" },
-      "step_4a_product_review":   { "page_id": "string|null", "page_url": "string|null", "source_path": "string", "source_mtime": "number|null", "last_published_at": "string|null" },
-      "step_4b_technical_review": { "page_id": "string|null", "page_url": "string|null", "source_path": "string", "source_mtime": "number|null", "last_published_at": "string|null" },
       "step_6_system_design":     { "page_id": "string|null", "page_url": "string|null", "source_path": "string", "source_mtime": "number|null", "last_published_at": "string|null" },
       "step_7_visual_diagram":    { "page_id": "string|null", "page_url": "string|null", "source_path": "string", "source_mtime": "number|null", "last_published_at": "string|null" },
       "step_8_design_catalog":    [{ "phase": 1, "page_id": "string|null", "page_url": "string|null", "source_path": "string", "source_mtime": "number|null", "last_published_at": "string|null" }],
-      "step_10_user_stories":     { "page_id": "string|null", "page_url": "string|null", "source_path": "string", "source_mtime": "number|null", "last_published_at": "string|null" },
+      "step_10_user_stories":     { "page_id": "string|null", "page_url": "string|null", "source_path": "string", "source_mtime": "number|null", "last_published_at": "string|null", "format": "lightweight-jira-index (v2.8.0+)" },
       "step_10_5_timeline":       { "page_id": "string|null", "page_url": "string|null", "source_path": "string", "source_mtime": "number|null", "last_published_at": "string|null" }
     }
   },
+  // NOTE (v2.8.0+): step_4a_product_review and step_4b_technical_review are no longer in this schema —
+  // these artifacts are kept local and not mirrored to Confluence. Legacy state entries from pre-v2.8.0
+  // runs are ignored on subsequent publishes (existing pages preserved, not updated, not deleted).
   "open_conflicts": [],
   "review_requests": [
     {

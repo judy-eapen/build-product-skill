@@ -1,7 +1,13 @@
-v2.7.0 — 2026-05-22
+v2.8.0 — 2026-05-22
 
-New `/pipeline-doctor` diagnostic command. Scans the skill itself (every step in `pipeline-configs.yaml` has matching prose in `SKILL.md` + `subprompts/build-product.md`; every quality_check is defined; every instruction file exists; every step block has an explicit "Next:" handoff), feature workspaces (state-file schema, artifact-path existence on disk, gate-state coherence, DRAFT/epic/Confluence cross-checks), slash command coverage, and stale features. Read-only by default; per-finding fix approval; writes a timestamped report.
+Confluence publish scope tightened. Three artifacts are no longer published as Confluence child pages:
 
-The class of bug it catches: orchestrator drift where new steps land in `pipeline-configs.yaml` but never get added to `subprompts/build-product.md` — exactly the failure mode that caused the v2.2.0 Step 10.5 / v2.3.0 Step 12 silent stall.
+- Step 4a: Product Review — internal artifact, kept local.
+- Step 4b: Technical Review — internal artifact, kept local.
+- Full User Stories Breakdown with Gherkin AC — too large for Confluence; already attached to each Jira Epic.
+
+Step 10 on Confluence is now a lightweight Jira-index page instead of the full breakdown: per-Epic block with title, theme, story count, Jira Epic URL, and story titles only (no Gherkin AC). Stakeholders use it for navigation; the full detail lives in Jira.
+
+Existing pages from pre-v2.8.0 publishes are NOT auto-deleted (bookmarks preserved). Legacy state entries are gracefully ignored.
 
 See CHANGELOG.md for full version history.

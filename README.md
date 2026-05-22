@@ -35,7 +35,7 @@ Full setup instructions are in [GETTING-STARTED.md](./GETTING-STARTED.md).
 | User Stories Breakdown with Gherkin AC, FE/BE pairs, sizing | Your computer |
 | Gantt timeline (Figma FigJam + interactive HTML) at Epic + Phase level | Figma + your computer |
 | Jira Epic + Stories with labels, links, and custom fields | Your team's Jira |
-| Optional: Confluence feature hub with a numbered child page per artifact (Research, Codebase Review, PRD, Product/Technical Review, System Design, Visual Diagram, Design Catalog per phase, User Stories, Timeline) | Your team's Confluence |
+| Optional: Confluence feature hub with a numbered child page per artifact — Research, Codebase Review, PRD, System Design, Visual Diagram, Design Catalog per phase, Timeline, plus a lightweight User Stories page that links to each Jira Epic. Product/Technical Reviews and the full Gherkin breakdown stay local. | Your team's Confluence |
 | Optional: Google Drive folder mirroring everything | Your team's Drive |
 | Conversation transcript — clean reading version + full forensic version of every message you sent and reply you got during the pipeline run | Your computer |
 | Pipeline timing report — wall-clock total, active-work total, per-step breakdown, per-gate wait time | Your computer |
@@ -104,7 +104,7 @@ To see what changed in this update, check [CHANGELOG.md](./CHANGELOG.md).
 | Integration | MCP | Used for |
 |-------------|-----|----------|
 | **Jira** | Atlassian MCP | Step 11a — ticket creation (required for the export step) |
-| **Confluence** | Atlassian MCP | Step 11c (publishes feature hub + child page per artifact, per-file mtime change detection), `/publish-to-confluence`, `/read-feedback` |
+| **Confluence** | Atlassian MCP | Step 11c (publishes feature hub + child page per stakeholder-relevant artifact, with per-file mtime change detection. v2.8.0+: Product/Technical Reviews and the full Gherkin breakdown are kept local; the Step 10 page is a lightweight Jira Epic index instead), `/publish-to-confluence`, `/read-feedback` |
 | **Google Drive** | Drive MCP | Step 11b, `/drive-sync` |
 | **Figma** | Figma MCP | Step 7 — FigJam diagram generation |
 | **Slack** | Slack MCP | `/share-for-review` — post review links with reviewers tagged |
@@ -222,7 +222,7 @@ As of v2.1.0, Jira conventions (labels, title format, BE/FE split, custom field 
 
 ## Version
 
-**v2.7.0** — New **`/pipeline-doctor`** diagnostic command. Scans the skill itself (every step in `pipeline-configs.yaml` has matching prose in `SKILL.md` and `subprompts/build-product.md`; every quality check defined; every instruction file exists), feature workspaces (state-file schema, artifact-path existence, gate-state coherence, DRAFT/epic/Confluence cross-checks), slash command coverage, and stale features (>30 days without completion). Read-only by default; per-finding fix approval; writes a timestamped report. The kind of check that catches "the orchestrator silently doesn't know about Step 10.5" bugs before they cause stalls. See [CHANGELOG.md](./CHANGELOG.md) for full version history.
+**v2.8.0** — **Confluence publish scope tightened.** Product Review (Step 4a), Technical Review (Step 4b), and the full Gherkin User Stories Breakdown are no longer published to Confluence — they're internal/too-large artifacts that stay local. The Step 10 page is now a **lightweight Jira Epic index** instead of the full breakdown: per-Epic block with title, theme, story count, Jira Epic URL, and story titles only (no Gherkin AC). Stakeholders use this page for navigation; the full detail lives in Jira and in the local breakdown attached to each Epic. See [CHANGELOG.md](./CHANGELOG.md) for full version history.
 
 ## License
 

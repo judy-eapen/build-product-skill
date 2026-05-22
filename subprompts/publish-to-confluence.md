@@ -15,14 +15,16 @@ Read `ai-framework/rules.md` and `ai-framework/error-handling.md` before executi
   ├─ Step 1: Research
   ├─ Step 2: Codebase Review
   ├─ Step 3: PRD
-  ├─ Step 4a: Product Review
-  ├─ Step 4b: Technical Review
   ├─ Step 6: System Design                              (only if generated)
   ├─ Step 7: Visual Diagram                             (Figma iframe embed)
   ├─ Step 8: Design Catalog — Phase [N]                 (one page per phase)
-  ├─ Step 10: User Stories Breakdown
+  ├─ Step 10: User Stories                              (lightweight — Jira Epic index, not full breakdown)
   └─ Step 10½: Timeline                                 (Figma embed + link to HTML Gantt)
 ```
+
+**Intentionally excluded from Confluence (v2.8.0):**
+- **Step 4a: Product Review** and **Step 4b: Technical Review** — internal review artifacts. Kept local in `product-review/` and `technical-review/`, referenced in the PRD's decision log when relevant.
+- **Full User Stories Breakdown** (`user-stories/[feature]-user-stories.md`) — too large for Confluence and duplicates what's already in Jira. Replaced by a lightweight Step 10 page with Jira Epic links and story titles only (no Gherkin AC).
 
 Steps 5, 9, 11 do not get pages — they are gate-application / export steps that update the PRD in place or push to Jira. The PRD page (Step 3) reflects all post-gate updates.
 
@@ -51,15 +53,15 @@ Read `_pipeline-state.json` and the feature workspace folder to determine which 
 | Step 1: Research | `research/[feature]-research.md` | `Step 1: Research` | File exists |
 | Step 2: Codebase Review | `codebase-review/[feature]-codebase-review.md` | `Step 2: Codebase Review` | File exists |
 | Step 3: PRD | `prd/[feature]-prd.md` | `Step 3: PRD` | File exists |
-| Step 4a: Product Review | `product-review/[feature]-product-review.md` | `Step 4a: Product Review` | File exists |
-| Step 4b: Technical Review | `technical-review/[feature]-technical-review.md` | `Step 4b: Technical Review` | File exists |
 | Step 6: System Design | `technical-review/[feature]-system-design.md` | `Step 6: System Design` | File exists |
 | Step 7: Visual Diagram | `diagrams/[feature]-feature-diagram.md` | `Step 7: Visual Diagram` | File exists |
 | Step 8: Design Catalog — Phase N | `design/[feature]-phase-[N]-designs.md` | `Step 8: Design Catalog — Phase [N]` | File exists (one page per phase file) |
-| Step 10: User Stories Breakdown | `user-stories/[feature]-user-stories.md` | `Step 10: User Stories Breakdown` | File exists |
+| Step 10: User Stories (Jira index) | `user-stories/[feature]-user-stories.md` *(mtime source — page content is composed from `user_stories.epics[]` in state, not from the breakdown file itself)* | `Step 10: User Stories` | `user_stories.epics[]` in state has at least one entry |
 | Step 10½: Timeline | `timeline/[feature]-timeline.md` | `Step 10½: Timeline` | File exists |
 
 Skip any artifact whose source file is missing. Note skipped artifacts on the hub page with a `⏸ Not yet generated` status so the hub remains accurate.
+
+**Step 4a (Product Review) and Step 4b (Technical Review) are excluded entirely** — these internal artifacts stay local. On the hub page, list them under a "Kept local — not published" subsection with their local file paths so stakeholders know they exist, with a one-line "Internal review artifact" explanation.
 
 ### Per-artifact change detection
 
@@ -78,18 +80,21 @@ Build a publish plan and present it to the PM before any API calls:
 Parent hub:    [Existing URL] (will update) | [New page — will be created]
 
 Artifacts:
-  Step 1:  Research                  → unchanged · skip
-  Step 2:  Codebase Review           → changed · update
-  Step 3:  PRD                       → changed · update
-  Step 4a: Product Review            → unchanged · skip
-  Step 4b: Technical Review          → unchanged · skip
-  Step 6:  System Design             → not generated · skip
-  Step 7:  Visual Diagram            → new · create
-  Step 8:  Design Catalog — Phase 1  → unchanged · skip
-  Step 10: User Stories Breakdown    → new · create
-  Step 10½: Timeline                 → new · create
+  Step 1:   Research                  → unchanged · skip
+  Step 2:   Codebase Review           → changed · update
+  Step 3:   PRD                       → changed · update
+  Step 6:   System Design             → not generated · skip
+  Step 7:   Visual Diagram            → new · create
+  Step 8:   Design Catalog — Phase 1  → unchanged · skip
+  Step 10:  User Stories (Jira index) → new · create
+  Step 10½: Timeline                  → new · create
 
-Total: 4 page operations (4 create/update, 6 skipped)
+Total: 4 page operations (4 create/update, 4 skipped)
+
+Kept local (not published):
+  Step 4a: Product Review
+  Step 4b: Technical Review
+  Full User Stories Breakdown (Gherkin AC — kept local + attached to Jira Epics)
 
 Proceed? (yes / no / show diff for one of these)
 ```
@@ -165,13 +170,19 @@ For each artifact in the publish plan that is **create** or **update**, compose 
 | 1 | [Step 1: Research](child-url) | ✅ Published [date] |
 | 2 | [Step 2: Codebase Review](child-url) | ✅ Published [date] |
 | 3 | [Step 3: PRD](child-url) | ✅ Published [date] |
-| 4a | [Step 4a: Product Review](child-url) | ✅ Published [date] |
-| 4b | [Step 4b: Technical Review](child-url) | ✅ Published [date] |
-| 6 | Step 6: System Design | ⏸ Not generated for this feature |
+| 6 | [Step 6: System Design](child-url) | ✅ Published [date] *(or: ⏸ Not generated for this feature)* |
 | 7 | [Step 7: Visual Diagram](child-url) | ✅ Published [date] |
 | 8 | [Step 8: Design Catalog — Phase 1](child-url) | ✅ Published [date] |
-| 10 | [Step 10: User Stories Breakdown](child-url) | ✅ Published [date] |
+| 10 | [Step 10: User Stories](child-url) | ✅ Published [date] · Lightweight — links to Jira Epics |
 | 10½ | [Step 10½: Timeline](child-url) | ✅ Published [date] |
+
+## Kept local — not published to Confluence
+
+These artifacts exist on disk but are intentionally not mirrored here:
+
+- **Step 4a: Product Review** — internal review artifact. Local: `product-review/[feature]-product-review.md`
+- **Step 4b: Technical Review** — internal review artifact. Local: `technical-review/[feature]-technical-review.md`
+- **Full User Stories Breakdown** (with Gherkin AC) — too large for Confluence; the full doc lives at `user-stories/[feature]-user-stories.md` and is also attached to each Jira Epic. The lightweight Step 10 page above provides Jira Epic navigation.
 
 ## Decision log
 [From PRD Section 10 — locked decisions only, most recent first.]
@@ -254,17 +265,9 @@ The PRD page keeps the existing PRD-page structure but adds the breadcrumb at th
 [PRD Section 11]
 ```
 
-### Step 4a: Product Review / Step 4b: Technical Review
+### Step 4a / 4b: Reviews — not published
 
-```markdown
-# Step 4a: Product Review — [Feature Name]
-*(or "Step 4b: Technical Review")*
-
-**Source:** `product-review/[feature]-product-review.md`
-**Pipeline:** [← Step 3: PRD] · [↑ Parent hub] · [Next: Step 4b: Technical Review →]
-
-[Full content of the review document.]
-```
+**Skip.** Product Review and Technical Review are internal artifacts kept local in `product-review/` and `technical-review/`. They do not get Confluence pages. The PRD's decision log surfaces any review findings that ended up locked into the spec — that's the stakeholder-facing record.
 
 ### Step 6: System Design
 
@@ -272,7 +275,7 @@ The PRD page keeps the existing PRD-page structure but adds the breadcrumb at th
 # Step 6: System Design — [Feature Name]
 
 **Source:** `technical-review/[feature]-system-design.md`
-**Pipeline:** [← Step 4b: Technical Review] · [↑ Parent hub] · [Next: Step 7: Visual Diagram →]
+**Pipeline:** [← Step 3: PRD] · [↑ Parent hub] · [Next: Step 7: Visual Diagram →]
 
 [Full content.]
 ```
@@ -297,16 +300,63 @@ The PRD page keeps the existing PRD-page structure but adds the breadcrumb at th
 
 For every file matching `design/[feature]-phase-*-designs.md`, create or update a page titled `Step 8: Design Catalog — Phase [N]`. Same breadcrumb pattern.
 
-### Step 10: User Stories Breakdown
+### Step 10: User Stories (lightweight Jira-index page)
+
+This page replaces the full Gherkin breakdown for Confluence. The full breakdown is kept local (too large) and attached to each Jira Epic. This page is a navigation index that points stakeholders at the right Epic for any story they want to dig into.
+
+**Compose from `_pipeline-state.json` → `user_stories.epics[]`** (not from the breakdown file itself). Each Epic in state should already have a `jira_key` populated by Step 11a Jira Export. If `jira_key` is missing for any Epic (Jira export hasn't run yet, or that Epic's creation failed), label that Epic "(Jira creation pending)" instead of linking.
 
 ```markdown
-# Step 10: User Stories Breakdown — [Feature Name]
+# Step 10: User Stories — [Feature Name]
 
-**Source:** `user-stories/[feature]-user-stories.md`
+**Source of truth:** Jira Epics (linked below) and the local breakdown at
+`user-stories/[feature]-user-stories.md` (kept local — too large for Confluence).
 **Pipeline:** [← Step 8: Design Catalog] · [↑ Parent hub] · [Next: Step 10½: Timeline →]
 
-[Full content — Build Sequence Map, per-story sections, traceability appendix.]
+User stories for this feature are tracked in Jira, one ticket per story under the
+appropriate Epic. This page is a navigation index — it links to each Jira Epic and
+lists the stories under it. The full Gherkin acceptance criteria, testing notes,
+and per-story detail live in the Jira tickets and in the local breakdown file
+(attached to each Jira Epic).
+
+## Epics
+
+### Epic 1: [title]
+- **Phase:** [N]
+- **Theme:** [one-line theme from user_stories.epics[].theme]
+- **Stories:** [N] total ([N] FE, [N] BE)
+- **Jira Epic:** [JIRA-KEY](Jira-URL) *(or "(Jira creation pending)" if jira_key not set)*
+
+Stories under this Epic:
+- US-1.1 [FE] [story title]
+- US-1.2 [BE] [story title]
+- US-1.3 [FE] [story title]
+
+### Epic 2: [title]
+- **Phase:** [N]
+- **Theme:** [...]
+- **Stories:** [N] total ([N] FE, [N] BE)
+- **Jira Epic:** [JIRA-KEY](Jira-URL)
+
+Stories under this Epic:
+- US-2.1 [FE] [story title]
+- ...
+
+[Repeat per Epic in user_stories.epics[].]
+
+## Notes
+
+- For full acceptance criteria, testing notes, and per-story detail, open the
+  Jira ticket for that story or open the local breakdown file.
+- This page does NOT list Gherkin scenarios — intentional. Gherkin AC is the
+  reading-mode artifact for engineers/QA in Jira; Confluence stakeholders use
+  this page for navigation only.
+- If the breakdown is updated (`/change-mode`, `/user-stories`, or
+  `/change-mode` → "Designs arrived"), this page is re-published automatically
+  based on the breakdown file's mtime.
 ```
+
+**Source mtime for this page:** use the breakdown file's mtime (`user-stories/[feature]-user-stories.md`) as the source-of-change indicator — when the breakdown changes (new stories, refreshed DRAFT stories, etc.), this page should re-publish so the index reflects the new structure.
 
 ### Step 10½: Timeline
 
@@ -368,19 +418,19 @@ Write to `_pipeline-state.json`:
     "step_1_research":          { "page_id": "...", "page_url": "...", "source_path": "research/...", "source_mtime": 1700000000.0, "last_published_at": "..." },
     "step_2_codebase_review":   { "page_id": "...", "page_url": "...", "source_path": "...", "source_mtime": ..., "last_published_at": "..." },
     "step_3_prd":               { ... },
-    "step_4a_product_review":   { ... },
-    "step_4b_technical_review": { ... },
     "step_6_system_design":     { ... },
     "step_7_visual_diagram":    { ... },
     "step_8_design_catalog": [
       { "phase": 1, "page_id": "...", "page_url": "...", "source_path": "design/[feature]-phase-1-designs.md", "source_mtime": ..., "last_published_at": "..." },
       { "phase": 2, "page_id": "...", "page_url": "...", "source_path": "design/[feature]-phase-2-designs.md", "source_mtime": ..., "last_published_at": "..." }
     ],
-    "step_10_user_stories":     { ... },
+    "step_10_user_stories":     { "page_id": "...", "page_url": "...", "source_path": "user-stories/[feature]-user-stories.md", "source_mtime": ..., "last_published_at": "...", "format": "lightweight-jira-index" },
     "step_10_5_timeline":       { ... }
   }
 }
 ```
+
+**Note (v2.8.0+):** `step_4a_product_review` and `step_4b_technical_review` are no longer published. If they appear in legacy state files from a pre-v2.8.0 pipeline run, the entries are ignored on subsequent runs — the corresponding Confluence pages are **not** deleted automatically (preserving stakeholder bookmarks). If you want to delete the prior review pages from Confluence after upgrading, do so manually in Confluence. The hub's "Kept local — not published" section will note that the reviews are no longer mirrored.
 
 For unchanged-and-skipped artifacts, do **not** touch their existing entry in state — leave the prior `source_mtime` and `last_published_at` intact.
 
