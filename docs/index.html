@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>/build-product — Work Pipeline v2.9.0</title>
-  <!-- Version: 2.9.0 | Updated: 2026-05-22 | Update this line and the badge/changelog below on every release -->
+  <title>/build-product — Work Pipeline v2.10.0</title>
+  <!-- Version: 2.10.0 | Updated: 2026-05-22 | Update this line and the badge/changelog below on every release -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
@@ -494,7 +494,7 @@
   <header>
     <div class="header-top">
       <span class="cmd-title">/build-product</span>
-      <span class="version-badge">v2.9.0</span>
+      <span class="version-badge">v2.10.0</span>
     </div>
     <p class="header-sub">A Claude Code skill that takes a PM from feature idea → Jira Epic with all linked tickets. Research · Codebase review · PRD · Dual AI review · Design prompts · User stories · Jira export.</p>
     <div class="header-links">
@@ -687,7 +687,7 @@
             <span class="badge gate">Gate</span>
           </div>
           <div class="gate-banner">⏸ Pipeline pauses here. <span>Review the breakdown. Once approved, Jira tickets are created.</span></div>
-          <p class="step-desc">Generates exhaustive Gherkin acceptance criteria, FE/BE story pairing, testing notes, and a Build Sequence Map. <strong>Multi-epic grouping (v2.4.0+):</strong> proposes an Epic split (one per PRD phase by default, sub-epics for functional clusters); PM accepts or adjusts before stories are composed. <strong>DRAFT mode (v2.4.0+):</strong> if designs aren't finalized yet, the PM can write stories from the PRD alone — design-dependent stories tagged <code>Status: DRAFT — needs design</code>, sized with <code>*</code>, exempt from UX state coverage at Gate 3, labeled <code>draft</code> in Jira. 9 automated quality checks at Gate 3.</p>
+          <p class="step-desc">Generates exhaustive Gherkin acceptance criteria, FE/BE story pairing, testing notes, and a Build Sequence Map. <strong>Multi-epic grouping (v2.4.0+):</strong> proposes an Epic split (one per PRD phase by default, sub-epics for functional clusters); PM accepts or adjusts before stories are composed. <strong>Wave sequencing (v2.10.0+):</strong> computes a Wave assignment for every story via topological sort on dependencies — waves group stories that can ship in parallel; Wave Summary section lists what ships together; <strong>cycles in the dependency graph are CRITICAL findings</strong>, refuse to advance until PM resolves. <strong>DRAFT mode (v2.4.0+):</strong> if designs aren't finalized yet, the PM can write stories from the PRD alone — design-dependent stories tagged <code>Status: DRAFT — needs design</code>, sized with <code>*</code>, exempt from UX state coverage at Gate 3, labeled <code>draft</code> in Jira. 11 automated quality checks at Gate 3.</p>
           <p class="step-desc" style="margin-top:6px;"><strong>Optional after approval:</strong> publish breakdown to Confluence + share in Slack for engineering sizing review before Jira tickets are created.</p>
           <p class="step-desc" style="margin-top:6px;"><strong>DRAFT refresh:</strong> when designs land later, <code>/change-mode</code> → "Designs arrived" walks through every DRAFT story with the new designs, refreshes AC + sizing + UX coverage, and updates the Jira tickets in place (removes the <code>draft</code> label).</p>
           <div class="step-meta">
@@ -877,6 +877,24 @@
   <section>
     <p class="section-title">Recent Changes</p>
     <div class="changelog-list">
+
+      <div class="changelog-item">
+        <div class="changelog-header">
+          <span class="changelog-version">v2.10.0</span>
+          <span class="changelog-date">2026-05-22</span>
+          <span class="changelog-major-badge">MINOR</span>
+        </div>
+        <div class="changelog-body">
+          <ul>
+            <li><strong>Wave sequencing in the User Stories Breakdown.</strong> New <strong>Step 2.5 — Wave Sequencing</strong> in <code>ai-framework/06-user-stories.md</code> computes a Wave assignment for every story via topological sort on the <code>Depends On</code> column. Wave 1 = stories with no dependencies; Wave N = stories whose dependencies are all in Waves 1..N-1. Global numbering (W1, W2, ... W[N]) — not reset per phase or epic.</li>
+            <li><strong>Cycles in the dependency graph are CRITICAL findings.</strong> The step detects cycles and refuses to advance Gate 3 until the PM resolves. Catches the class of bug where engineering can never start because every starting point depends on something else.</li>
+            <li><strong>Build Sequence Map gains a Wave column</strong> (between Phase and Depends On). FE/BE pairs in the Related To column are NOT treated as hard dependencies by default — pairs commonly land in the same wave.</li>
+            <li><strong>New Wave Summary section</strong> in the breakdown file lists what ships in each wave (theme + story_ids), with explicit annotations for the <em>critical convergence wave</em> (unlocks a large downstream block) and the <em>launch gate wave</em> (last before release).</li>
+            <li>State schema adds <code>user_stories.waves[]</code>. Two new Gate 3 quality checks: <code>every_story_has_wave</code> and <code>dependency_graph_acyclic</code>. Closes the loop with <code>/validate-user-stories</code> Check 7 (which already expected waves to exist).</li>
+          </ul>
+          <a class="changelog-link" href="https://github.com/judy-eapen/build-product-skill/blob/main/CHANGELOG.md" target="_blank">Full changelog →</a>
+        </div>
+      </div>
 
       <div class="changelog-item">
         <div class="changelog-header">

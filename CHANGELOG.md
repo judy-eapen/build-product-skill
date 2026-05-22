@@ -4,6 +4,36 @@ All notable changes are documented here. Follows [Semantic Versioning](https://s
 
 ---
 
+## v2.10.0 — 2026-05-22
+
+### Added
+
+- **Wave sequencing in the User Stories Breakdown.** `ai-framework/06-user-stories.md` gains a new **Step 2.5 — Wave Sequencing** between Step 2 (Build Sequence Map) and Step 3 (Per-story sections). The step:
+  - **Computes a Wave assignment** for every story via topological sort on the `Depends On` column. Wave 1 = stories with no dependencies; Wave N = stories whose dependencies are all in Waves 1..N-1.
+  - **Wave numbering is global** (W1, W2, ... W[N]) — not reset per phase or epic. Phase ordering is respected as an implicit constraint.
+  - **FE/BE pairs are NOT treated as hard dependencies** by default (they commonly land in the same wave). Pair links live in the `Related To` column, not `Depends On`. Override only when an AC explicitly requires the BE deployed before the FE.
+  - **Cycle detection**: if the dependency graph contains a cycle, the step surfaces it as a CRITICAL Gate 3 finding with the US-IDs in the cycle, and refuses to advance until the PM resolves.
+- **Build Sequence Map gains a Wave column.** Column order: `US-ID | Title | Type | Epic | Phase | Wave | Depends On | Related To | Size | DRAFT?`.
+- **New Wave Summary section** in the breakdown file — one row per wave with theme, story_ids, and annotations for the **critical convergence wave** (a wave whose completion unlocks a large downstream block) and the **launch gate wave** (the last wave before release).
+- **State schema adds `user_stories.waves[]`** — one entry per wave with `wave`, `theme`, `story_ids[]`, `critical_convergence`, `launch_gate` flags.
+- **Two new Gate 3 quality checks** added to `pipeline-configs.yaml`:
+  - `every_story_has_wave` (WARNING) — every story must have a wave assignment.
+  - `dependency_graph_acyclic` (CRITICAL when a cycle is found) — flags cycles with the US-IDs involved.
+
+### Why this matters
+
+`/validate-user-stories` Check 7 ("Wave / dependency sanity") was added in v2.9.0 expecting waves to exist — but the creation step (`/user-stories`) didn't actually produce them. PMs (like Judy on nestfully-ai) had been adding waves manually. v2.10.0 closes that loop: waves are computed automatically, persisted to state, and validated at Gate 3 + by `/validate-user-stories`.
+
+The cycle-detection check is the most impactful piece. Cycles in the dependency graph are real bugs — they mean engineering can never start because every starting point depends on something else. Catching them at Gate 3 (before Jira export) saves a sprint of confusion.
+
+### Not changed
+
+- Existing user_stories.epics[] and user_stories.draft_stories[] schemas unchanged.
+- Existing Gate 3 quality checks unchanged — wave checks are additive.
+- `/timeline` (Step 10.5) doesn't yet read waves explicitly (it operates at Epic + Phase granularity). Future work could surface waves on the Gantt as a finer-grained view; out of scope for this release.
+
+---
+
 ## v2.9.0 — 2026-05-22
 
 ### Added

@@ -190,24 +190,90 @@ Record the final grouping for later use in Step 2 (Sequence Map column) and Step
 
 ## Step 2 — Build the Sequence Map
 
-Produce a single table covering every story:
+Produce a single table covering every story. The `Wave` column is computed in **Step 2.5** below — leave it blank in this initial pass; Step 2.5 fills it in.
 
-| US-ID | Title | Type | Epic | Phase | Depends On | Related To | Size | DRAFT? |
-|---|---|---|---|---|---|---|---|---|
-| US-1.1 | View saved searches | FE | Epic 1 | 1 | US-1.2 | US-1.2 (BE pair) | M* | DRAFT |
-| US-1.2 | Saved searches endpoint | BE | Epic 1 | 1 | — | US-1.1 (FE pair) | S | — |
-| ... | ... | ... | ... | ... | ... | ... | ... | ... |
+| US-ID | Title | Type | Epic | Phase | Wave | Depends On | Related To | Size | DRAFT? |
+|---|---|---|---|---|---|---|---|---|---|
+| US-1.1 | View saved searches | FE | Epic 1 | 1 | W3 | US-1.2 | US-1.2 (BE pair) | M* | DRAFT |
+| US-1.2 | Saved searches endpoint | BE | Epic 1 | 1 | W1 | — | US-1.1 (FE pair) | S | — |
+| ... | ... | ... | ... | ... | ... | ... | ... | ... | ... |
 
 Rules for the table:
 - **Epic**: name from Step 1.5. Critical for downstream Jira export — every story must have an Epic assigned.
+- **Wave**: computed in Step 2.5 (topological sort on `Depends On`). Format `W1`, `W2`, ... `W[N]`. Global numbering across the whole feature, not reset per phase or epic.
 - **Depends On**: hard prerequisites. List the US-IDs of stories that must ship before this one can start. Use `—` for none.
-- **Related To**: soft links, especially the FE/BE counterpart for the same feature. List the US-IDs.
+- **Related To**: soft links, especially the FE/BE counterpart for the same feature. List the US-IDs. FE/BE pair links here do NOT count as dependencies — pair siblings often ship in the same wave.
 - **Size**: S (less than a day), M (one to three days), L (more than three days or significant unknowns). If a story would be larger than L, mark `L+` and propose a split in the per-story section. **In DRAFT mode**, append `*` to indicate design-driven uncertainty (e.g., `M*`).
 - **DRAFT?**: in full mode, this column is omitted. In DRAFT or MIXED mode, mark `DRAFT` for stories awaiting design refresh, or `—` for stories complete as-is.
 
-Below the table, produce a one-paragraph **build-order summary** a PM could read aloud in sprint planning:
+Below the table, produce a one-paragraph **build-order summary** a PM could read aloud in sprint planning. (After Step 2.5 runs, the summary should reference wave numbers, not loose ordering.)
 
-> "Start with US-1.2 BE and US-1.1 FE in parallel (linked pair). Once US-1.2 is deployed, US-2.1 and US-2.2 can begin. Final block is US-3.1 + US-3.2 which depend on the auth changes in Phase 2."
+> "Wave 1 (foundation) ships US-1.2 BE auth and US-1.5 BE schema in parallel. Once W1 is done, Wave 2 unlocks US-2.1 + US-2.2. Critical convergence at Wave 6 — everything in W7+ depends on it. Launch gate at Wave [N]."
+
+---
+
+## Step 2.5 — Wave Sequencing
+
+Compute a **wave assignment** for every story via topological sort on the `Depends On` column. Waves group stories that can ship in parallel; later waves depend on earlier ones.
+
+### Algorithm
+
+1. **Initialize** an empty assignment `wave[us_id]` for every story.
+2. **Wave 1** = every story whose `Depends On` is `—` (no hard prerequisites). Set `wave[us_id] = 1` for each.
+3. **Wave N** (for N = 2, 3, ...): every story whose `Depends On` US-IDs are all already assigned to waves `1..N-1`. Set `wave[us_id] = N` for each.
+4. **Repeat** until every story has a wave.
+5. **Cycle detection**: if at any pass no new story can be assigned (all remaining stories depend on each other or on unassigned stories), the dependency graph contains a cycle. Stop. Report which US-IDs are in the cycle and flag for PM resolution before continuing. Cycles are real bugs — surface them, don't paper over.
+
+### Phase ordering constraint
+
+A story's wave assignment is the **max** of:
+- The wave computed from its dependencies (above), AND
+- (Phase × 1.5)-rounded-up if the PRD's Phased Plan strictly orders the phases. (E.g., if Phase 2 cannot start until Phase 1 fully ships, the earliest Phase 2 wave is `(last Phase 1 wave) + 1`.)
+
+If the PRD's decision log explicitly allows phase parallelism, ignore the phase constraint and let dependencies alone drive wave assignment.
+
+### FE/BE pair handling
+
+A linked FE/BE pair (Related To, not Depends On) is **not** a hard dependency — the FE story does not block on the BE story being deployed. Pairs commonly land in the same wave (built in parallel, integrated at the end of the wave). The orchestrator should NOT add an FE→BE edge to the dependency graph based on the "Related To" column alone.
+
+However, if the FE story's AC explicitly says "Given the BE endpoint US-X.Y is deployed", that IS a hard dependency — add it to `Depends On` and let the wave algorithm route accordingly.
+
+### Wave Summary section
+
+After computing waves, write a **Wave Summary** below the build-order summary in the breakdown file:
+
+```markdown
+## Wave Summary
+
+| Wave | Theme | Stories | Critical? |
+|---|---|---|---|
+| W1 | Foundation (BE schema, auth, config) | US-1.2, US-1.5, US-2.3 (3 stories) | — |
+| W2 | Data-layer APIs | US-1.3, US-1.4, US-1.6 (3 stories) | — |
+| W3 | UI layer (initial screens) | US-1.1, US-1.7, US-1.8, US-1.9 (4 stories) | — |
+| W4 | Notifications backend | US-2.1, US-2.2 (2 stories) | — |
+| W5 | Notifications UI | US-2.4, US-2.5 (2 stories) | — |
+| W6 | Cross-cutting search refinement | US-3.1, US-3.2, US-3.3 (3 stories) | **Critical convergence** — W7+ all depend on W6 |
+| W7 | Saved-search-from-notification flow | US-3.4, US-3.5 (2 stories) | — |
+| ... | ... | ... | ... |
+| W12 | Launch gate | US-4.1 (release-blocking polish) | **Launch gate** |
+```
+
+Annotate two wave types:
+- **Critical convergence wave** — a wave whose completion unlocks a large downstream block (e.g., 3+ subsequent waves all have at least one dependency on this wave). Mark it explicitly so the PM and team know it's the make-or-break point.
+- **Launch gate wave** — the last wave before user-facing release. Usually contains polish stories, release-readiness checks, or feature flags. Mark it explicitly.
+
+### Quality checks performed during wave sequencing
+
+The orchestrator should surface these as Gate 3 quality-check findings (severity in brackets):
+
+- **Cycles in dependency graph** [CRITICAL] — flag US-IDs in the cycle, refuse to proceed until PM resolves.
+- **Story with no Wave assigned** [CRITICAL] — every story must have a wave (or the cycle check above caught it).
+- **Wave imbalance** [INFO] — if one wave has 5x the stories of the median wave (e.g., 40 stories in W3 while W1, W2, W4 each have ~5), flag for PM review. Often indicates missing dependencies that would split that wave.
+- **Phase straddling** [INFO] — a single wave contains stories from two different phases. Surface for PM awareness (sometimes intentional, sometimes a bug).
+
+### Update the Sequence Map
+
+After computing waves, go back to the Sequence Map table from Step 2 and fill in the **Wave** column for every story.
 
 ---
 
@@ -363,12 +429,14 @@ Before presenting the breakdown to the PM, run the quality checks:
 1. **Every PRD user story appears in the breakdown** (no drops). Cross-check against the PRD's Phased Plan.
 2. **Every story has a unique US-ID.** No duplicates.
 3. **Every story is assigned to exactly one Epic** from the Step 1.5 grouping.
-4. **Every non-DRAFT story has at least 2 Gherkin scenarios.** Single-scenario non-DRAFT stories are insufficient. (DRAFT stories aim for ≥1 scenario — count is reported but not required.)
-5. **Every non-DRAFT story has at least one edge-case OR error-state scenario.** Not just happy path. (DRAFT stories exempt.)
-6. **Every linked FE/BE pair has both sides present.** If you list US-1.1 (FE) → linked to US-1.2 (BE), US-1.2 must exist as its own story.
-7. **No story is sized L+ without a proposed split.** If you marked L+, the per-story section must include a "Proposed split into US-X.Y + US-X.Z" note. (Applies to DRAFT stories too — sized as L+* gets the same treatment.)
-8. **HIGH risks from the codebase review appear in at least one story's testing notes.** Traceability check. Read the codebase review file and confirm.
-9. **UX state coverage per non-DRAFT FE story.** Empty / loading / error / populated — all four states have at least one scenario between them. DRAFT FE stories are exempt and counted as known gaps.
+4. **Every story has a Wave assignment** from Step 2.5 (W1, W2, ...). No story should be missing a wave (would indicate a cycle or an algorithm bug).
+5. **No cycles in the dependency graph.** Step 2.5 detects cycles; surface them here as CRITICAL findings with the US-IDs involved.
+6. **Every non-DRAFT story has at least 2 Gherkin scenarios.** Single-scenario non-DRAFT stories are insufficient. (DRAFT stories aim for ≥1 scenario — count is reported but not required.)
+7. **Every non-DRAFT story has at least one edge-case OR error-state scenario.** Not just happy path. (DRAFT stories exempt.)
+8. **Every linked FE/BE pair has both sides present.** If you list US-1.1 (FE) → linked to US-1.2 (BE), US-1.2 must exist as its own story.
+9. **No story is sized L+ without a proposed split.** If you marked L+, the per-story section must include a "Proposed split into US-X.Y + US-X.Z" note. (Applies to DRAFT stories too — sized as L+* gets the same treatment.)
+10. **HIGH risks from the codebase review appear in at least one story's testing notes.** Traceability check. Read the codebase review file and confirm.
+11. **UX state coverage per non-DRAFT FE story.** Empty / loading / error / populated — all four states have at least one scenario between them. DRAFT FE stories are exempt and counted as known gaps.
 
 If any check fails, flag as a WARNING (severity: WARNING) for Gate 3. Do not silently auto-fix. Surface to the PM at Gate 3 so they can decide to fix-first or approve-anyway.
 
@@ -396,12 +464,13 @@ Write the complete document to:
 ```
 
 Structure:
-1. Front matter (Source PRD, Generated date, Phases covered, Mode: full / DRAFT / MIXED, DRAFT story count if any).
+1. Front matter (Source PRD, Generated date, Phases covered, Mode: full / DRAFT / MIXED, DRAFT story count, total wave count).
 2. Epic grouping table from Step 1.5.
-3. Build Sequence Map table.
-4. Build-order summary paragraph.
-5. Per-story sections in US-ID order, grouped under an `## Epic [N]: [name]` header per epic.
-6. Appendix: list of PRD user stories cross-referenced to breakdown US-IDs (for the no-drops check).
+3. Build Sequence Map table (with Wave column populated from Step 2.5).
+4. Build-order summary paragraph (referencing wave numbers).
+5. Wave Summary table from Step 2.5 — one row per wave with theme, story_ids, and critical/launch-gate annotations.
+6. Per-story sections in US-ID order, grouped under an `## Epic [N]: [name]` header per epic.
+7. Appendix: list of PRD user stories cross-referenced to breakdown US-IDs (for the no-drops check).
 
 ### Update `_pipeline-state.json`
 
@@ -426,6 +495,13 @@ Persist the following under `user_stories`:
       "theme": "...",
       "story_ids": ["US-1.4", "US-1.5"]
     }
+  ],
+  "waves": [
+    { "wave": 1, "theme": "Foundation (BE schema, auth, config)", "story_ids": ["US-1.2", "US-1.5", "US-2.3"], "critical_convergence": false, "launch_gate": false },
+    { "wave": 2, "theme": "Data-layer APIs",                       "story_ids": ["US-1.3", "US-1.4"],            "critical_convergence": false, "launch_gate": false },
+    { "wave": 3, "theme": "UI layer (initial screens)",            "story_ids": ["US-1.1", "US-1.7"],            "critical_convergence": false, "launch_gate": false },
+    { "wave": 6, "theme": "Cross-cutting search refinement",       "story_ids": ["US-3.1", "US-3.2"],            "critical_convergence": true,  "launch_gate": false },
+    { "wave": 12, "theme": "Launch gate",                          "story_ids": ["US-4.1"],                      "critical_convergence": false, "launch_gate": true }
   ],
   "draft_stories": [
     { "us_id": "US-1.1", "epic_id": "E1", "reason": "no design catalog for Phase 1 yet" },
@@ -455,7 +531,9 @@ Until Gate 3 is approved, do not proceed to Jira Export.
 - **Source of truth is the PRD.** Do not add user stories the PRD doesn't have. Do not invent acceptance criteria not implied by the PRD's AC.
 - **Split into FE/BE pairs only when warranted.** A pure-UI story (e.g., a static info screen) doesn't need a BE pair.
 - **Every story must be assigned to exactly one Epic** from the Step 1.5 grouping. Stories without an Epic are invalid.
+- **Every story must have a Wave assignment** from Step 2.5. Cycles in the dependency graph are CRITICAL findings — surface them, do not paper over.
+- **FE/BE pair (Related To) is not a hard dependency** unless the FE story's AC explicitly requires the BE deployed first. Pairs commonly land in the same wave.
 - **DRAFT mode is opt-in.** Default is full mode (designs required). DRAFT mode requires explicit PM choice at Step 0.5.
 - **Verbatim language from Voice of Customer (Step 1 of pipeline) should appear** in user-story narratives and AC where possible. Don't paraphrase user-facing language unless necessary.
-- **Update `_pipeline-state.json`** at the end of this step. The `epics[]` and `draft_stories[]` fields are required by downstream steps (Jira export, `/change-mode`).
+- **Update `_pipeline-state.json`** at the end of this step. Persist `user_stories.epics[]`, `user_stories.draft_stories[]`, and `user_stories.waves[]` (one entry per wave with theme, story_ids, and any critical-convergence / launch-gate annotations). These fields are required by downstream steps (Jira export, `/change-mode`, `/validate-user-stories`, `/timeline`).
 - **Self-check (Error Type 3 in error-handling.md):** does this breakdown contradict any decision recorded in the PRD's decision log? If yes, flag to the PM before writing.

@@ -142,6 +142,8 @@ pipelines:
           - all_prd_stories_in_breakdown
           - every_story_has_unique_id
           - every_story_has_epic
+          - every_story_has_wave
+          - dependency_graph_acyclic
           - every_story_has_two_scenarios
           - every_story_has_edge_case
           - fe_be_pairs_complete
@@ -214,6 +216,14 @@ quality_checks:
 
   every_story_has_epic:
     description: "Every story is assigned to exactly one Epic from the Step 1.5 multi-epic grouping (v2.4.0+)."
+    severity: WARNING
+
+  every_story_has_wave:
+    description: "Every story has a Wave assignment from Step 2.5 wave-sequencing (v2.10.0+). Missing wave indicates either a cycle in the dependency graph or an algorithm failure."
+    severity: WARNING
+
+  dependency_graph_acyclic:
+    description: "The story dependency graph (built from the Depends On column) is acyclic. Cycles are CRITICAL — surface the US-IDs involved and refuse to advance until PM resolves."
     severity: WARNING
 
   every_story_has_two_scenarios:

@@ -459,9 +459,12 @@ The step runs in one of three modes determined by design availability at Step 0.
 
 The step also proposes a **multi-epic grouping** before writing stories (Step 1.5 in the underlying prompt). Default heuristic: one Epic per PRD phase, with sub-epics for clear functional clusters. PM accepts or adjusts (merge, split, rename, move stories between epics) before stories are composed. The accepted grouping is persisted to `user_stories.epics[]`.
 
+It then computes a **wave assignment** for every story via topological sort on the `Depends On` column (Step 2.5 in the underlying prompt, v2.10.0+). Waves group stories that can ship in parallel; later waves depend on earlier ones. Global numbering (W1, W2, ... W[N]) — not reset per phase or epic. FE/BE pairs are NOT treated as hard dependencies (they commonly land in the same wave) unless an AC explicitly requires one before the other. Critical convergence waves and the launch-gate wave are annotated. Cycles in the dependency graph are CRITICAL findings — surfaced at Gate 3, not silently papered over. Waves persist to `user_stories.waves[]`.
+
 Output: `~/Desktop/Resources/PDLC Workflow Docs/[feature-name]/user-stories/[feature-name]-user-stories.md`. Standalone document with:
 - Epic grouping table (multi-epic).
-- Build Sequence Map (every story, type FE/BE, **epic**, phase, depends-on, related-to, size, **DRAFT?** when applicable).
+- Build Sequence Map (every story, type FE/BE, **epic**, phase, **wave**, depends-on, related-to, size, **DRAFT?** when applicable).
+- Wave Summary table (theme + story_ids + annotations per wave).
 - Per-story sections grouped under `## Epic [N]: [name]` headers.
 
 **Gate 3 — Breakdown approval — Quality Check (before presenting the gate):**
@@ -471,6 +474,8 @@ Run all of the following:
 - Every PRD user story appears in the breakdown (no drops).
 - Every story has a unique US-ID.
 - Every story is assigned to exactly one Epic from the Step 1.5 grouping.
+- Every story has a Wave assignment from Step 2.5 (v2.10.0+).
+- The dependency graph is acyclic — cycles are CRITICAL and block Gate 3 advancement (v2.10.0+).
 - Every **non-DRAFT** story has at least 2 Gherkin scenarios. (DRAFT stories aim for ≥1; counted but not required.)
 - Every **non-DRAFT** story has at least one edge-case or error-state scenario. (DRAFT exempt.)
 - Every linked FE/BE pair has both sides present.
@@ -802,7 +807,16 @@ Write this file at the end of every step, overwriting the previous version:
           "reason": "string — why this story is in DRAFT (e.g., 'no design catalog for Phase 1')"
         }
       ],
-      "draft_resolved_at": "ISO-8601 | null — set when /change-mode 'Designs arrived' clears the last DRAFT"
+      "draft_resolved_at": "ISO-8601 | null — set when /change-mode 'Designs arrived' clears the last DRAFT",
+      "waves": [
+        {
+          "wave": 1,
+          "theme": "string — short description e.g. 'Foundation (BE schema, auth, config)'",
+          "story_ids": ["string"],
+          "critical_convergence": false,
+          "launch_gate": false
+        }
+      ]
     },
     "jira_manifest": { "path": "string | null", "size_bytes": 0 }
   },

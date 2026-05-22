@@ -57,7 +57,7 @@ You approve at three gates (PRD, Designs, User Stories) before anything moves to
 | 7 | **Visual Diagram** — Figma FigJam via Figma MCP (falls back to Mermaid) | AUTO | `diagrams/` |
 | 8 | **Design Prompts** — Structured v0 or Figma Make prompts per screen, per state | AUTO | `design/` |
 | 9 | **Update PRD from Designs → Gate 2** — Surgical sync, your approval | **GATE** | `prd/` (updated) |
-| 10 | **User Stories Breakdown → Gate 3** — Exhaustive Gherkin AC, FE/BE pairs, multi-epic grouping, optional DRAFT mode for stories without finalized designs | **GATE** | `user-stories/` |
+| 10 | **User Stories Breakdown → Gate 3** — Exhaustive Gherkin AC, FE/BE pairs, multi-epic grouping, **wave sequencing** (topological sort on dependencies — cycles are CRITICAL findings), optional DRAFT mode for stories without finalized designs | **GATE** | `user-stories/` |
 | 10.5 | **Timeline (Gantt)** — Figma FigJam + interactive HTML at Epic + Phase level; hybrid estimation (skill proposes, PM tunes); HTML is editable in-browser (drag bars, auto-cascade); **💾 Save to skill** writes plan JSON directly to disk in Chrome/Edge; `/timeline apply` auto-discovers the latest plan | AUTO | `timeline/` |
 | 11 | **Export** — Jira tickets always; Google Drive + Confluence (hub + child page per artifact) optional, parallel | PARALLEL | Jira + Drive + Confluence |
 | 12 | **Export Transcript** — Reads the live session JSONL and writes the full PM↔model conversation to two markdown files (clean + forensic) | AUTO | `transcript/` |
@@ -136,7 +136,7 @@ Any integration the skill cannot reach is skipped cleanly. It never blocks the r
 | `/cto-review` | Technical Reviewer pass on an existing PRD |
 | `/system-design` | System design doc from a PRD |
 | `/visual-diagram` | Figma FigJam diagram from a PRD (Mermaid fallback) |
-| `/user-stories` | User Stories Breakdown from an approved PRD. Multi-epic grouping (skill proposes, PM tunes). DRAFT mode for missing designs — refresh later via `/change-mode` → "Designs arrived" |
+| `/user-stories` | User Stories Breakdown from an approved PRD. Multi-epic grouping (skill proposes, PM tunes). Wave sequencing via topological sort on dependencies. DRAFT mode for missing designs — refresh later via `/change-mode` → "Designs arrived" |
 | `/timeline` | Gantt timeline (Figma FigJam + editable HTML) at Epic + Phase level. Drag-to-shift / drag-edge-to-resize with auto-cascade in the browser. 💾 Save to skill writes plan JSON directly to disk (Chrome/Edge). `/timeline apply` (no args) auto-discovers the latest plan and round-trips it into the skill state. |
 | `/prd-to-jira` | Create Jira tickets from a breakdown or PRD |
 | `/drive-sync` | Sync artifacts to Google Drive |
@@ -224,7 +224,7 @@ As of v2.1.0, Jira conventions (labels, title format, BE/FE split, custom field 
 
 ## Version
 
-**v2.9.0** — Two new **semantic content validators**: `/validate-prd` (6 checks — internal consistency, hallucinated data, completeness, VOC traceability, NFR measurability, scope coherence) and `/validate-user-stories` (7 checks — PRD traceability, AC duplication / contradiction, FE/BE pair coherence, AC specificity, sizing sanity, DRAFT consistency, wave / dependency sanity). Different from `/pipeline-doctor` (structural integrity); these actually read the content and flag contradictions, hallucinations, vague language, and broken cross-story coherence. Especially valuable on large breakdowns where no human is reading every AC carefully. Same UX as the doctor: inline summary, per-finding fix approval, timestamped report. See [CHANGELOG.md](./CHANGELOG.md) for full version history.
+**v2.10.0** — **Wave sequencing in the User Stories Breakdown.** Step 10 now computes a Wave assignment for every story via topological sort on the `Depends On` column. Waves group stories that can ship in parallel; later waves depend on earlier ones. Global numbering (W1, W2, ... W[N]). Critical convergence waves and the launch-gate wave are annotated. **Cycles in the dependency graph are CRITICAL Gate 3 findings** — surfaced, not silently papered over. The Build Sequence Map gains a Wave column; a new Wave Summary table lists what ships in each wave. State schema adds `user_stories.waves[]`. Closes the loop with `/validate-user-stories` Check 7 (which already expected waves to exist). See [CHANGELOG.md](./CHANGELOG.md) for full version history.
 
 ## License
 

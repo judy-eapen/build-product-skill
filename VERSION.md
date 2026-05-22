@@ -1,15 +1,13 @@
-v2.9.0 — 2026-05-22
+v2.10.0 — 2026-05-22
 
-Two new semantic content validators:
+Wave sequencing added to the User Stories Breakdown step.
 
-- `/validate-prd` — six checks on the PRD: internal consistency (sections contradicting each other), hallucinated data (claims without sources), completeness ([TBD]/[TODO]/empty), VOC traceability (PRD reflects actual research vs. generic AI prose), NFR measurability (concrete thresholds vs. vague aspirations), scope coherence (in-scope vs. out-of-scope contradictions).
+The /user-stories step (and Step 10 of /build-product) now computes a Wave assignment for every story via topological sort on the Depends On column. Wave 1 = stories with no dependencies; Wave N = stories whose dependencies are all in Waves 1..N-1. Global numbering (W1, W2, ... W[N]). Phase ordering respected. FE/BE pairs are NOT treated as hard dependencies (they commonly land in the same wave).
 
-- `/validate-user-stories` — seven checks on the breakdown: story↔PRD traceability, AC duplication / contradiction across stories, FE/BE pair coherence (endpoint contracts + naming + permissions), AC specificity (catches vague Gherkin), sizing sanity (scenario count vs. size label), DRAFT consistency (state ↔ breakdown agree), wave / dependency sanity (acyclic + correctly ordered).
+Cycles in the dependency graph are CRITICAL Gate 3 findings — surfaced with the US-IDs in the cycle, refuse to advance until PM resolves.
 
-Different from `/pipeline-doctor`: the doctor catches structural drift (missing files, schema problems); these validators catch content drift (a PRD that no longer agrees with itself after 17 review-and-fix cycles; a 75-story breakdown where two stories specify different copy for the same screen; an L-sized story that's actually 3 trivial scenarios).
+The Build Sequence Map gains a Wave column; a new Wave Summary table lists theme + story_ids per wave, with annotations for the critical convergence wave and the launch gate wave. State schema adds user_stories.waves[]. Two new Gate 3 quality checks: every_story_has_wave, dependency_graph_acyclic.
 
-Same UX as the doctor — inline summary, per-finding fix approval, timestamped markdown report to [feature]/validation/.
-
-Cost note: /validate-user-stories is the most expensive command in the skill. On a 614KB breakdown like nestfully-ai, expect 1–3 minutes runtime.
+Closes the loop with /validate-user-stories Check 7 (which already expected waves to exist).
 
 See CHANGELOG.md for full version history.
