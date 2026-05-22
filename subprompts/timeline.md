@@ -57,26 +57,43 @@ The HTML Gantt is **editable in the browser** — no skill round-trip needed for
 
 **Toolbar buttons**:
 - **↺ Reset to original** — discards your edits and restores the skill-computed baseline. Confirms first.
+- **💾 Save to skill** (v2.6.0+, Chrome/Edge) — writes the plan JSON directly into the feature's `timeline/` folder via the File System Access API. First click pops a one-time permission prompt; subsequent clicks save silently. Falls back to ⬇ Export plan behavior in Safari/Firefox.
 - **⬇ Export plan** — downloads a JSON file with your edits, ready to round-trip back into the skill.
 
 ### Round-trip edits to the skill
 
-Casual edits in the browser are great for "what if?" exploration, but they don't update the skill's official state (so `/change-mode`, the Confluence Timeline child page, and downstream tools still see the old plan). To promote your edits to the official plan:
+Casual edits in the browser are great for "what if?" exploration, but they don't update the skill's official state (so `/change-mode`, the Confluence Timeline child page, and downstream tools still see the old plan) until you apply them. There are now three ways to do it — pick whichever fits the moment:
 
+**Fastest (v2.6.0+, Chrome/Edge):**
 ```
-1. Open the HTML, drag bars to tune.
+1. Edit in browser.
+2. Click 💾 Save to skill. First time only: grant write permission for the timeline/ folder.
+3. In chat, just type: /timeline apply
+   (no path needed — auto-discovers the latest plan JSON)
+4. Skill diffs, you confirm, sidecar + HTML re-render.
+```
+
+**Cross-browser (works in Safari, Firefox, anywhere):**
+```
+1. Edit in browser.
 2. Click ⬇ Export plan → downloads [feature]-plan-YYYYMMDD-HHMM.json
-3. Paste this in chat:
-   /timeline apply ~/Downloads/[that-file].json
-4. The skill shows a diff of all changes, asks you to confirm, then:
-   - Updates _pipeline-state.json (timeline.computed, timeline.parameters)
-   - Re-renders the markdown sidecar with the new dates
-   - Re-renders the HTML so your edits become the new baseline
-   - Logs the apply event to timeline.applied_edits[]
-5. Optional: run /publish-to-confluence to refresh the Timeline child page.
+3. In chat, type: /timeline apply
+   (still no path — auto-discovery scans ~/Downloads/ too)
+4. Skill diffs, you confirm, sidecar + HTML re-render.
 ```
 
-You can also paste the JSON content inline if you don't want to deal with file paths — the skill detects the `build-product-timeline-plan-v1` schema and handles it the same way.
+**Explicit (if you've moved the file or want to be precise):**
+```
+/timeline apply ~/path/to/specific-plan.json
+```
+
+You can also paste the JSON content inline in chat if you don't want to deal with file paths at all — the skill detects the `build-product-timeline-plan-v1` schema and handles it the same way.
+
+### Where Save-to-skill writes (Chrome/Edge)
+
+First click of 💾 Save to skill opens a native save dialog. **Recommended:** navigate to your feature's timeline folder (`~/Desktop/Resources/PDLC Workflow Docs/[feature]/timeline/`) and save as `[feature]-plan-current.json`. After the first save, the browser remembers the file handle (stored in IndexedDB) so subsequent saves go straight to that file with no dialog.
+
+If you ever want to point Save-to-skill at a different file, use ↺ Reset to original first (clears edits and the saved handle) or click 💾 Save to skill from a fresh browser profile.
 
 ### What gets updated when you apply
 

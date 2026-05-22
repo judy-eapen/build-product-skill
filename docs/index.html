@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>/build-product — Work Pipeline v2.5.0</title>
-  <!-- Version: 2.5.0 | Updated: 2026-05-21 | Update this line and the badge/changelog below on every release -->
+  <title>/build-product — Work Pipeline v2.6.0</title>
+  <!-- Version: 2.6.0 | Updated: 2026-05-21 | Update this line and the badge/changelog below on every release -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
@@ -494,7 +494,7 @@
   <header>
     <div class="header-top">
       <span class="cmd-title">/build-product</span>
-      <span class="version-badge">v2.5.0</span>
+      <span class="version-badge">v2.6.0</span>
     </div>
     <p class="header-sub">A Claude Code skill that takes a PM from feature idea → Jira Epic with all linked tickets. Research · Codebase review · PRD · Dual AI review · Design prompts · User stories · Jira export.</p>
     <div class="header-links">
@@ -704,12 +704,12 @@
             <span class="badge auto">Auto</span>
           </div>
           <p class="step-desc">Produces a Gantt-style timeline at the <strong>Epic + Phase</strong> level (not story level). Hybrid estimation: the skill proposes durations from the user-stories breakdown's <code>Size</code> column × default velocity (8 person-days per dev per sprint), then the PM tunes any epic or phase. Two outputs every run: <strong>Figma FigJam timeline</strong> (via Figma MCP — URL stored in <code>_pipeline-state.json</code>) and an <strong>editable interactive HTML Gantt</strong> (v2.5.0+: drag bars to shift dates, drag right edge to resize duration, downstream bars auto-cascade — hold <kbd>Shift</kbd> to lock; vanilla JS, no CDN, opens offline; localStorage auto-save). Honest target-gap math: if the computed end exceeds a PM-supplied target launch, the step surfaces the gap and offers scope cut / team increase / slip — it does not silently shrink durations.</p>
-          <p class="step-desc" style="margin-top:6px;"><strong>Round-trip edits:</strong> click <strong>⬇ Export Plan</strong> in the HTML to download a JSON, then run <code>/timeline apply [json-path]</code> — the skill shows a diff, updates <code>_pipeline-state.json</code>, re-renders the markdown sidecar with new dates, and re-renders the HTML so applied edits become the new baseline. Schema-gated, idempotent, logged to <code>timeline.applied_edits[]</code>.</p>
+          <p class="step-desc" style="margin-top:6px;"><strong>Round-trip edits in two steps (v2.6.0+):</strong> Chrome/Edge users click <strong>💾 Save to skill</strong> — the HTML writes the plan JSON directly into the feature's <code>timeline/</code> folder via the File System Access API (first click grants permission; subsequent clicks save silently to the same file via a persisted FileSystemHandle in IndexedDB). Then in chat: <code>/timeline apply</code> — no path needed, the command auto-discovers the latest plan JSON in <code>timeline/</code> or <code>~/Downloads/</code>. Skill shows a diff, updates <code>_pipeline-state.json</code>, re-renders the sidecar + HTML so applied edits become the new baseline. Safari/Firefox fall back to <strong>⬇ Export Plan</strong> (download flow); auto-discovery picks up Downloads files automatically. Schema-gated, idempotent, logged to <code>timeline.applied_edits[]</code>.</p>
           <div class="step-meta">
-            <div class="step-meta-item">📁 <code>timeline/[feature]-timeline.html</code> <em>(editable)</em></div>
+            <div class="step-meta-item">📁 <code>timeline/[feature]-timeline.html</code> <em>(editable + save-to-disk)</em></div>
             <div class="step-meta-item">📁 <code>timeline/[feature]-timeline.md</code></div>
             <div class="step-meta-item">🎨 Figma FigJam timeline</div>
-            <div class="step-meta-item">⭐ Editing added in v2.5.0</div>
+            <div class="step-meta-item">⭐ Save-to-skill added in v2.6.0</div>
           </div>
         </div>
       </div>
@@ -777,7 +777,7 @@
           <div class="cmd-item"><span class="cmd-name">/system-design</span><span class="cmd-desc">System design doc from a PRD</span></div>
           <div class="cmd-item"><span class="cmd-name">/visual-diagram</span><span class="cmd-desc">Figma FigJam diagram (Mermaid fallback)</span></div>
           <div class="cmd-item"><span class="cmd-name">/user-stories</span><span class="cmd-desc">User Stories Breakdown from an approved PRD</span></div>
-          <div class="cmd-item"><span class="cmd-name">/timeline</span><span class="cmd-desc">Gantt (Figma + editable HTML at Epic+Phase). Drag/cascade in browser; <code>/timeline apply [json]</code> round-trips edits back to state</span></div>
+          <div class="cmd-item"><span class="cmd-name">/timeline</span><span class="cmd-desc">Gantt (Figma + editable HTML at Epic+Phase). Drag/cascade in browser; 💾 Save to skill (Chrome/Edge) or ⬇ Export plan; then <code>/timeline apply</code> (auto-discovers latest)</span></div>
           <div class="cmd-item"><span class="cmd-name">/prd-to-jira</span><span class="cmd-desc">Create Jira tickets from a breakdown or PRD</span></div>
           <div class="cmd-item"><span class="cmd-name">/drive-sync</span><span class="cmd-desc">Sync artifacts to Google Drive</span></div>
           <div class="cmd-item"><span class="cmd-name">/publish-to-confluence</span><span class="cmd-desc">Publish whole feature workspace: hub + child page per artifact; re-publishes only changed pages</span></div>
@@ -874,6 +874,23 @@
   <section>
     <p class="section-title">Recent Changes</p>
     <div class="changelog-list">
+
+      <div class="changelog-item">
+        <div class="changelog-header">
+          <span class="changelog-version">v2.6.0</span>
+          <span class="changelog-date">2026-05-21</span>
+          <span class="changelog-major-badge">MINOR</span>
+        </div>
+        <div class="changelog-body">
+          <ul>
+            <li><strong>💾 Save to skill button in the HTML Gantt</strong> (Chrome / Edge / Chromium browsers). Uses the File System Access API to write the plan JSON directly into the feature's <code>timeline/</code> folder. First click pops a native save dialog; the file handle is persisted to IndexedDB so subsequent clicks save silently. Safari/Firefox auto-relabel the button to "Save (download)" and fall back to the existing download flow.</li>
+            <li><strong>Auto-discovery on <code>/timeline apply</code>.</strong> The command now accepts zero arguments — it scans the feature's <code>timeline/</code> folder (where Save-to-skill writes) and <code>~/Downloads/</code> (where Export Plan writes), sorted by mtime descending. If exactly one candidate, confirms; if multiple, lists with timestamps; if none, asks for inline paste or explicit path.</li>
+            <li><strong>The round-trip drops from three steps to two.</strong> Chrome/Edge: edit → 💾 Save → <code>/timeline apply</code>. Safari/Firefox: edit → ⬇ Export plan → <code>/timeline apply</code>. No paths to type or files to hunt down.</li>
+            <li>HTML stays a single self-contained file. FSA API code is inline. localStorage still auto-saves. Schema (<code>build-product-timeline-plan-v1</code>) unchanged from v2.5.0 — plans saved by v2.5.0 Export Plan are accepted by v2.6.0 apply unchanged.</li>
+          </ul>
+          <a class="changelog-link" href="https://github.com/judy-eapen/build-product-skill/blob/main/CHANGELOG.md" target="_blank">Full changelog →</a>
+        </div>
+      </div>
 
       <div class="changelog-item">
         <div class="changelog-header">

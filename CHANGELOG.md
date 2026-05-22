@@ -4,6 +4,37 @@ All notable changes are documented here. Follows [Semantic Versioning](https://s
 
 ---
 
+## v2.6.0 — 2026-05-21
+
+### Added
+
+- **💾 Save to skill button in the HTML Gantt** (Chrome / Edge / Chromium-based browsers). Uses the File System Access API (`window.showSaveFilePicker`, `FileSystemFileHandle`) to write the plan JSON directly into the feature's `timeline/` folder — no Downloads round-trip. First click pops a native save dialog; the file handle is persisted to IndexedDB so subsequent clicks save silently to the same file. Permission re-requests gracefully if revoked. Safari and Firefox don't support the API; in those browsers the button auto-relabels to "💾 Save (download)" and falls back to the existing download flow.
+- **Auto-discovery on `/timeline apply`.** The command now accepts zero arguments and scans for plan JSON files in this order:
+  1. **Feature's own `timeline/` folder** (where Save-to-skill writes by default): `[feature]/timeline/*-plan-*.json` sorted by mtime descending.
+  2. **Downloads folder** (where Export Plan writes): `~/Downloads/[feature]-plan-*.json` sorted by mtime descending, filtered by feature-name prefix.
+  - If exactly one candidate, confirms with a one-line prompt. If multiple, lists them with timestamps. If none, asks for an inline paste or explicit path.
+
+### Why this matters
+
+The round-trip from browser to skill was three steps (Export Plan → find the file → paste path to chat). With both changes, the typical flow becomes:
+
+- **Chrome/Edge users:** edit → click 💾 Save → type `/timeline apply`. Three steps with no path-typing or file-hunting.
+- **Safari/Firefox users:** edit → click ⬇ Export plan → type `/timeline apply`. Auto-discovery picks up the latest plan from `~/Downloads/` automatically.
+
+### Changed
+
+- `ai-framework/06b-timeline.md` Step 6 (HTML JS) extended with the FSA spec — feature detection, first-click vs. subsequent-click flows, IndexedDB handle persistence, permission re-request, error handling, and the Safari/Firefox download fallback.
+- `ai-framework/06b-timeline.md` Apply Mode Step A-1 extended with the three input paths (explicit path, inline paste, auto-discovery) and the multi-candidate selection UX.
+- `subprompts/timeline.md` workflow section updated with the three round-trip options (fastest / cross-browser / explicit) so PMs can pick whichever fits the moment.
+
+### Not changed
+
+- The HTML remains a single self-contained file with no CDN dependency. The FSA API code is inline.
+- localStorage auto-save still works — Save-to-skill is additive, not a replacement.
+- The `build-product-timeline-plan-v1` schema is unchanged. Plans saved by v2.5.0 Export Plan are accepted by v2.6.0 apply unchanged.
+
+---
+
 ## v2.5.0 — 2026-05-21
 
 ### Added

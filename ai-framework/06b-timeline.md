@@ -247,9 +247,11 @@ Build a self-contained HTML file (no external dependencies, no CDN, opens offlin
 
   <div class="toolbar">
     <button id="btn-reset" type="button" title="Discard edits and restore the skill-computed plan">↺ Reset to original</button>
+    <button id="btn-save" type="button" title="Save plan JSON directly to the skill's timeline folder (Chrome/Edge)">💾 Save to skill</button>
     <button id="btn-export" type="button" title="Download current plan as JSON for /timeline apply">⬇ Export plan</button>
-    <span class="hint">Drag a bar to shift · Drag right edge to resize · Hold <kbd>Shift</kbd> to lock other bars (no cascade)</span>
+    <span class="hint">Drag a bar to shift · Drag right edge to resize · Hold <kbd>Shift</kbd> to lock other bars</span>
     <span id="edit-indicator" class="edit-indicator" hidden>● Unsaved edits</span>
+    <span id="save-status" class="save-status" hidden></span>
   </div>
 
   <div class="legend">
@@ -360,6 +362,71 @@ This means dependencies are inferred by **original position**, not by an explici
 
 - **`#btn-reset`**: confirm via native `confirm()` then clear `edits = {}`, clear localStorage, re-render everything from baseline. Hide the edit indicator.
 - **`#btn-export`**: build a JSON object (see "Export shape" below) and trigger a download via a temporary `<a download>` element. Filename: `[feature-name]-plan-[YYYYMMDD-HHMM].json`. Do not clear edits on export — they remain in localStorage until reset.
+- **`#btn-save`** (File System Access API — Chrome/Edge): writes the plan JSON directly into the feature's `timeline/` folder so the PM doesn't have to deal with a Downloads file. See "Save to skill" below.
+
+#### Save to skill (File System Access API)
+
+The "💾 Save to skill" button uses the modern File System Access API (`window.showSaveFilePicker`, `FileSystemFileHandle`) to write the plan JSON directly to disk — no Downloads round-trip. Browser support: Chromium-based browsers (Chrome, Edge, Brave, Opera). Safari and Firefox don't support it; the button falls back to the same behavior as Export Plan in those browsers.
+
+##### Feature detection
+
+```javascript
+const fsaSupported = 'showSaveFilePicker' in window && 'storage' in navigator;
+if (!fsaSupported) {
+  // Re-label the button to "💾 Save (download)" and have it dispatch to the same handler as #btn-export.
+  document.getElementById('btn-save').textContent = '💾 Save (download)';
+  document.getElementById('btn-save').title = 'Browser does not support direct save — will download a JSON file instead';
+}
+```
+
+##### First-click flow
+
+1. Build the plan JSON object (same shape as Export Plan).
+2. Call `window.showSaveFilePicker({ suggestedName: '[feature-name]-plan-current.json', types: [{ description: 'Timeline plan JSON', accept: { 'application/json': ['.json'] } }] })`.
+3. The browser shows a native save dialog. The PM picks a target — recommend they save into the feature's `timeline/` folder (mention this in the button's title attribute).
+4. Receive the `FileSystemFileHandle`. Persist it to IndexedDB so subsequent saves reuse the same target without re-prompting. See "IndexedDB handle storage" below.
+5. Get a writable stream: `const writable = await handle.createWritable();`
+6. Write the JSON: `await writable.write(JSON.stringify(plan, null, 2));`
+7. Close the stream: `await writable.close();`
+8. Show success toast in `#save-status` for 4 seconds: `✅ Saved to [filename]. Run /timeline apply in chat to refresh the sidecar.`
+
+##### Subsequent-click flow
+
+1. Read the stored `FileSystemFileHandle` from IndexedDB.
+2. Verify the permission is still granted: `if (await handle.queryPermission({ mode: 'write' }) !== 'granted') { ... }`. If revoked or expired, call `await handle.requestPermission({ mode: 'write' })` — this requires a user gesture (which we have, the button click).
+3. If permission is denied, fall back to first-click flow (prompt the picker again).
+4. Otherwise: get writable stream, write, close, toast.
+
+##### IndexedDB handle storage
+
+Store under a database named `build-product-timeline` with an object store `handles`. Key: feature name. Value: the `FileSystemFileHandle` (handles are structured-cloneable in modern browsers, so they can be persisted in IDB directly).
+
+Minimal helper code:
+
+```javascript
+async function idbStoreHandle(featureName, handle) {
+  const db = await openIDB();
+  const tx = db.transaction('handles', 'readwrite');
+  await tx.objectStore('handles').put(handle, featureName);
+  await tx.done;
+}
+async function idbReadHandle(featureName) {
+  const db = await openIDB();
+  return db.transaction('handles').objectStore('handles').get(featureName);
+}
+```
+
+Use the IDB Promised API or hand-roll a tiny Promise wrapper around the native API — no external library.
+
+##### Error handling
+
+- User cancels the picker: silently no-op. Do not show an error.
+- Permission denied: show `⚠ Save permission denied — using download instead` and fall back to the download flow.
+- Write fails (disk full, file locked): show `⚠ Save failed: [error message]` and offer "Download instead?" via a button in the toast.
+
+##### Why "Save to skill" doesn't update the markdown sidecar
+
+The HTML can only write files the user has granted it access to. It writes the plan JSON, but it cannot rewrite the markdown sidecar (`[feature]-timeline.md`) because the markdown formatting logic lives in the skill, not in the JS. After Save-to-skill, the PM must still run `/timeline apply` once in chat to rebuild the sidecar from the saved JSON. The auto-discovery feature (next section) makes that a one-line command — no path argument needed.
 
 #### localStorage
 
@@ -478,9 +545,34 @@ Triggered when the PM runs `/timeline apply [path]` (or pastes a `build-product-
 
 ### A-1 — Locate and read the JSON
 
-If the PM gave a file path (e.g., `~/Downloads/feature-plan-20260521-1342.json`), read the file. If the PM pasted JSON content inline, parse the content directly. If both are missing, ask: "Paste the plan JSON, or give me the path to the downloaded file from the HTML's Export Plan button."
+Three input paths:
 
-Validate the JSON has `"schema": "build-product-timeline-plan-v1"`. If it doesn't, refuse and explain — the file isn't an export from this skill's Gantt. Do not attempt to interpret arbitrary JSON.
+**(a) Explicit path:** PM gave a file path like `/timeline apply ~/Downloads/feature-plan-20260521-1342.json`. Read that file directly.
+
+**(b) Inline paste:** PM pasted JSON content in the message. Parse it directly.
+
+**(c) No argument — auto-discovery:** PM just typed `/timeline apply` (with no path and no pasted JSON). Scan for plan files in this order:
+
+1. **Feature's own `timeline/` folder** (where "💾 Save to skill" writes by default): `~/Desktop/Resources/PDLC Workflow Docs/[feature-name]/timeline/*-plan-*.json` — sorted by mtime descending.
+2. **Downloads folder** (where "⬇ Export plan" writes): `~/Downloads/[feature-name]-plan-*.json` — sorted by mtime descending. Filter by feature-name prefix to avoid picking up plans for other features.
+
+For each candidate, briefly read it to verify it parses as a `build-product-timeline-plan-v1` JSON and that its `feature_name` matches the current context.
+
+Presentation rules:
+
+- **Zero candidates found:** ask: "I couldn't find a plan JSON in `[feature]/timeline/` or `~/Downloads/`. Paste the JSON content, or give me an explicit path."
+- **Exactly one candidate found:** show the path and modified time, ask: "Apply `[path]` (modified [time ago])? (yes / no)". If yes, proceed with that file.
+- **Multiple candidates found:** list them with mtimes (newest first), most recent pre-selected:
+  ```
+  Multiple plan files found:
+    1. ~/Desktop/Resources/PDLC Workflow Docs/[feature]/timeline/[feature]-plan-current.json   (2 minutes ago) ← latest
+    2. ~/Downloads/[feature]-plan-20260521-1342.json                                            (1 hour ago)
+    3. ~/Downloads/[feature]-plan-20260521-1015.json                                            (yesterday)
+
+  Apply #1 (default) or pick another?
+  ```
+
+Once a JSON is selected (via any of the three paths), validate it has `"schema": "build-product-timeline-plan-v1"`. If it doesn't, refuse and explain — the file isn't an export from this skill's Gantt. Do not attempt to interpret arbitrary JSON.
 
 Validate that `feature_name` matches the current feature (when running inside the orchestrator, use the context feature; standalone, ask if it doesn't match: "This plan is for `[plan-feature]` but the active feature is `[ctx-feature]`. Apply to `[plan-feature]` instead?").
 

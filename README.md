@@ -58,7 +58,7 @@ You approve at three gates (PRD, Designs, User Stories) before anything moves to
 | 8 | **Design Prompts** — Structured v0 or Figma Make prompts per screen, per state | AUTO | `design/` |
 | 9 | **Update PRD from Designs → Gate 2** — Surgical sync, your approval | **GATE** | `prd/` (updated) |
 | 10 | **User Stories Breakdown → Gate 3** — Exhaustive Gherkin AC, FE/BE pairs, multi-epic grouping, optional DRAFT mode for stories without finalized designs | **GATE** | `user-stories/` |
-| 10.5 | **Timeline (Gantt)** — Figma FigJam + interactive HTML at Epic + Phase level; hybrid estimation (skill proposes, PM tunes); HTML is editable in-browser (drag bars, auto-cascade, Export Plan → `/timeline apply` round-trip) | AUTO | `timeline/` |
+| 10.5 | **Timeline (Gantt)** — Figma FigJam + interactive HTML at Epic + Phase level; hybrid estimation (skill proposes, PM tunes); HTML is editable in-browser (drag bars, auto-cascade); **💾 Save to skill** writes plan JSON directly to disk in Chrome/Edge; `/timeline apply` auto-discovers the latest plan | AUTO | `timeline/` |
 | 11 | **Export** — Jira tickets always; Google Drive + Confluence (hub + child page per artifact) optional, parallel | PARALLEL | Jira + Drive + Confluence |
 | 12 | **Export Transcript** — Reads the live session JSONL and writes the full PM↔model conversation to two markdown files (clean + forensic) | AUTO | `transcript/` |
 
@@ -137,7 +137,7 @@ Any integration the skill cannot reach is skipped cleanly. It never blocks the r
 | `/system-design` | System design doc from a PRD |
 | `/visual-diagram` | Figma FigJam diagram from a PRD (Mermaid fallback) |
 | `/user-stories` | User Stories Breakdown from an approved PRD. Multi-epic grouping (skill proposes, PM tunes). DRAFT mode for missing designs — refresh later via `/change-mode` → "Designs arrived" |
-| `/timeline` | Gantt timeline (Figma FigJam + editable HTML) at Epic + Phase level. Drag-to-shift / drag-edge-to-resize with auto-cascade in the browser. `/timeline apply [json-path]` round-trips edits back into the skill state. |
+| `/timeline` | Gantt timeline (Figma FigJam + editable HTML) at Epic + Phase level. Drag-to-shift / drag-edge-to-resize with auto-cascade in the browser. 💾 Save to skill writes plan JSON directly to disk (Chrome/Edge). `/timeline apply` (no args) auto-discovers the latest plan and round-trips it into the skill state. |
 | `/prd-to-jira` | Create Jira tickets from a breakdown or PRD |
 | `/drive-sync` | Sync artifacts to Google Drive |
 | `/publish-to-confluence` | Publish the whole feature workspace as a Confluence hub + one numbered child page per artifact. Per-file mtime tracking — only re-publishes pages whose source actually changed. |
@@ -221,7 +221,7 @@ As of v2.1.0, Jira conventions (labels, title format, BE/FE split, custom field 
 
 ## Version
 
-**v2.5.0** — The HTML Gantt is now **editable in the browser**. Drag any bar to shift the start date; drag the right edge to resize duration; downstream bars auto-cascade (hold Shift to lock them). Edits auto-save to localStorage. Click **Export Plan** to download a JSON, then run `/timeline apply [path]` to round-trip the edits back into the skill — updates `_pipeline-state.json`, re-renders the markdown sidecar with the new dates, and re-renders the HTML so the applied edits become the new baseline. See [CHANGELOG.md](./CHANGELOG.md) for full version history.
+**v2.6.0** — Two refinements to the v2.5.0 editable Gantt that cut the round-trip down to two steps. (1) New **💾 Save to skill** button uses the File System Access API to write the plan JSON directly into the feature's `timeline/` folder (Chrome/Edge); Safari/Firefox fall back to download. (2) `/timeline apply` now accepts zero arguments and auto-discovers the latest plan JSON in the feature's `timeline/` folder or `~/Downloads/`. Typical flow: edit in browser → 💾 Save → `/timeline apply` in chat. See [CHANGELOG.md](./CHANGELOG.md) for full version history.
 
 ## License
 
