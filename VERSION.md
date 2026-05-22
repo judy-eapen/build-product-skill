@@ -1,11 +1,7 @@
-v2.6.0 — 2026-05-21
+v2.7.0 — 2026-05-22
 
-Two refinements to the v2.5.0 editable Gantt that drop the round-trip from three steps to two:
+New `/pipeline-doctor` diagnostic command. Scans the skill itself (every step in `pipeline-configs.yaml` has matching prose in `SKILL.md` + `subprompts/build-product.md`; every quality_check is defined; every instruction file exists; every step block has an explicit "Next:" handoff), feature workspaces (state-file schema, artifact-path existence on disk, gate-state coherence, DRAFT/epic/Confluence cross-checks), slash command coverage, and stale features. Read-only by default; per-finding fix approval; writes a timestamped report.
 
-1. New **💾 Save to skill** button in the HTML Gantt (Chrome / Edge). Uses the File System Access API to write the plan JSON directly into the feature's `timeline/` folder — no Downloads round-trip. File handle persists across sessions via IndexedDB so subsequent saves are silent. Safari/Firefox fall back to download.
-
-2. **Auto-discovery on `/timeline apply`**. The command now accepts zero arguments and scans the feature's `timeline/` folder and `~/Downloads/` for the latest plan JSON.
-
-Typical flow now: edit in browser → click 💾 Save → type `/timeline apply` in chat. No paths to type.
+The class of bug it catches: orchestrator drift where new steps land in `pipeline-configs.yaml` but never get added to `subprompts/build-product.md` — exactly the failure mode that caused the v2.2.0 Step 10.5 / v2.3.0 Step 12 silent stall.
 
 See CHANGELOG.md for full version history.

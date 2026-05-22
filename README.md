@@ -159,6 +159,7 @@ Any integration the skill cannot reach is skipped cleanly. It never blocks the r
 | Command | What it does |
 |---------|--------------|
 | `/lint-style` | Check any document against `style-preferences.md` |
+| `/pipeline-doctor` | Scan the skill and feature workspaces for drift — missing steps, broken slash commands, stale features, state-file inconsistencies. Read-only with per-finding fix approval; writes a timestamped report. |
 | `/team-status` | Portfolio dashboard: all features, phases, owners, blockers |
 | `/feature-kickoff` | Role-specific briefing for an engineer or designer picking up a feature |
 | `/project-status` | Pipeline state and next step for a single feature |
@@ -221,7 +222,7 @@ As of v2.1.0, Jira conventions (labels, title format, BE/FE split, custom field 
 
 ## Version
 
-**v2.6.0** — Two refinements to the v2.5.0 editable Gantt that cut the round-trip down to two steps. (1) New **💾 Save to skill** button uses the File System Access API to write the plan JSON directly into the feature's `timeline/` folder (Chrome/Edge); Safari/Firefox fall back to download. (2) `/timeline apply` now accepts zero arguments and auto-discovers the latest plan JSON in the feature's `timeline/` folder or `~/Downloads/`. Typical flow: edit in browser → 💾 Save → `/timeline apply` in chat. See [CHANGELOG.md](./CHANGELOG.md) for full version history.
+**v2.7.0** — New **`/pipeline-doctor`** diagnostic command. Scans the skill itself (every step in `pipeline-configs.yaml` has matching prose in `SKILL.md` and `subprompts/build-product.md`; every quality check defined; every instruction file exists), feature workspaces (state-file schema, artifact-path existence, gate-state coherence, DRAFT/epic/Confluence cross-checks), slash command coverage, and stale features (>30 days without completion). Read-only by default; per-finding fix approval; writes a timestamped report. The kind of check that catches "the orchestrator silently doesn't know about Step 10.5" bugs before they cause stalls. See [CHANGELOG.md](./CHANGELOG.md) for full version history.
 
 ## License
 

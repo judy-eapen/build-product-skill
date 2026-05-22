@@ -67,6 +67,7 @@ Each command runs one stage of the pipeline independently. Each asks for the inp
 
 ### Execution & Validation
 - `/lint-style` — Check any generated document against `ai-framework/style-preferences.md` and flag or fix style violations.
+- `/pipeline-doctor` — Scan the skill and feature workspaces for drift and inconsistencies. Four check categories: (A) skill self-consistency — every step in `pipeline-configs.yaml` has matching prose in `SKILL.md` and `subprompts/build-product.md`, every quality_check is defined, every instruction file exists; (B) feature-state consistency — `_pipeline-state.json` schema, artifact-path existence on disk, gate-state coherence, DRAFT/epic/Confluence cross-checks; (C) slash command coverage — every subprompt has a registered command, no broken pointers; (D) stale features — pipelines older than 30 days without completion. Read-only by default; per-finding fix approval. Writes a timestamped report to the workspace root.
 
 ### Status & Utilities
 - `/team-status` — Portfolio dashboard: all products, phases, owners, blockers.

@@ -4,6 +4,30 @@ All notable changes are documented here. Follows [Semantic Versioning](https://s
 
 ---
 
+## v2.7.0 — 2026-05-22
+
+### Added
+
+- **`/pipeline-doctor`** — a new diagnostic command that scans the skill and feature workspaces for drift, inconsistencies, and stalls. Four check categories:
+  - **(A) Skill self-consistency** — every step in `pipeline-configs.yaml` has matching prose in `SKILL.md` and `subprompts/build-product.md` (A3 — the check that catches the bug Judy hit where Step 10.5 was in the config but missing from the orchestrator); every gate's `quality_checks[]` entries are defined in the top-level `quality_checks:` section; every step's `instruction:` file path actually resolves; every step block has an explicit "Next:" handoff (A5).
+  - **(B) Feature-state consistency** — `_pipeline-state.json` parses and has required keys; each artifact entry with a `path` actually exists on disk; gate states are coherent with `current_step` (e.g., past Gate 2 means Gate 1 + 2 must be Approved); DRAFT stories list in state matches what's actually marked DRAFT in the breakdown; Confluence hub artifacts have sensible mtimes; timeline.applied_edits[] is consistent with timeline.computed.
+  - **(C) Slash command coverage** — every `subprompts/*.md` has a registered `~/.claude/commands/[name].md`; every `~/.claude/commands/*.md` that references this skill points at a real file; the orchestrator (`/build-product`) itself is registered.
+  - **(D) Stale features** — pipelines started >30 days ago without completion, state files unchanged for 14+ days, orphaned feature folders with no `_pipeline-state.json`.
+- **Per-finding fix approval.** After the scan, the doctor walks through CRITICAL/WARNING findings one at a time, proposes a concrete fix per finding, and asks the PM to approve, skip, or see file context. Fixes are never applied silently.
+- **Timestamped reports.** Every run writes a full markdown report to `~/Desktop/Resources/PDLC Workflow Docs/_pipeline-doctor-report-[YYYY-MM-DD-HHMM].md` and appends a one-line entry to `_pipeline-doctor-history.md` at the workspace root.
+
+### Why this matters
+
+The Step 10.5 / Step 12 orchestrator-drift bug Judy hit (fixed in the prior commit) was exactly the class of failure the doctor would have caught: `pipeline-configs.yaml` listed Step 10.5 (added in v2.2.0) but `subprompts/build-product.md` never got the matching prose block, so the orchestrator silently didn't know it existed. As the skill keeps growing — more steps, more commands, more state schema additions — this kind of drift becomes inevitable. Doctor is the safety net.
+
+### Not changed
+
+- Doctor is **read-only by default**. It doesn't modify any file until the PM approves a specific fix.
+- No external network calls. Doctor only reads local files; it doesn't query Jira, Confluence, Figma, or any MCP. (A potential future `/pipeline-doctor --remote` could verify external resources, but not in v1.)
+- Idempotent. Two runs in a row produce the same findings (no state changes between runs except the timestamped report file).
+
+---
+
 ## v2.6.0 — 2026-05-21
 
 ### Added
