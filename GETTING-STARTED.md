@@ -186,22 +186,37 @@ Git is a one-time install per computer. You do not need a GitHub account.
 
 ## Step 4 — Download the skill
 
-In your terminal (outside of Claude Code), paste the following command and press Enter:
+In your terminal (outside of Claude Code), paste the command for your OS and press Enter.
+
+### On a Mac or Linux (Terminal)
 
 ```bash
 git clone https://github.com/judy-eapen/build-product-skill.git ~/.claude/skills/build-product
 ```
 
-You will see output similar to:
+### On Windows (PowerShell)
+
+PowerShell does not always expand `~` when the path is passed as an argument to an external program like `git.exe` — depending on PowerShell version, the bash-style command above may either fail or create a literal `~` folder in your current directory. Use this explicit Windows path instead:
+
+```powershell
+git clone https://github.com/judy-eapen/build-product-skill.git "$HOME\.claude\skills\build-product"
+```
+
+### What you should see
 
 ```
-Cloning into '/Users/yourname/.claude/skills/build-product'...
+Cloning into '...'
 remote: Enumerating objects: 200, done.
 ...
 Resolving deltas: 100% (123/123), done.
 ```
 
-The skill is now installed at `~/.claude/skills/build-product`. The `~` is shorthand for your home folder.
+Verify the skill folder exists:
+
+- **Mac/Linux:** `ls ~/.claude/skills/build-product/subprompts | head -5`
+- **Windows:** `Get-ChildItem "$HOME\.claude\skills\build-product\subprompts" | Select-Object -First 5`
+
+Either way, you should see a list of `.md` files. The skill is now installed at `~/.claude/skills/build-product` (Mac/Linux) or `%USERPROFILE%\.claude\skills\build-product` (Windows).
 
 ---
 
