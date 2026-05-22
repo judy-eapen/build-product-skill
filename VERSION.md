@@ -1,13 +1,9 @@
-v2.8.0 — 2026-05-22
+v2.8.1 — 2026-05-22
 
-Confluence publish scope tightened. Three artifacts are no longer published as Confluence child pages:
+PATCH — DRAFT-mode Gate 2 now records a distinct "Deferred" state instead of being indistinguishable from "haven't reached Gate 2 yet".
 
-- Step 4a: Product Review — internal artifact, kept local.
-- Step 4b: Technical Review — internal artifact, kept local.
-- Full User Stories Breakdown with Gherkin AC — too large for Confluence; already attached to each Jira Epic.
+Pre-v2.8.1, when the PM proceeded past Step 9 in DRAFT mode (no finalized designs), `gates.gate_2` was left as `"Pending"`. That looked identical to "this gate hasn't been reached yet" and caused `/pipeline-doctor` to falsely flag the feature as state-corrupted.
 
-Step 10 on Confluence is now a lightweight Jira-index page instead of the full breakdown: per-Epic block with title, theme, story count, Jira Epic URL, and story titles only (no Gherkin AC). Stakeholders use it for navigation; the full detail lives in Jira.
-
-Existing pages from pre-v2.8.0 publishes are NOT auto-deleted (bookmarks preserved). Legacy state entries are gracefully ignored.
+v2.8.1+ writes `gates.gate_2 = "Deferred — DRAFT mode (no finalized designs as of YYYY-MM-DD)"` instead. Gate 2 will still be formally approved later when designs arrive. The doctor's B4 check now recognizes the deferred pattern and downgrades it to INFO instead of WARNING.
 
 See CHANGELOG.md for full version history.

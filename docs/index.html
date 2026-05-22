@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>/build-product — Work Pipeline v2.8.0</title>
-  <!-- Version: 2.8.0 | Updated: 2026-05-22 | Update this line and the badge/changelog below on every release -->
+  <title>/build-product — Work Pipeline v2.8.1</title>
+  <!-- Version: 2.8.1 | Updated: 2026-05-22 | Update this line and the badge/changelog below on every release -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
@@ -494,7 +494,7 @@
   <header>
     <div class="header-top">
       <span class="cmd-title">/build-product</span>
-      <span class="version-badge">v2.8.0</span>
+      <span class="version-badge">v2.8.1</span>
     </div>
     <p class="header-sub">A Claude Code skill that takes a PM from feature idea → Jira Epic with all linked tickets. Research · Codebase review · PRD · Dual AI review · Design prompts · User stories · Jira export.</p>
     <div class="header-links">
@@ -875,6 +875,23 @@
   <section>
     <p class="section-title">Recent Changes</p>
     <div class="changelog-list">
+
+      <div class="changelog-item">
+        <div class="changelog-header">
+          <span class="changelog-version">v2.8.1</span>
+          <span class="changelog-date">2026-05-22</span>
+          <span class="changelog-major-badge">PATCH</span>
+        </div>
+        <div class="changelog-body">
+          <ul>
+            <li><strong>DRAFT-mode Gate 2 now records a distinct "Deferred" state.</strong> Pre-v2.8.1, when the PM proceeded past Step 9 in DRAFT mode (no finalized designs), <code>gates.gate_2</code> was left as <code>"Pending"</code> — indistinguishable from "haven't reached this gate yet". The orchestrator now writes <code>gates.gate_2 = "Deferred — DRAFT mode (no finalized designs as of YYYY-MM-DD)"</code> instead.</li>
+            <li><strong><code>/pipeline-doctor</code> B4 check updated</strong> to recognize the deferred pattern. If <code>current_step</code> is past Step 9 + <code>user_stories.mode</code> is DRAFT/MIXED + <code>design_catalogs</code> is empty, gate_2 = "Pending" is treated as deferred-but-not-yet-recorded and downgraded to INFO (with a proposed fix to write the explicit string). Mismatches outside this pattern still WARN.</li>
+            <li><strong>SKILL.md state schema updated</strong> — gates.gate_2 now lists the Deferred value alongside Approved / Pending / N/A.</li>
+            <li>Caught by <code>/pipeline-doctor</code> on first real run against <code>nestfully-ai</code>. Backup of the prior state file written to <code>_pipeline-state.json.bak-before-gate2-fix-20260522</code> in the feature folder.</li>
+          </ul>
+          <a class="changelog-link" href="https://github.com/judy-eapen/build-product-skill/blob/main/CHANGELOG.md" target="_blank">Full changelog →</a>
+        </div>
+      </div>
 
       <div class="changelog-item">
         <div class="changelog-header">

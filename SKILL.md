@@ -437,9 +437,14 @@ Update `_pipeline-state.json`.
 
 Same as Personal Full Step 8. Sync the PRD with design catalog: catalog reference, copy/flow changes, AC updates, decision log entries. Quality checks run before Gate 2 (see Personal Full Step 8 for the check list).
 
-After Gate 2 approval, proceed to Step 10.
+**Two branches (v2.4.0+):**
 
-Update `_pipeline-state.json`. Mark Gate 2 as Approved with date.
+- **Designs finalized** → sync the PRD with the design catalog, run Gate 2 in its normal "approve designs" form. On approval, write `gates.gate_2 = "Approved YYYY-MM-DD"`.
+- **No finalized designs** → skip the PRD-from-designs sync. Gate 2 becomes a quick "proceed to user stories without finalized designs?" confirmation. On PM confirmation, write `gates.gate_2 = "Deferred — DRAFT mode (no finalized designs as of YYYY-MM-DD)"` (v2.8.1+ — NOT `"Pending"`, which is reserved for "haven't reached this gate yet"). Mark `user_stories.mode = "DRAFT"` so Step 10 runs in DRAFT mode. Gate 2 will be formally re-opened and approved later when designs arrive.
+
+After Gate 2 approval (or deferral), proceed to Step 10.
+
+Update `_pipeline-state.json` with the appropriate gate_2 status and date.
 
 ### Step 10 — User Stories Breakdown [AUTO → GATE 3]
 
@@ -738,7 +743,7 @@ Write this file at the end of every step, overwriting the previous version:
   "next_step": "string — step number and name, e.g. '4 — Apply Fixes'",
   "gates": {
     "gate_1": "Approved YYYY-MM-DD | Pending | N/A",
-    "gate_2": "Approved YYYY-MM-DD | Pending | N/A",
+    "gate_2": "Approved YYYY-MM-DD | Deferred — DRAFT mode (no finalized designs as of YYYY-MM-DD) | Pending | N/A",
     "gate_3": "Approved YYYY-MM-DD | Pending | N/A"
   },
   "step_timings": {

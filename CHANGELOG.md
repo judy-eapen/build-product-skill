@@ -4,6 +4,24 @@ All notable changes are documented here. Follows [Semantic Versioning](https://s
 
 ---
 
+## v2.8.1 — 2026-05-22
+
+### Fixed
+
+- **DRAFT-mode Gate 2 now records a distinct "Deferred" state instead of "Pending".** Pre-v2.8.1, when the PM proceeded past Step 9 in DRAFT mode (no finalized designs), `gates.gate_2` was left as `"Pending"` — indistinguishable from "haven't reached Gate 2 yet" in state, which caused the `/pipeline-doctor` B4 check to falsely flag the feature as state-corrupted. The orchestrator now writes `gates.gate_2 = "Deferred — DRAFT mode (no finalized designs as of YYYY-MM-DD)"` instead. Gate 2 will still be formally approved later when designs arrive (via re-running Step 9 or via `/change-mode` → "Designs arrived").
+- **`/pipeline-doctor` B4 check updated** to recognize the deferred pattern. If `current_step` is past Step 9 AND `user_stories.mode == "DRAFT"` (or `"MIXED"`) AND `artifacts.design_catalogs` is empty, the doctor treats `gate_2 = "Pending"` as a deferred-but-not-yet-recorded state and proposes updating it to the explicit `"Deferred — DRAFT mode (...)"` string (INFO, not WARNING). Mismatches outside this pattern still WARN.
+- **`SKILL.md` state schema documentation** updated — `gates.gate_2` now lists `"Deferred — DRAFT mode (...)"` as a valid value alongside `"Approved YYYY-MM-DD"`, `"Pending"`, and `"N/A"`.
+
+### State files affected
+
+- `nestfully-ai` had `gate_2 = "Pending"` while at Step 10. Retroactively updated to `gate_2 = "Deferred — DRAFT mode (no finalized designs as of 2026-05-22)"` to match the new semantics. Backup saved to `_pipeline-state.json.bak-before-gate2-fix-20260522` in the feature folder.
+
+### Why this matters
+
+The doctor surfaced this as a state-corruption warning on `nestfully-ai`, but the state was actually internally consistent — it just used an ambiguous value. This patch makes the deferred-Gate-2 flow explicit in the data so it's distinguishable from unstarted-Gate-2 going forward.
+
+---
+
 ## v2.8.0 — 2026-05-22
 
 ### Changed

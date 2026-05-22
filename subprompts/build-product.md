@@ -347,6 +347,8 @@ Self-check (Error Type 3): does this output contradict any prior PRD decision? I
 **If the PM answers No (designs-pending):**
 Skip the PRD-from-designs sync. The PRD stays as it was post-Gate 1. Note in `_pipeline-state.json` → `user_stories.mode = "DRAFT"` so Step 10 knows to default to DRAFT mode. Gate 2 still runs but becomes a quick "proceed to user stories without finalized designs?" confirmation rather than a design-approval gate.
 
+**When the PM confirms "proceed without finalized designs":** write `gates.gate_2` explicitly as **`"Deferred — DRAFT mode (no finalized designs as of [YYYY-MM-DD])"`** — NOT `"Pending"`. This makes the deferred state distinguishable from "haven't reached Gate 2 yet" in state and downstream tooling (pipeline-doctor, /change-mode, /pipeline-timing). Gate 2 will be formally re-opened and approved later when designs arrive — via the PM re-running Step 9 or via `/change-mode` → "Designs arrived" trigger.
+
 **Gate 2 — Quality Check (run automatically before presenting):**
 
 - Does the visual diagram cover every user story approved at Gate 1? Flag any stories with no corresponding flow.
