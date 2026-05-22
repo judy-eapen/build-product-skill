@@ -1,9 +1,15 @@
-v2.8.1 — 2026-05-22
+v2.9.0 — 2026-05-22
 
-PATCH — DRAFT-mode Gate 2 now records a distinct "Deferred" state instead of being indistinguishable from "haven't reached Gate 2 yet".
+Two new semantic content validators:
 
-Pre-v2.8.1, when the PM proceeded past Step 9 in DRAFT mode (no finalized designs), `gates.gate_2` was left as `"Pending"`. That looked identical to "this gate hasn't been reached yet" and caused `/pipeline-doctor` to falsely flag the feature as state-corrupted.
+- `/validate-prd` — six checks on the PRD: internal consistency (sections contradicting each other), hallucinated data (claims without sources), completeness ([TBD]/[TODO]/empty), VOC traceability (PRD reflects actual research vs. generic AI prose), NFR measurability (concrete thresholds vs. vague aspirations), scope coherence (in-scope vs. out-of-scope contradictions).
 
-v2.8.1+ writes `gates.gate_2 = "Deferred — DRAFT mode (no finalized designs as of YYYY-MM-DD)"` instead. Gate 2 will still be formally approved later when designs arrive. The doctor's B4 check now recognizes the deferred pattern and downgrades it to INFO instead of WARNING.
+- `/validate-user-stories` — seven checks on the breakdown: story↔PRD traceability, AC duplication / contradiction across stories, FE/BE pair coherence (endpoint contracts + naming + permissions), AC specificity (catches vague Gherkin), sizing sanity (scenario count vs. size label), DRAFT consistency (state ↔ breakdown agree), wave / dependency sanity (acyclic + correctly ordered).
+
+Different from `/pipeline-doctor`: the doctor catches structural drift (missing files, schema problems); these validators catch content drift (a PRD that no longer agrees with itself after 17 review-and-fix cycles; a 75-story breakdown where two stories specify different copy for the same screen; an L-sized story that's actually 3 trivial scenarios).
+
+Same UX as the doctor — inline summary, per-finding fix approval, timestamped markdown report to [feature]/validation/.
+
+Cost note: /validate-user-stories is the most expensive command in the skill. On a 614KB breakdown like nestfully-ai, expect 1–3 minutes runtime.
 
 See CHANGELOG.md for full version history.

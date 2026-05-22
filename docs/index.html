@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>/build-product — Work Pipeline v2.8.1</title>
-  <!-- Version: 2.8.1 | Updated: 2026-05-22 | Update this line and the badge/changelog below on every release -->
+  <title>/build-product — Work Pipeline v2.9.0</title>
+  <!-- Version: 2.9.0 | Updated: 2026-05-22 | Update this line and the badge/changelog below on every release -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
@@ -494,7 +494,7 @@
   <header>
     <div class="header-top">
       <span class="cmd-title">/build-product</span>
-      <span class="version-badge">v2.8.1</span>
+      <span class="version-badge">v2.9.0</span>
     </div>
     <p class="header-sub">A Claude Code skill that takes a PM from feature idea → Jira Epic with all linked tickets. Research · Codebase review · PRD · Dual AI review · Design prompts · User stories · Jira export.</p>
     <div class="header-links">
@@ -801,7 +801,9 @@
         <div class="cmd-group-title">Utilities</div>
         <div class="cmd-list">
           <div class="cmd-item"><span class="cmd-name">/lint-style</span><span class="cmd-desc">Check any document against style-preferences.md</span></div>
-          <div class="cmd-item"><span class="cmd-name">/pipeline-doctor</span><span class="cmd-desc">Scan skill + features for drift, broken commands, stale pipelines, state-file inconsistencies. Per-finding fix approval; writes timestamped report</span></div>
+          <div class="cmd-item"><span class="cmd-name">/pipeline-doctor</span><span class="cmd-desc">Scan skill + features for <strong>structural</strong> drift, broken commands, stale pipelines, state-file inconsistencies. Per-finding fix approval; writes timestamped report</span></div>
+          <div class="cmd-item"><span class="cmd-name">/validate-prd</span><span class="cmd-desc"><strong>Semantic</strong> PRD validator: internal consistency, hallucinated data, completeness, VOC traceability, NFR measurability, scope coherence (6 checks)</span></div>
+          <div class="cmd-item"><span class="cmd-name">/validate-user-stories</span><span class="cmd-desc"><strong>Semantic</strong> breakdown validator: PRD traceability, AC duplication/contradiction, FE/BE pair coherence, AC specificity, sizing sanity, DRAFT consistency, wave/dependency sanity (7 checks)</span></div>
           <div class="cmd-item"><span class="cmd-name">/team-status</span><span class="cmd-desc">Portfolio dashboard: all features, phases, owners, blockers</span></div>
           <div class="cmd-item"><span class="cmd-name">/feature-kickoff</span><span class="cmd-desc">Role-specific briefing for engineer or designer</span></div>
           <div class="cmd-item"><span class="cmd-name">/project-status</span><span class="cmd-desc">Pipeline state and next step for one feature</span></div>
@@ -875,6 +877,25 @@
   <section>
     <p class="section-title">Recent Changes</p>
     <div class="changelog-list">
+
+      <div class="changelog-item">
+        <div class="changelog-header">
+          <span class="changelog-version">v2.9.0</span>
+          <span class="changelog-date">2026-05-22</span>
+          <span class="changelog-major-badge">MINOR</span>
+        </div>
+        <div class="changelog-body">
+          <ul>
+            <li><strong>Two new semantic content validators</strong> — <code>/validate-prd</code> (6 checks) and <code>/validate-user-stories</code> (7 checks). Different from <code>/pipeline-doctor</code> (structural integrity); these actually read the content and flag contradictions, hallucinations, vague language, and broken cross-story coherence.</li>
+            <li><strong><code>/validate-prd</code> checks:</strong> (1) internal consistency between sections (data model vs API contracts, scope vs phases, decision log vs body); (2) hallucinated data — claims without sources, cross-checked against the research output; (3) completeness — <code>[TBD]</code> / <code>[TODO]</code> / empty sections; (4) VOC traceability — does the PRD use research language or generic AI prose?; (5) NFR measurability — concrete thresholds vs vague aspirations; (6) scope coherence — in-scope vs out-of-scope contradictions, scope-creep references.</li>
+            <li><strong><code>/validate-user-stories</code> checks:</strong> (1) story↔PRD traceability — every story maps to a PRD section, no orphans; (2) AC duplication / contradiction across stories; (3) FE/BE pair coherence — endpoint contracts, naming, permissions match; (4) AC specificity — catches lazy "when clicked, it works" Gherkin; (5) sizing sanity — scenario count + surface count vs size label; (6) DRAFT consistency between state and the breakdown; (7) wave / dependency sanity — acyclic, correctly ordered.</li>
+            <li><strong>Same UX as <code>/pipeline-doctor</code>:</strong> inline summary → per-finding walkthrough with approve/skip → full timestamped markdown report saved to <code>[feature]/validation/[feature]-validate-{prd|stories}-[YYYY-MM-DD-HHMM].md</code>. History log accumulates one-line entries per run.</li>
+            <li><strong>Why this matters:</strong> the doctor catches structural drift (missing files, schema problems); these validators catch <em>content</em> drift — a PRD that no longer agrees with itself after 17 review-and-fix cycles; a 75-story breakdown where two stories specify different copy for the same screen; an L-sized story that's actually 3 trivial scenarios. Invisible to mechanical gate quality checks and to skim-reading.</li>
+            <li><strong>Cost note:</strong> <code>/validate-user-stories</code> is the most expensive command in the skill. On a 614KB breakdown (like nestfully-ai), expect 1–3 minutes runtime.</li>
+          </ul>
+          <a class="changelog-link" href="https://github.com/judy-eapen/build-product-skill/blob/main/CHANGELOG.md" target="_blank">Full changelog →</a>
+        </div>
+      </div>
 
       <div class="changelog-item">
         <div class="changelog-header">

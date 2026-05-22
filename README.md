@@ -159,7 +159,9 @@ Any integration the skill cannot reach is skipped cleanly. It never blocks the r
 | Command | What it does |
 |---------|--------------|
 | `/lint-style` | Check any document against `style-preferences.md` |
-| `/pipeline-doctor` | Scan the skill and feature workspaces for drift — missing steps, broken slash commands, stale features, state-file inconsistencies. Read-only with per-finding fix approval; writes a timestamped report. |
+| `/pipeline-doctor` | Scan the skill and feature workspaces for **structural** drift — missing steps, broken slash commands, stale features, state-file inconsistencies. Read-only with per-finding fix approval; writes a timestamped report. |
+| `/validate-prd` | **Semantic** content validation for a PRD. Six checks (consistency, hallucinated data, completeness, VOC traceability, NFR measurability, scope coherence). Per-finding fix approval + timestamped report. |
+| `/validate-user-stories` | **Semantic** content validation for the user-stories breakdown. Seven checks (PRD traceability, AC duplication / contradiction, FE/BE pair coherence, AC specificity, sizing sanity, DRAFT consistency, wave / dependency sanity). Most expensive command in the skill — best run on-demand before Gate 3 or `/prd-to-jira`. |
 | `/team-status` | Portfolio dashboard: all features, phases, owners, blockers |
 | `/feature-kickoff` | Role-specific briefing for an engineer or designer picking up a feature |
 | `/project-status` | Pipeline state and next step for a single feature |
@@ -222,7 +224,7 @@ As of v2.1.0, Jira conventions (labels, title format, BE/FE split, custom field 
 
 ## Version
 
-**v2.8.0** — **Confluence publish scope tightened.** Product Review (Step 4a), Technical Review (Step 4b), and the full Gherkin User Stories Breakdown are no longer published to Confluence — they're internal/too-large artifacts that stay local. The Step 10 page is now a **lightweight Jira Epic index** instead of the full breakdown: per-Epic block with title, theme, story count, Jira Epic URL, and story titles only (no Gherkin AC). Stakeholders use this page for navigation; the full detail lives in Jira and in the local breakdown attached to each Epic. See [CHANGELOG.md](./CHANGELOG.md) for full version history.
+**v2.9.0** — Two new **semantic content validators**: `/validate-prd` (6 checks — internal consistency, hallucinated data, completeness, VOC traceability, NFR measurability, scope coherence) and `/validate-user-stories` (7 checks — PRD traceability, AC duplication / contradiction, FE/BE pair coherence, AC specificity, sizing sanity, DRAFT consistency, wave / dependency sanity). Different from `/pipeline-doctor` (structural integrity); these actually read the content and flag contradictions, hallucinations, vague language, and broken cross-story coherence. Especially valuable on large breakdowns where no human is reading every AC carefully. Same UX as the doctor: inline summary, per-finding fix approval, timestamped report. See [CHANGELOG.md](./CHANGELOG.md) for full version history.
 
 ## License
 

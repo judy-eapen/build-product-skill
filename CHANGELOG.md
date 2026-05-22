@@ -4,6 +4,42 @@ All notable changes are documented here. Follows [Semantic Versioning](https://s
 
 ---
 
+## v2.9.0 — 2026-05-22
+
+### Added
+
+- **`/validate-prd`** — a semantic content validator for the PRD (different from `/pipeline-doctor`, which checks structural integrity). Six checks:
+  1. **Internal consistency** — sections contradict each other (data model vs. API contracts, scope vs. phases, decision log vs. body, roles referenced but not defined, NFR scope vs. API endpoints).
+  2. **Hallucinated data** — numeric claims / statistics / market references without a source. Cross-checks against the research output file.
+  3. **Completeness** — `[TBD]` / `[TODO]` / `[FIXME]` markers, empty required sections, single-sentence placeholders.
+  4. **VOC traceability** — does the PRD use language from the research output, or did it drift to generic AI prose? Catches invented user quotes.
+  5. **NFR measurability** — non-functional requirements have concrete thresholds and bounded scopes vs. vague aspirations ("fast", "scalable").
+  6. **Scope coherence** — in-scope vs. out-of-scope contradictions, scope-creep references, success metrics that depend on out-of-scope capabilities.
+- **`/validate-user-stories`** — a semantic content validator for the user-stories breakdown. Seven checks:
+  1. **Story ↔ PRD traceability** — every story maps to a PRD section; no orphans either direction; FE/BE pair coverage.
+  2. **AC duplication / contradiction across stories** — same Gherkin scenario in multiple stories, or contradicting `Then` clauses for the same screen / endpoint.
+  3. **FE/BE pair coherence** — endpoint contracts, error paths, permissions, and naming match between paired stories.
+  4. **AC specificity** — catches vague Gherkin ("it works", "appropriate error", "if needed") that won't survive QA. DRAFT stories exempt.
+  5. **Sizing sanity** — scenario count + distinct surface count vs. size label (S/M/L/L+). Catches under-sized and over-sized stories. DRAFT stories' `*` sizing gets gentle treatment.
+  6. **DRAFT consistency** — state and breakdown agree on which stories are DRAFT; markers (`Status: ⚠ DRAFT`, `*` sizing, design-gaps list) are present where expected.
+  7. **Wave / dependency sanity** — acyclic dependencies, wave ordering (no story depends on later-wave work), phase ordering, FE→BE direction sanity.
+- **Same UX as `/pipeline-doctor`** — inline summary → per-finding walkthrough with approve/skip → full markdown report saved to `[feature]/validation/[feature]-validate-{prd|stories}-[YYYY-MM-DD-HHMM].md`. A `_validate-{prd|stories}-history.md` log accumulates one-line entries per run.
+
+### Why this matters
+
+`/pipeline-doctor` catches structural drift (missing files, broken state schemas, stale features). The new validators catch **content drift** — the PRD that no longer agrees with itself after 17 review-and-fix cycles; the 75-story breakdown where Story 2.4 and Story 3.1 specify different empty-state copy for the same screen; the L-sized story that's actually 3 trivial scenarios because the PM rushed it. These are invisible to mechanical gate quality checks and to skim-reading. At 75 stories / 11,220 lines, a PM cannot catch them by hand.
+
+### Cost note
+
+`/validate-user-stories` is the most expensive command in the skill. On the nestfully-ai 614KB breakdown, expect 1–3 minutes of runtime and significant token consumption. Run on-demand, not auto-run at gates.
+
+### Not changed
+
+- Existing pipeline gates (1, 2, 3) and their mechanical quality checks remain. Validators are additive on-demand checks, not replacements.
+- All existing commands (`/pipeline-doctor`, `/change-mode`, `/build-product`, etc.) unchanged.
+
+---
+
 ## v2.8.1 — 2026-05-22
 
 ### Fixed
