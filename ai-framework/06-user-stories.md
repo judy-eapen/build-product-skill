@@ -242,32 +242,25 @@ As a [role], I want [goal] so that [benefit].
 
 **Acceptance Criteria (Gherkin)**
 
+Write the number of scenarios this story actually needs — simple stories may have 2–3, complex stories may have 10+. Do not pad to match the template; do not cap at the template count. Cover all four categories (happy / negative / edge / error) per the rules below.
+
 \`\`\`
-Scenario: [Happy-path scenario name]
+Scenario: [Happy-path — the most common successful flow]
   Given [...]
   When [...]
   Then [...]
 
-Scenario: [Negative case — invalid input]
-  Given [...]
-  When [...]
-  Then [...]
-  And [...]
+# Then add additional scenarios as the AC requires.
+# Category cues (write 1 or more per applicable category — do not copy verbatim):
 
-Scenario: [Edge case — empty state]
-  Given [...]
-  When [...]
-  Then [...]
+Scenario: [Negative case — e.g., invalid input, missing required field, validation failure, unauthorized]
+  ...
 
-Scenario: [Edge case — boundary / max / min]
-  Given [...]
-  When [...]
-  Then [...]
+Scenario: [Edge case — e.g., empty state, max/min boundary, concurrent action, offline, locale/timezone]
+  ...
 
-Scenario: [Error case — upstream dependency fails]
-  Given [...]
-  When [...]
-  Then [...]
+Scenario: [Error case — e.g., upstream timeout, partial failure, retry, fallback]
+  ...
 \`\`\`
 
 **Testing Notes (high level)**
@@ -331,12 +324,16 @@ Scenario: [Negative or error case where the PRD has enough detail to write it]
 
 ### Gherkin coverage rules
 
-Each non-DRAFT story must cover these AC categories exhaustively (no minimums other than these — write as many scenarios as needed):
+**Scenario count scales with story complexity. There is no fixed number.** A simple story (e.g., "log analytics event when user clicks Save") may need 2–3 scenarios. A complex story (e.g., "submit a 12-field form with cross-field validation, three error paths, and a draft autosave") may need 10 or more. Do not pad scenarios to match the template, and do not cap at the template's example count. The template above shows one happy-path scenario plus category cues — fill in the actual scenarios this specific story requires.
 
-- **Happy path** — at least 1 scenario. The most common successful flow.
-- **Negative cases** — invalid input, missing required fields, validation failures, unauthorized access (where applicable). At least 1 scenario.
-- **Edge cases** — empty state / first use, max boundary, min boundary, concurrent actions, offline or degraded service, timezone or locale if applicable. At least 1 scenario.
-- **Error cases** — upstream timeouts, partial failures, retries, fallbacks. At least 1 scenario (especially for BE stories).
+Each non-DRAFT story must cover these AC categories — write each category exhaustively for this specific story (some categories may need multiple scenarios, others may need just one, depending on the story):
+
+- **Happy path** — at least 1 scenario. The most common successful flow. Add more if the story has multiple legitimate happy paths (e.g., a feature with two user roles each having a different happy path).
+- **Negative cases** — invalid input, missing required fields, validation failures, unauthorized access (where applicable). At least 1 scenario, more if the story has multiple distinct validation rules each worth specifying.
+- **Edge cases** — empty state / first use, max boundary, min boundary, concurrent actions, offline or degraded service, timezone or locale if applicable. At least 1 scenario, more if multiple boundaries apply.
+- **Error cases** — upstream timeouts, partial failures, retries, fallbacks. At least 1 scenario (especially for BE stories), more if the story integrates with multiple upstream systems each with distinct failure modes.
+
+**Skip a category only if it genuinely doesn't apply** (e.g., a read-only stats display has no "negative input" case). If you skip a category, the story is exempt from that one. Do not skip just to keep the count low.
 
 DRAFT stories aim for happy path + at least one behavioral negative/error scenario when the PRD supports it. Edge cases tied to UX states (empty / loading) are deferred to design refresh.
 
