@@ -500,7 +500,7 @@ Inputs: the approved user-stories breakdown from Step 10 (primary), the PRD (for
 The step gathers timeline parameters from the PM in one turn (start date, sprint length, team composition, velocity, buffer, optional target launch and off-time), proposes durations at the Epic + Phase level using a hybrid estimation model (sizing × velocity, PM tunes), and produces two outputs:
 
 - **Figma FigJam timeline** — via Figma MCP `generate_diagram`. URL stored in `_pipeline-state.json` → `export_urls.figma_timeline_url`. If the Figma MCP is unavailable, the step skips this output, notes it in the markdown sidecar, and continues.
-- **Interactive HTML Gantt** — self-contained HTML file at `timeline/[feature-name]-timeline.html`. Opens offline. Hover details on every bar.
+- **Interactive HTML Gantt** — self-contained HTML file at `timeline/[feature-name]-timeline.html`. Opens offline. **Editable in the browser** (v2.5.0+): drag bars to shift dates, drag right edge to resize duration, auto-cascade downstream bars (Shift to lock), localStorage auto-save, Export Plan button downloads a JSON for round-trip via `/timeline apply [path]`. Hover details on every bar.
 
 Granularity is Epic + Phase, not story-level. A 60-story feature produces a roadmap with one bar per epic grouped under phase headers, not 60 bars.
 
@@ -770,6 +770,39 @@ Write this file at the end of every step, overwriting the previous version:
       "draft_resolved_at": "ISO-8601 | null — set when /change-mode 'Designs arrived' clears the last DRAFT"
     },
     "jira_manifest": { "path": "string | null", "size_bytes": 0 }
+  },
+  "timeline": {
+    "parameters": {
+      "start_date": "YYYY-MM-DD | null",
+      "sprint_length_weeks": 2,
+      "fe_devs": 1,
+      "be_devs": 1,
+      "velocity_days_per_dev_per_sprint": 8,
+      "buffer_pct": 0.15,
+      "target_launch_date": "YYYY-MM-DD | null",
+      "off_time": [{ "start": "YYYY-MM-DD", "end": "YYYY-MM-DD" }],
+      "size_to_days_overrides": { "S": 1, "M": 3, "L": 5, "L_plus": 8 }
+    },
+    "computed": {
+      "start_date": "YYYY-MM-DD | null",
+      "end_date": "YYYY-MM-DD | null",
+      "working_days": 0,
+      "sprints": 0,
+      "gap_days": "int | null"
+    },
+    "outputs": {
+      "html_path": "string | null",
+      "markdown_path": "string | null"
+    },
+    "applied_edits": [
+      {
+        "applied_at": "ISO-8601 — v2.5.0+: set when /timeline apply runs",
+        "source_file": "string — path to imported JSON, or 'inline-paste'",
+        "epics_changed": 0,
+        "feature_end_shift_days": 0,
+        "new_gap_days": "int | null"
+      }
+    ]
   },
   "export_urls": {
     "jira_epic": "string | null",

@@ -43,6 +43,53 @@ Hybrid:
 
 Math is honest: if the computed end date misses a target launch, the skill surfaces the gap and offers scope cut / team increase / slip as the three options — it does not shrink durations to fit.
 
+## Editing the timeline interactively (v2.5.0+)
+
+The HTML Gantt is **editable in the browser** — no skill round-trip needed for quick what-if exploration.
+
+**Drag a bar** to shift the start date. Downstream bars cascade automatically (every Epic that originally started after this bar's original end moves by the same amount). Hold **Shift** while dragging to lock other bars — only the bar you're moving will shift.
+
+**Drag the right edge** of a bar to resize its duration. Same cascade rules apply.
+
+**Arrow-key edits**: focus a bar (Tab to it) and use `←` / `→` to shift by 1 working day. Add Shift to resize instead of shift. Add Alt to lock other bars (suppress cascade).
+
+**Auto-saved to localStorage** on every edit. Reload the page and your edits persist.
+
+**Toolbar buttons**:
+- **↺ Reset to original** — discards your edits and restores the skill-computed baseline. Confirms first.
+- **⬇ Export plan** — downloads a JSON file with your edits, ready to round-trip back into the skill.
+
+### Round-trip edits to the skill
+
+Casual edits in the browser are great for "what if?" exploration, but they don't update the skill's official state (so `/change-mode`, the Confluence Timeline child page, and downstream tools still see the old plan). To promote your edits to the official plan:
+
+```
+1. Open the HTML, drag bars to tune.
+2. Click ⬇ Export plan → downloads [feature]-plan-YYYYMMDD-HHMM.json
+3. Paste this in chat:
+   /timeline apply ~/Downloads/[that-file].json
+4. The skill shows a diff of all changes, asks you to confirm, then:
+   - Updates _pipeline-state.json (timeline.computed, timeline.parameters)
+   - Re-renders the markdown sidecar with the new dates
+   - Re-renders the HTML so your edits become the new baseline
+   - Logs the apply event to timeline.applied_edits[]
+5. Optional: run /publish-to-confluence to refresh the Timeline child page.
+```
+
+You can also paste the JSON content inline if you don't want to deal with file paths — the skill detects the `build-product-timeline-plan-v1` schema and handles it the same way.
+
+### What gets updated when you apply
+
+| Updated | Not updated |
+|---|---|
+| `timeline.computed` (start, end, working_days, gap) | User stories breakdown (scope unchanged) |
+| `timeline.parameters` (per-epic durations) | Jira ticket sizing |
+| `timeline.applied_edits[]` (history of applies) | PRD |
+| Markdown sidecar (re-rendered with new dates) | Figma FigJam timeline (run `/timeline` to regenerate) |
+| HTML (re-rendered; edited positions become new baseline) | Confluence Timeline page (run `/publish-to-confluence`) |
+
+Scope changes still go through `/change-mode`. The Timeline is a "when," not a "what."
+
 ## When to use the full pipeline instead
 
 If you have only a feature idea, run `/build-product`. The Timeline step runs automatically after Gate 3 (User Stories Breakdown approval) and before Step 11 (Export), and the resulting Figma URL is embedded in the Confluence publish.

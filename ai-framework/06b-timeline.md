@@ -13,6 +13,19 @@ Read `ai-framework/rules.md` and `ai-framework/error-handling.md` before executi
 
 ---
 
+## Mode dispatch (run this first)
+
+If the PM invoked the prompt with `apply [path-to-json]` (or "apply this plan: [path]", or pasted JSON content), this is **apply mode** — skip the normal generation flow and jump to the dedicated **Apply Mode** section at the end of this file. Otherwise, continue with Step 0.
+
+Apply mode is triggered when:
+- The PM message contains `/timeline apply [path]` or `apply [path]`
+- The PM pasted JSON matching the `build-product-timeline-plan-v1` schema (with a `"schema"` field set to that value)
+- The PM said "apply my edits" or "save the plan" along with a path or pasted JSON
+
+If you're not sure whether this is an apply call, ask: "Are you applying an edited plan JSON, or generating a fresh timeline?"
+
+---
+
 ## Step 0 — Input Check (gracefully handle standalone calls)
 
 Before doing anything else, determine whether you have the required inputs.
@@ -213,7 +226,9 @@ If `generate_diagram` fails or the Figma MCP is not available, do not block the 
 
 ## Step 6 — Generate the interactive HTML Gantt
 
-Build a self-contained HTML file (no external dependencies, no CDN, opens offline) with the following structure:
+Build a self-contained HTML file (no external dependencies, no CDN, opens offline) that the PM can **edit interactively** — drag bars to shift dates, drag the right edge to resize duration, with auto-cascade of downstream bars by default. Edits persist to localStorage and can be exported as a JSON plan that round-trips back to the skill via `/timeline apply [path]`.
+
+### HTML structure
 
 ```html
 <!DOCTYPE html>
@@ -221,64 +236,183 @@ Build a self-contained HTML file (no external dependencies, no CDN, opens offlin
 <head>
   <meta charset="UTF-8" />
   <title>[feature-name] — Timeline</title>
-  <style>
-    /* Embedded CSS — see template below */
-  </style>
+  <style>/* see CSS section below */</style>
 </head>
-<body>
+<body data-feature="[feature-name]" data-start-date="[YYYY-MM-DD]" data-working-days="[N]" data-px-per-day="24">
   <header>
     <h1>[feature-name] — Timeline</h1>
-    <p class="meta">Generated [date] · Start [start] · End [end] · [N] sprints · [N] working days</p>
-    <p class="target">[Target launch: [date] · Gap: +/- [N] days]</p>  <!-- only if target given -->
+    <p class="meta">Generated [date] · Start <span id="hdr-start">[start]</span> · End <span id="hdr-end">[end]</span> · [N] sprints · <span id="hdr-days">[N]</span> working days</p>
+    <p class="target">[Target launch: [date] · Gap: <span id="hdr-gap">+/- [N] days</span>]</p>
   </header>
+
+  <div class="toolbar">
+    <button id="btn-reset" type="button" title="Discard edits and restore the skill-computed plan">↺ Reset to original</button>
+    <button id="btn-export" type="button" title="Download current plan as JSON for /timeline apply">⬇ Export plan</button>
+    <span class="hint">Drag a bar to shift · Drag right edge to resize · Hold <kbd>Shift</kbd> to lock other bars (no cascade)</span>
+    <span id="edit-indicator" class="edit-indicator" hidden>● Unsaved edits</span>
+  </div>
 
   <div class="legend">
     <span class="legend-item phase-1">Phase 1</span>
-    <span class="legend-item phase-2">Phase 2</span>
     <!-- ... per phase ... -->
     <span class="legend-item today">▎ Today</span>
     <span class="legend-item target">▎ Target</span>
   </div>
 
-  <div class="gantt">
-    <div class="time-axis">
-      <!-- One column per week, labeled "W1 / Apr 1" etc. -->
-    </div>
+  <div class="gantt" id="gantt">
+    <div class="time-axis"><!-- one column per working day, week labels above --></div>
 
-    <div class="row phase-row">
+    <div class="row phase-row" data-id="P1" data-kind="phase" data-phase="1">
       <div class="row-label">PHASE 1 — [name]</div>
-      <div class="bar phase" style="--start: [N]; --span: [N]; --color: phase-1;">PHASE 1</div>
+      <div class="bar phase" data-start="[N]" data-span="[N]">PHASE 1</div>
     </div>
-    <div class="row epic-row">
+    <div class="row epic-row" data-id="E1" data-kind="epic" data-phase="1" data-depends-on="">
       <div class="row-label">Epic 1.1 — [name]</div>
-      <div class="bar epic" style="--start: [N]; --span: [N]; --color: phase-1;"
+      <div class="bar epic" data-start="[N]" data-span="[N]"
            data-hover="Start: [date] · End: [date] · FE [N]d · BE [N]d · Buffered [N]d">
-        Epic 1.1
+        <span class="bar-label">Epic 1.1</span>
+        <span class="resize-handle" aria-hidden="true"></span>
       </div>
     </div>
-    <!-- ... -->
+    <!-- ... more epics ... -->
 
-    <div class="today-line" style="--day: [N];"></div>
-    <div class="target-line" style="--day: [N];"></div>  <!-- only if target given -->
+    <div class="today-line" data-day="[N]"></div>
+    <div class="target-line" data-day="[N]"></div>
   </div>
 
   <footer>
     <p>Source: <code>[user-stories-file-path]</code></p>
-    <p>Re-render this timeline: <code>/timeline</code> from this feature folder.</p>
+    <p>Re-render: <code>/timeline</code> · Apply edits to skill state: <code>/timeline apply [path]</code></p>
   </footer>
+
+  <script>/* see JS section below */</script>
 </body>
 </html>
 ```
 
-**CSS template** — embed inline. Use CSS Grid with one column per working day, `--start` and `--span` as CSS custom properties driving `grid-column`. Use distinct hues per phase. Hover state on each bar shows the `data-hover` content as a tooltip. Today and Target lines are absolutely positioned vertical bars.
+### CSS rules (embed inline)
 
-**Print stylesheet** — `@media print`: hide hover tooltips, force a single-page-wide layout, keep colors.
+- **Layout via CSS Grid.** The `.gantt` container has `grid-template-columns: repeat(var(--days), var(--px-per-day, 24px))` where `--days` is total working days. Each `.bar` uses `grid-column: calc(var(--start) + 1) / span var(--span)` driven by `data-start` and `data-span` attributes (read into CSS custom properties by JS on render).
+- **Phase header bars** span the full epic group inside their phase and use a slightly darker hue than the epics. Distinct hue per phase (use a 5-color palette cycling per phase index).
+- **Bars are draggable**: `.bar { cursor: grab; }` and `.bar.dragging { cursor: grabbing; opacity: 0.7; }`. Edited bars get a subtle outline: `.bar.edited { outline: 2px solid currentColor; }`.
+- **Resize handle**: the `.resize-handle` is an 8px-wide strip on the right edge of every epic bar with `cursor: col-resize` and high z-index so it captures pointer events before the bar's drag handler.
+- **Ghost preview during drag**: a faintly-outlined clone of the bar follows the cursor in its candidate position. Implemented with a CSS `::after` pseudo or a sibling `.ghost` element positioned via JS.
+- **Today line / target line**: absolutely positioned vertical bars using `left: calc(var(--day) * var(--px-per-day, 24px))`. Today is dashed grey; target is solid red.
+- **Toolbar**: sticky to top of viewport, white background, buttons styled minimally. `.edit-indicator` hidden until an edit happens.
+- **Print stylesheet** — `@media print`: hide toolbar, hide hover tooltips, hide ghost previews, force a single-page-wide layout, keep colors.
 
-**Today logic** — compute the column index for today's date at render time using the start date and a working-days-elapsed calculation. Embed the index as a CSS custom property on the `.today-line` element so it does not need JavaScript.
+### JavaScript behavior (embed inline, no external dependencies)
 
-**Minimal JS** — none required unless adding bar-click-to-expand. If included, keep it inline and under 30 lines. Default: no JS.
+The JS implements the editing model. Write it inline at the bottom of `<body>`. Keep under ~250 lines. Vanilla JS only — no library, no CDN.
 
-The bars must be sized in **working days** to keep the math consistent with Step 3. Weekends are simply not rendered as columns.
+#### Data model
+
+```javascript
+// Read-only baseline written by the skill (parsed once at load from data-* attributes).
+const baseline = readBaselineFromDOM();
+// Shape:
+// {
+//   bars: [
+//     { id: "E1", kind: "epic", phase: 1, baseStart: 0, baseSpan: 12, dependsOn: [] },
+//     { id: "E2", kind: "epic", phase: 1, baseStart: 12, baseSpan: 6, dependsOn: ["E1"] },
+//     ...
+//   ],
+//   phaseRows: [{ id: "P1", phase: 1 }, ...],   // header rows, derived not edited
+//   totalDays: [N],
+//   featureName: "...",
+//   startDate: "[YYYY-MM-DD]"
+// }
+
+// Editable delta layer — start at zeros, mutate as the user drags.
+let edits = loadFromLocalStorage() || {}; // { [barId]: { startDelta: int, spanDelta: int } }
+```
+
+#### Effective positions
+
+`effectiveStart(barId)` = `baseStart + (edits[barId]?.startDelta ?? 0)`
+`effectiveSpan(barId)` = `baseSpan + (edits[barId]?.spanDelta ?? 0)` (minimum 1)
+Phase header bars are NOT editable directly — their position recomputes from `min(effectiveStart of epics in that phase)` to `max(effectiveStart + effectiveSpan of epics in that phase)`. After every edit, recompute all phase bars and rewrite their `data-start`/`data-span` and CSS custom properties.
+
+#### Drag-to-shift (mouse on bar body)
+
+1. On `mousedown` on a `.bar.epic` (NOT on its `.resize-handle`): record `startX = e.clientX`, `originalDelta = edits[id]?.startDelta ?? 0`. Add `.dragging` class. Set `document.body.style.userSelect = 'none'`.
+2. On `mousemove`: compute `dxPx = e.clientX - startX`, `dxDays = Math.round(dxPx / pxPerDay)`. Compute candidate `newDelta = originalDelta + dxDays`. Render the bar's ghost at the candidate position. Show a small floating label with the new start date next to the cursor.
+3. On `mouseup`: commit the change: set `edits[id].startDelta = newDelta`. Then **cascade** unless Shift is held: for every other bar whose original `baseStart >= bar.baseStart + bar.baseSpan` (i.e., bars that started after this bar's original end), apply the same `dxDays` shift to their `startDelta`. (Phase headers do not get a direct delta — they recompute from their epics.) Save to localStorage. Re-render all affected bars. Update header totals (end date, working days). Show the edit indicator.
+4. Bound the resulting position: a bar cannot start before day 0. Clamp negative effectiveStart to 0.
+
+#### Drag-to-resize (mouse on `.resize-handle`)
+
+1. On `mousedown` on `.resize-handle`: same setup as drag-to-shift, but tracking `spanDelta` instead of `startDelta`.
+2. On `mousemove`: compute `dxDays` and propose `newSpan = baseSpan + originalSpanDelta + dxDays`. Minimum is 1 day. Render ghost showing the new right edge.
+3. On `mouseup`: commit `edits[id].spanDelta = newSpanDelta`. Cascade unless Shift held: same logic as shift — bars that originally started after this bar's original end shift by the resize delta. Save, re-render, show edit indicator.
+
+#### Cascade rule (precise)
+
+When bar `X` moves or resizes by `delta` working days (positive or negative):
+- If Shift is held: only `X` is updated. No downstream changes.
+- Otherwise: for every bar `Y` (excluding phase headers) where `Y.baseStart >= X.baseStart + X.baseSpan`, set `edits[Y.id].startDelta += delta`. Phase headers recompute automatically from the new epic positions.
+
+This means dependencies are inferred by **original position**, not by an explicit `dependsOn` list. A bar that originally came after `X` is treated as downstream of `X` and cascades when `X` moves. This matches the visual mental model ("everything after this point shifts") and avoids requiring the PM to maintain a dependency graph.
+
+(If the PM wants more surgical cascade behavior, they can hold Shift on the first drag, then drag each downstream bar manually. The "Export plan" output captures the final state regardless of how it was reached.)
+
+#### Toolbar buttons
+
+- **`#btn-reset`**: confirm via native `confirm()` then clear `edits = {}`, clear localStorage, re-render everything from baseline. Hide the edit indicator.
+- **`#btn-export`**: build a JSON object (see "Export shape" below) and trigger a download via a temporary `<a download>` element. Filename: `[feature-name]-plan-[YYYYMMDD-HHMM].json`. Do not clear edits on export — they remain in localStorage until reset.
+
+#### localStorage
+
+Key: ``build-product-timeline:${baseline.featureName}``. Value: `JSON.stringify(edits)`. Save on every successful `mouseup` that committed a change. Load once at page init.
+
+#### Export shape (JSON)
+
+```json
+{
+  "schema": "build-product-timeline-plan-v1",
+  "feature_name": "[feature]",
+  "exported_at": "ISO-8601 UTC",
+  "baseline_start_date": "[YYYY-MM-DD]",
+  "px_per_day": 24,
+  "edits": [
+    {
+      "epic_id": "E1",
+      "base_start_day": 0,
+      "base_span_days": 12,
+      "edited_start_day": 0,
+      "edited_span_days": 12,
+      "start_delta_days": 0,
+      "span_delta_days": 0
+    },
+    {
+      "epic_id": "E2",
+      "base_start_day": 12,
+      "base_span_days": 6,
+      "edited_start_day": 17,
+      "edited_span_days": 8,
+      "start_delta_days": 5,
+      "span_delta_days": 2
+    }
+  ],
+  "phase_bands_recomputed": [
+    { "phase": 1, "start_day": 0, "end_day": 25 },
+    { "phase": 2, "start_day": 26, "end_day": 47 }
+  ]
+}
+```
+
+`base_start_day` and `base_span_days` reflect the original skill-computed plan; `edited_start_day` and `edited_span_days` reflect the final edited plan. Both are included so the skill can apply edits idempotently and compute new calendar dates from working days.
+
+### Accessibility & ergonomics
+
+- Every bar has a `tabindex="0"` and responds to `←`/`→` arrow keys to shift by 1 day, and `Shift+←`/`→` to resize by 1 day (when focused on the bar but not on the resize handle). Arrow-key edits also cascade (or lock with held Shift) — same rules as mouse drag.
+- Hover tooltip shows the current effective dates and computed FE/BE breakdown.
+- All buttons have visible focus states.
+- The today/target lines have `aria-label`s.
+
+### Working-day math
+
+All shifting and resizing is done in **working days** (the unit the grid columns are sized in). Calendar-date computation (for display in tooltips and the JSON export's `edited_start_date`) skips weekends and any off-time ranges from `_pipeline-state.json` → `timeline.parameters.off_time`. The skill should embed those off-time ranges as a `data-off-time` attribute on `<body>` if present, so the JS can compute calendar dates correctly.
 
 ---
 
@@ -335,3 +469,137 @@ Ask exactly one question:
 - **No external CDN.** The HTML must open offline. No `<script src="...">` to a remote host.
 - **Self-check (Error Type 3 in error-handling.md):** does this timeline contradict any decision recorded in the PRD's decision log (e.g., a committed phase order)? If yes, flag to the PM before writing.
 - **Update `_pipeline-state.json`** at the end of this step regardless of whether Figma succeeded.
+
+---
+
+## Apply Mode — round-trip edits from the HTML back into the skill
+
+Triggered when the PM runs `/timeline apply [path]` (or pastes a `build-product-timeline-plan-v1` JSON, or says "apply my edits"). This mode promotes interactive HTML edits into the official skill state and re-renders the markdown sidecar.
+
+### A-1 — Locate and read the JSON
+
+If the PM gave a file path (e.g., `~/Downloads/feature-plan-20260521-1342.json`), read the file. If the PM pasted JSON content inline, parse the content directly. If both are missing, ask: "Paste the plan JSON, or give me the path to the downloaded file from the HTML's Export Plan button."
+
+Validate the JSON has `"schema": "build-product-timeline-plan-v1"`. If it doesn't, refuse and explain — the file isn't an export from this skill's Gantt. Do not attempt to interpret arbitrary JSON.
+
+Validate that `feature_name` matches the current feature (when running inside the orchestrator, use the context feature; standalone, ask if it doesn't match: "This plan is for `[plan-feature]` but the active feature is `[ctx-feature]`. Apply to `[plan-feature]` instead?").
+
+### A-2 — Compute new calendar dates from the edits
+
+For each entry in `edits[]`:
+- Read `edited_start_day` and `edited_span_days` (post-edit values).
+- Convert `edited_start_day` (working-day offset) to a calendar date by adding `edited_start_day` working days to `baseline_start_date`, skipping weekends and any off-time ranges from `_pipeline-state.json` → `timeline.parameters.off_time`.
+- Convert `edited_span_days` to an end date the same way (add `edited_span_days - 1` working days to the start date).
+- Result per epic: `{ epic_id, new_start_date, new_end_date, new_duration_working_days }`.
+
+For each phase band in `phase_bands_recomputed`:
+- Same conversion: working-day offset → calendar date.
+- Result per phase: `{ phase, new_start_date, new_end_date }`.
+
+Compute the new overall feature end (latest epic end). Compute the new gap vs. target launch (if PM set one): `new_gap = target_launch - new_feature_end`. Flag prominently if the gap is now negative (timeline exceeds target).
+
+### A-3 — Show the diff before writing
+
+Present a compact diff:
+
+```
+━━━ Apply plan — [Feature Name] ━━━
+
+Edited 4 of 7 epics. Total feature end moved from 2026-08-12 to 2026-08-19 (+5 working days).
+[Gap vs target 2026-08-15: was +2 days, now -2 days — timeline exceeds target.]
+
+Per-epic changes:
+  Epic 1.1 (Listing FE)        unchanged
+  Epic 1.2 (Listing BE)        2026-06-10 → 2026-06-15  (+5 working days, span unchanged)
+  Epic 1.3 (Management FE)     2026-06-20 → 2026-06-25  (+5 working days, span +2 days)
+  Epic 1.4 (Management BE)     2026-06-20 → 2026-06-25  (+5 working days, span unchanged)
+  Epic 2.1 (Notifications)     2026-07-05 → 2026-07-10  (+5 working days, span unchanged)
+  ...
+
+Phase bands:
+  Phase 1                      ends 2026-07-02 (+5 days)
+  Phase 2                      starts 2026-07-05, ends 2026-08-19 (+5 days)
+
+Apply this plan? (yes / no / show full per-epic detail)
+```
+
+If the PM says no, stop. Do not modify state or files.
+
+### A-4 — Update `_pipeline-state.json`
+
+On approval:
+- Update `timeline.computed` with the new `start_date`, `end_date`, `working_days`, `sprints`, `gap_days` (if target).
+- Update `timeline.parameters` epic durations to match `edited_span_days` per epic.
+- Add an entry to `timeline.applied_edits[]`:
+  ```json
+  {
+    "applied_at": "ISO-8601",
+    "source_file": "[path or 'inline-paste']",
+    "epics_changed": [N],
+    "feature_end_shift_days": [signed int],
+    "new_gap_days": [signed int or null]
+  }
+  ```
+
+### A-5 — Re-render the markdown sidecar
+
+Rewrite `[feature]/timeline/[feature]-timeline.md` to reflect the new dates. Keep the same structure (parameter snapshot, proposed-timeline table, Figma URL, HTML path, traceability) but with **post-edit** values throughout. Preserve any unchanged sections verbatim.
+
+Note at the top of the file:
+
+```markdown
+> Plan applied [YYYY-MM-DD HH:MM] from `[path]`.
+> Feature end shifted [+/- N] working days from baseline. See `_pipeline-state.json` → `timeline.applied_edits` for history.
+```
+
+### A-6 — Re-render the HTML
+
+Rewrite `[feature]/timeline/[feature]-timeline.html` so the **edited positions become the new baseline**. After re-render:
+- `data-start` and `data-span` on each bar reflect the edited values (not the original baseline).
+- localStorage edits should be cleared (the JS reads `data-start` / `data-span` as the new ground truth).
+- The HTML is functionally identical to a fresh `/timeline` run, but with the new dates.
+
+This means after `/timeline apply`, the PM can open the HTML again and it shows the applied plan as the new baseline — they can iterate further from there.
+
+### A-7 — Confluence + transcript awareness
+
+If Confluence has been published for this feature (`confluence_hub.parent_page_id` exists), inform the PM:
+
+```
+The Step 10½: Timeline child page in Confluence still reflects the prior plan.
+Run /publish-to-confluence to update it with the applied edits. (per-file mtime
+detection means only the timeline page will re-publish.)
+```
+
+Do not auto-republish — PM should decide when to share the change.
+
+### A-8 — Report
+
+```
+✅ Plan applied — [Feature Name]
+
+  Feature start:  [date]
+  Feature end:    [date]   (was [old], shift: [+/- N] working days)
+  Working days:   [N]      (was [old])
+  Target:         [date or "none set"]
+  Gap:            [+/- N days] [⚠ if negative]
+
+State updated:
+  _pipeline-state.json → timeline.computed
+  _pipeline-state.json → timeline.parameters (per-epic durations)
+  _pipeline-state.json → timeline.applied_edits[] (this run logged)
+
+Files re-rendered:
+  timeline/[feature]-timeline.md   (sidecar, with applied-from header)
+  timeline/[feature]-timeline.html (new baseline = applied edits)
+
+Next step (optional):
+  /publish-to-confluence  — refresh the Timeline child page on the hub
+```
+
+### Apply-mode rules
+
+- **Never modify the user-stories breakdown** as part of apply mode. The breakdown is the source of truth for what gets built; the timeline only governs when. Scope changes still require `/change-mode`.
+- **Never silently overwrite the markdown sidecar without showing the diff.** Always Step A-3 → Step A-4.
+- **Idempotent re-apply.** If the PM applies the same JSON twice, the second run should be a no-op (state and files already match). Detect this and tell the PM: "Plan is already applied — nothing to update."
+- **Schema gate.** Refuse any JSON that doesn't have `"schema": "build-product-timeline-plan-v1"`. Future schema versions will require a migration step here; today there is only v1.

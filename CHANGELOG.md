@@ -4,6 +4,46 @@ All notable changes are documented here. Follows [Semantic Versioning](https://s
 
 ---
 
+## v2.5.0 — 2026-05-21
+
+### Added
+
+- **Interactive editing in the HTML Gantt.** The `timeline/[feature]-timeline.html` file is now editable in the browser:
+  - **Drag any bar** to shift its start date. Downstream bars (anything that originally started after this bar's original end) cascade by the same amount automatically.
+  - **Drag the right edge** of a bar to resize its duration. Same cascade behavior.
+  - **Hold Shift while dragging** to lock other bars — only the dragged bar moves; the rest stay in place (may now overlap, intentionally).
+  - **Arrow-key edits**: focus a bar (Tab) and use `←` / `→` to shift by 1 working day, or Shift+arrow to resize. Alt suppresses the cascade.
+  - **Auto-saved to localStorage** on every edit, keyed by feature name. Reload preserves edits.
+  - **Toolbar buttons**: `↺ Reset to original` (discards edits, restores skill-computed baseline; confirms first) and `⬇ Export plan` (downloads a JSON plan).
+  - Still **vanilla JS, no CDN, opens offline.** The HTML remains a single self-contained file.
+- **`/timeline apply [path]` — round-trip edits back into the skill.** A new mode of the existing `/timeline` command that promotes browser edits into the official skill state:
+  - Reads the exported JSON (path or pasted content) and validates against `schema: "build-product-timeline-plan-v1"`.
+  - Computes new calendar dates from the edited working-day offsets, skipping weekends and any off-time ranges from `timeline.parameters.off_time`.
+  - Shows a per-epic diff (old date → new date, span delta) and an overall feature-end shift, with a target-gap warning if the new end exceeds the target launch date.
+  - On approval: updates `timeline.computed` and `timeline.parameters` (per-epic durations), logs the apply event to a new `timeline.applied_edits[]` history, re-renders the markdown sidecar with the applied dates as the new baseline, and re-renders the HTML so its `data-start` / `data-span` reflect the edits (localStorage cleared, edits become ground truth for future runs).
+  - **Idempotent** — applying the same JSON twice is a detected no-op.
+  - **Schema-gated** — refuses any JSON that isn't a build-product-timeline plan.
+- **`timeline.applied_edits[]` history** added to `_pipeline-state.json` so subsequent `/change-mode`, `/timeline`, and `/publish-to-confluence` runs can see when the plan was edited and what shifted.
+
+### Changed
+
+- `ai-framework/06b-timeline.md` Step 6 (HTML generation) substantially expanded with the interactive spec — data model, drag/resize/cascade rules, accessibility (keyboard editing, ARIA), localStorage persistence, JSON export shape.
+- `ai-framework/06b-timeline.md` adds a new Apply Mode section (Steps A-1 through A-8) covering the round-trip flow.
+- `subprompts/timeline.md` adds an "Editing the timeline interactively" section walking the PM through the drag/cascade/export/apply flow.
+- `_pipeline-state.json` schema in SKILL.md gains a documented `timeline.applied_edits[]` array and a fully-described `timeline.parameters` / `timeline.computed` block (these were previously written but not formally schema-documented).
+- After `/timeline apply`, if Confluence has been published for the feature, the skill reminds the PM to run `/publish-to-confluence` to refresh the Timeline child page (does not auto-republish — PM decides when to share).
+
+### Why this matters
+
+The Gantt stops being a read-only artifact and becomes an actual planning tool. PMs can negotiate dates with stakeholders live in a meeting, see ripple effects immediately ("if Epic 2 slips by a week, where does that put launch?"), and then promote the agreed plan back into the skill's state in one paste — without leaving the artifact, without re-running the pipeline, without re-typing dates into a spreadsheet.
+
+### Not changed
+
+- User stories breakdown, Jira tickets, PRD, system design, design catalog, codebase review, research, reviews — none of these are touched by Apply Mode. Scope changes still require `/change-mode`. The Timeline governs "when", not "what".
+- The Figma FigJam timeline is regenerated only by a normal `/timeline` run, not by `/timeline apply`. Edits round-trip into local files + state; refresh Figma manually if you want it synced.
+
+---
+
 ## v2.4.0 — 2026-05-21
 
 ### Added
