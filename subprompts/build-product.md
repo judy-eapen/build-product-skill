@@ -1,6 +1,26 @@
 # Build Product
 
-Orchestrator command that guides you through the Work pipeline: Research → Codebase Review → PRD → Dual Review → Apply Fixes → Gate 1 → System Design → Visual Diagram → Design → Update PRD from Designs → Gate 2 → User Stories Breakdown → Gate 3 → Export (Jira + Drive + Confluence).
+Orchestrator command that guides you through the Work pipeline: Research → Codebase Review → PRD → Dual Review → Apply Fixes → Gate 1 → System Design → Visual Diagram → Design → Update PRD from Designs → Gate 2 → User Stories Breakdown → Gate 3 → **Timeline (Gantt)** → Export (Jira + Drive + Confluence) → **Export Transcript** → Work Pipeline Complete.
+
+---
+
+## Auto-continue rule (read this before any step)
+
+**In Fast mode**, after every auto step or gate approval, immediately proceed to the next step in `ai-framework/pipeline-configs.yaml`. Do not wait for further PM input between steps. The only pause points are:
+
+1. **The three approval gates** (PRD, Designs, User Stories Breakdown) — pause until the PM says "approved" (or "approved with conditions").
+2. **Pre-flight questions** that ask for input the next step needs (e.g., "v0 or Figma Make?" at Step 8; the Step 11 Export pre-flight).
+3. **Optional offers** that the PM can decline in one word (e.g., the post-Gate-3 "publish breakdown to Confluence?" offer). Continue immediately after the PM answers — "skip" is a valid answer that means "keep moving."
+
+The full step order is: 1 → 2 → 3 → 4 (parallel a+b) → 5/Gate 1 → 6 (conditional) → 7 → 8 → 9/Gate 2 → 10/Gate 3 → **10.5 Timeline** → 11 (parallel a+b+c) → **12 Transcript** → Work Pipeline Complete. Steps 10.5 and 12 are not optional in Fast mode — they always run unless the PM explicitly says "skip" for them.
+
+**In Gated mode**, pause briefly after every step with:
+```
+✓ Step [N] complete. Next: Step [N+1] — [name]. Continue? (yes / pause)
+```
+Default-yes if PM types Enter or anything affirmative. The only thing that pauses Gated mode is an explicit "pause" or "stop."
+
+**Never let the pipeline stall silently.** If you finish a step and aren't sure what's next, look at `pipeline-configs.yaml` → `pipelines.work.steps[]` and the current step in `_pipeline-state.json` — the next entry in the array is what runs next.
 
 ---
 
@@ -425,6 +445,34 @@ If yes:
    Record the URL in `_pipeline-state.json` → `export_urls.confluence_breakdown_page`.
 2. Then read and follow `subprompts/share-for-review.md` using that URL.
 
+**Next: Step 10.5 — Timeline (Gantt). Continue automatically after the share-for-review offer is answered (yes or skip).** Do not stop and wait — Step 10.5 always runs after Gate 3.
+
+---
+
+### Step 10.5 — Timeline (Gantt) [AUTO]
+
+Read and follow: `ai-framework/06b-timeline.md`.
+
+Inputs: the approved user-stories breakdown from Step 10 (primary), the PRD (for phase order and any committed milestones), and `_pipeline-state.json` (for prior timeline parameters if re-running).
+
+The step:
+1. Gathers timeline parameters from the PM in one turn (start date, sprint length, team composition, velocity, buffer, optional target launch and off-time).
+2. Proposes durations at the **Epic + Phase** level using a hybrid estimation model (sizing × velocity, PM tunes).
+3. Produces two outputs:
+   - **Figma FigJam timeline** via the Figma MCP `generate_diagram` call. URL recorded in `_pipeline-state.json` → `export_urls.figma_timeline_url`. If Figma MCP is unavailable, the step skips this output and notes the skip in the markdown sidecar.
+   - **Interactive HTML Gantt** (editable in-browser: drag bars, auto-cascade, Save-to-skill / Export Plan for `/timeline apply` round-trip) at `timeline/[feature-name]-timeline.html`.
+4. Writes a markdown sidecar at `timeline/[feature-name]-timeline.md` with the parameter snapshot, proposed-timeline table, Figma URL, traceability mapping.
+
+Honest target-gap math: if the PM provided a target launch date and the computed end exceeds it, surface the gap and offer scope cut / team increase / slip — do not silently shrink durations.
+
+No gate. After the PM accepts the timeline ("yes" at Step 8 of the underlying prompt), update `_pipeline-state.json`:
+- `timeline.parameters` (final parameter values)
+- `timeline.computed` (start, end, sprints, working_days, gap_days)
+- `timeline.outputs.html_path` and `timeline.outputs.markdown_path`
+- `export_urls.figma_timeline_url` (only if Figma succeeded)
+
+**Next: Step 11 — Export pre-flight. Continue automatically — do not wait for further PM input.**
+
 ---
 
 ### Step 11 — Export (parallel: Jira always + Drive optional + Confluence optional)
@@ -477,6 +525,27 @@ After all agents finish:
 ```
 
 Update `_pipeline-state.json` with export results.
+
+**Next: Step 12 — Export Conversation Transcript. Continue automatically — do not stop after Step 11.** If the PM types "skip transcript" before Step 12 begins, skip it for this run and go straight to the Work Pipeline Complete banner; otherwise run Step 12 normally.
+
+---
+
+### Step 12 — Export Conversation Transcript [AUTO]
+
+Read and follow: `ai-framework/08-export-transcript.md`.
+
+Runs automatically at the end of every pipeline. Reads the current Claude Code session's JSONL file (`~/.claude/projects/-Users-judydarvin/[session-uuid].jsonl`), filters to messages from this feature's pipeline window, and writes two markdown files:
+
+- `transcript/[feature-name]-transcript-clean.md` — user + assistant text only, the readable conversation.
+- `transcript/[feature-name]-transcript-full.md` — same conversation plus tool calls and (truncated) tool results, with system reminders and permission-mode events included.
+
+The model's `thinking` blocks are excluded from both files (private reasoning).
+
+If a prior transcript export exists for this feature, the older files are renamed with a timestamp suffix before the new ones are written — every run is preserved.
+
+Update `_pipeline-state.json` → `transcript` with `last_exported_at`, `session_id`, paths, window timestamps, and counts.
+
+**Next: print the Work Pipeline Complete banner.** Continue automatically — Step 12 is the final auto step. Also write `pipeline_completed_at` to `_pipeline-state.json`. If timing instrumentation has been recording step boundaries, generate the timing report (`ai-framework/09-pipeline-timing.md`) and include the summary block in the Work Pipeline Complete banner.
 
 ---
 

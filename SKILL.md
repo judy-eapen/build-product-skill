@@ -286,11 +286,35 @@ Then ask about optional review lenses. Read `ai-framework/personas.md` — "Opti
 
 ## Output Patterns
 
+### Auto-continue between steps — required behavior
+
+**In Fast mode**, after every auto step or gate approval, immediately proceed to the next step in `ai-framework/pipeline-configs.yaml`. Do not wait for further PM input between steps. The only pause points are:
+
+1. **The three approval gates** (PRD, Designs, User Stories Breakdown) — pause until the PM says "approved" (or "approved with conditions").
+2. **Optional pre-flight questions** that ask the PM for input the next step needs (e.g., "v0 or Figma Make?" at Step 8; the Step 11 Export pre-flight).
+3. **Optional offers** that the PM can decline in one word (e.g., the post-Gate-3 "publish breakdown to Confluence?" offer).
+
+Optional offers should always be phrased so a single "skip" answer keeps the pipeline moving. If the PM skips an optional offer, immediately continue to the next step — do not stop and wait.
+
+After Gate 3 approval and the optional Confluence-share-for-review offer, the next step is **Step 10.5 — Timeline** (always runs, no gate). After Step 10.5, the next step is **Step 11 — Export pre-flight**. After Step 11, the next step is **Step 12 — Export Transcript**. After Step 12, print the Work Pipeline Complete banner.
+
+**In Gated mode**, pause briefly between every step with this prompt:
+
+```
+✓ Step [N] complete. Next: Step [N+1] — [name].
+Continue? (yes / pause to review)
+```
+
+Default-yes if the PM types Enter or anything affirmative; the only thing that pauses Gated mode is an explicit "pause" or "stop" instruction.
+
+**Never let the pipeline stall silently.** If you're not sure what the next step is, look at `pipeline-configs.yaml` → `pipelines.work.steps[]` and the current `step_id` in `_pipeline-state.json` — the next entry in the array is what runs next.
+
 ### Fast mode — auto-step (no pause)
 ```
 ✓ Step [N] — [step name] — [one-line summary] → [output file path]
+Next: Step [N+1] — [name]. Continuing automatically.
 ```
-Proceed immediately to the next step.
+Then proceed immediately to the next step without waiting for further input.
 
 ### Fast mode — parallel block completion
 ```
@@ -491,6 +515,8 @@ If yes:
 Note: Step 11c (Confluence publish) runs next and will publish or update the full PRD
 page. The breakdown page created here is a separate page, not a duplicate.
 
+**Next: Step 10.5 — Timeline (Gantt). Continue automatically after the share-for-review offer is answered (yes or skip).** Do not stop and wait — the Timeline step always runs after Gate 3 regardless of whether the optional Confluence/Slack share happened.
+
 ### Step 10.5 — Timeline (Gantt) [AUTO]
 
 Read and follow: `ai-framework/06b-timeline.md`.
@@ -506,7 +532,7 @@ Granularity is Epic + Phase, not story-level. A 60-story feature produces a road
 
 Math is honest: if the PM provided a target launch date and the computed end exceeds it, the step surfaces the gap and offers scope cut / team increase / slip — it does not silently shrink durations.
 
-No gate. After the PM accepts the timeline ("yes" at Step 8 of the underlying prompt), proceed to Step 11.
+No gate. After the PM accepts the timeline ("yes" at Step 8 of the underlying prompt), **continue automatically to Step 11 — Export pre-flight**. Do not wait for further PM input.
 
 Update `_pipeline-state.json`:
 - `timeline.parameters`, `timeline.computed`, `timeline.outputs.html_path`, `timeline.outputs.markdown_path`.
@@ -616,6 +642,8 @@ If any of the three failed, the failure is reported but the others still succeed
 
 Update `_pipeline-state.json` with the export results, including the Drive folder URL and Confluence page URL if they were enabled.
 
+**Next: Step 12 — Export Conversation Transcript. Continue automatically — do not stop after Step 11.**
+
 ### Step 12 — Export Conversation Transcript [AUTO]
 
 Read and follow: `ai-framework/08-export-transcript.md`.
@@ -632,6 +660,8 @@ If a prior transcript export exists for this feature, the older files are rename
 To skip this step for a single pipeline run, the PM can say "skip transcript" at the end of Step 11. Standalone `/export-transcript` can be run any time afterward.
 
 Update `_pipeline-state.json` → `transcript` with `last_exported_at`, `session_id`, paths, window timestamps, and counts.
+
+**Next: print the Work Pipeline Complete banner.** Continue automatically — Step 12 is the final auto step in the pipeline. After the banner, also write `pipeline_completed_at` to `_pipeline-state.json` and (if instrumentation is enabled) include the timing summary from `ai-framework/09-pipeline-timing.md`.
 
 ### Work Pipeline Complete
 
