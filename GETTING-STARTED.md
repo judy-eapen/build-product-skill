@@ -209,19 +209,39 @@ The skill is now installed at `~/.claude/skills/build-product`. The `~` is short
 
 Claude Code discovers slash commands in a specific folder (`~/.claude/commands/`). This one-time setup copies a small wrapper file for each command in this skill into that folder.
 
-Paste this command (it is one long line) and press Enter:
+The command depends on your terminal — use the version that matches your OS.
+
+### On a Mac or Linux (Terminal)
+
+Paste this (it is one long line) and press Enter:
 
 ```bash
 mkdir -p ~/.claude/commands && for f in ~/.claude/skills/build-product/subprompts/*.md; do n=$(basename "$f" .md); printf 'Read and follow `~/.claude/skills/build-product/subprompts/%s.md`.\n' "$n" > ~/.claude/commands/"$n.md"; done
 ```
 
-If the prompt returns without any error message, the registration worked. To verify, type:
+Verify it worked:
 
 ```bash
 ls ~/.claude/commands/
 ```
 
-You should see a list of `.md` files including `build-product.md`, `research-idea.md`, `change-mode.md`, and others.
+### On Windows (PowerShell)
+
+PowerShell doesn't speak bash, so the Mac/Linux command above will fail with `'&&' is not a valid statement separator`. Paste this PowerShell-native version instead:
+
+```powershell
+New-Item -ItemType Directory -Force -Path "$HOME\.claude\commands" | Out-Null; Get-ChildItem "$HOME\.claude\skills\build-product\subprompts\*.md" | ForEach-Object { $n = $_.BaseName; "Read and follow ``~/.claude/skills/build-product/subprompts/$n.md``." | Set-Content "$HOME\.claude\commands\$n.md" }
+```
+
+Verify it worked:
+
+```powershell
+Get-ChildItem "$HOME\.claude\commands"
+```
+
+### What you should see
+
+A list of `.md` files including `build-product.md`, `research-idea.md`, `change-mode.md`, and others.
 
 Now start Claude Code by typing `claude` and pressing Enter. Inside Claude Code, type `/`. The slash commands list should include `/build-product`.
 
@@ -341,10 +361,18 @@ You can stop and resume at any time. The skill writes a state file (`_pipeline-s
 
 ## Updating to the latest version
 
-The skill is maintained as a GitHub repository. To pick up the latest changes (new commands, bug fixes, improved prompts), paste the following one-liner into your terminal and press Enter:
+The skill is maintained as a GitHub repository. To pick up the latest changes (new commands, bug fixes, improved prompts), paste the one-liner for your OS into your terminal and press Enter.
+
+### On a Mac or Linux (Terminal)
 
 ```bash
 cd ~/.claude/skills/build-product && git pull && mkdir -p ~/.claude/commands && for f in subprompts/*.md; do n=$(basename "$f" .md); printf 'Read and follow `~/.claude/skills/build-product/subprompts/%s.md`.\n' "$n" > ~/.claude/commands/"$n.md"; done
+```
+
+### On Windows (PowerShell)
+
+```powershell
+Set-Location "$HOME\.claude\skills\build-product"; git pull; New-Item -ItemType Directory -Force -Path "$HOME\.claude\commands" | Out-Null; Get-ChildItem "$HOME\.claude\skills\build-product\subprompts\*.md" | ForEach-Object { $n = $_.BaseName; "Read and follow ``~/.claude/skills/build-product/subprompts/$n.md``." | Set-Content "$HOME\.claude\commands\$n.md" }
 ```
 
 This does two things in sequence:
