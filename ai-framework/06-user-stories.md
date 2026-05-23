@@ -139,6 +139,14 @@ After classifying stories but before writing the Sequence Map, propose an **epic
 
 Use the PM's intake convention for Epic naming if specified at intake. Read `_pipeline-state.json` → `intake.jira_ticket_conventions` for any epic-title format guidance (e.g., `"Feature - Sub-feature"`).
 
+### Write a thorough Epic Description
+
+For each proposed Epic, write a **plain-English Description** that explains what this Epic is for, written so a stakeholder who has not read the PRD can understand it. Required fields per Epic:
+
+- **Title** — following intake naming convention if specified.
+- **Theme** — one-line tag (e.g., `Saved Searches - Listing`). Used as a short label.
+- **Description** — **3–6 sentences in plain English.** What this Epic covers, why it exists, who benefits, and how it fits into the broader feature. No jargon, no file paths, no "see PRD section X" references. A non-technical reader should finish this paragraph knowing what the Epic is for. Pull substance from PRD Section 2 (Scope), the PRD problem statement, and the specific stories in this Epic — do not generic-ify.
+
 ### Present the proposal to the PM
 
 Show the proposed grouping for confirmation:
@@ -148,7 +156,10 @@ Proposed Epic grouping — [Feature Name]
 
 EPIC 1: [Epic title following intake convention if specified]
   Phase: 1
-  Theme: [one-line description of what unifies these stories]
+  Theme: [one-line tag]
+  Description:
+    [3–6 sentences in plain English explaining what this Epic covers, why it exists,
+    and who benefits. No file paths or "see PRD" references.]
   Stories ([N]):
     US-1.1 [FE] View saved searches
     US-1.2 [BE] Saved searches endpoint
@@ -158,12 +169,16 @@ EPIC 1: [Epic title following intake convention if specified]
 EPIC 2: [Epic title]
   Phase: 1
   Theme: [...]
+  Description:
+    [...]
   Stories ([N]):
     ...
 
 EPIC 3: [Epic title]
   Phase: 2
   Theme: [...]
+  Description:
+    [...]
   Stories ([N]):
     ...
 
@@ -302,6 +317,10 @@ For each US-ID in the Sequence Map that is **not DRAFT**, write a section with t
 **Depends on:** [US-IDs or "None"]
 **Size:** S | M | L | L+ (proposed split: ...)
 
+**Description**
+
+3–6 sentences in plain English explaining what this ticket is trying to do. Written for a stakeholder who has not read the PRD: what work is being done, who it serves, what behavior the user will see (or what the system will do, for BE stories), and how it fits into the broader Epic. No file paths, no "see PRD section X" references, no jargon. This is the field a designer, QA, or new engineer reads first to understand the ticket — make it self-contained. Distinct from the formal "User Story" below, which is the role-goal-benefit framing.
+
 **User Story**
 
 As a [role], I want [goal] so that [benefit].
@@ -353,6 +372,10 @@ For each US-ID in the Sequence Map that **is DRAFT**, write a section with this 
 **Linked pair:** US-[A.B] ([type]) — [one-line note on relationship], or "None"
 **Depends on:** [US-IDs or "None"]
 **Size:** S* | M* | L* | L+* — sizing carries design-driven uncertainty; revisit at refresh.
+
+**Description**
+
+3–6 sentences in plain English explaining what this ticket is trying to do. Same rules as full-mode Description (stakeholder-readable, no file paths, no PRD section references). Acknowledge any design-driven ambiguity in plain English ("exact UI copy and screen flow will be pinned down once designs land"), but still describe the intent of the ticket fully.
 
 **User Story**
 
@@ -429,6 +452,8 @@ Before presenting the breakdown to the PM, run the quality checks:
 1. **Every PRD user story appears in the breakdown** (no drops). Cross-check against the PRD's Phased Plan.
 2. **Every story has a unique US-ID.** No duplicates.
 3. **Every story is assigned to exactly one Epic** from the Step 1.5 grouping.
+3a. **Every story has a thorough Description** (3–6 sentences, plain English, no file paths, no "see PRD section X" placeholders).
+3b. **Every Epic has a Description** (3–6 sentences, plain English) captured in `_pipeline-state.json` → `user_stories.epics[].description`.
 4. **Every story has a Wave assignment** from Step 2.5 (W1, W2, ...). No story should be missing a wave (would indicate a cycle or an algorithm bug).
 5. **No cycles in the dependency graph.** Step 2.5 detects cycles; surface them here as CRITICAL findings with the US-IDs involved.
 6. **Every non-DRAFT story has at least 2 Gherkin scenarios.** Single-scenario non-DRAFT stories are insufficient. (DRAFT stories aim for ≥1 scenario — count is reported but not required.)
@@ -485,7 +510,8 @@ Persist the following under `user_stories`:
       "epic_id": "E1",
       "title": "Saved Searches - Listing",
       "phase": 1,
-      "theme": "one-line description",
+      "theme": "one-line tag",
+      "description": "3–6 sentence plain-English explainer captured at Step 1.5. Stakeholder-readable; used verbatim as the Summary block of the Jira Epic description.",
       "story_ids": ["US-1.1", "US-1.2", "US-1.3"]
     },
     {
@@ -493,6 +519,7 @@ Persist the following under `user_stories`:
       "title": "Saved Searches - Management",
       "phase": 1,
       "theme": "...",
+      "description": "...",
       "story_ids": ["US-1.4", "US-1.5"]
     }
   ],
@@ -531,6 +558,8 @@ Until Gate 3 is approved, do not proceed to Jira Export.
 - **Source of truth is the PRD.** Do not add user stories the PRD doesn't have. Do not invent acceptance criteria not implied by the PRD's AC.
 - **Split into FE/BE pairs only when warranted.** A pure-UI story (e.g., a static info screen) doesn't need a BE pair.
 - **Every story must be assigned to exactly one Epic** from the Step 1.5 grouping. Stories without an Epic are invalid.
+- **Every story must have a thorough Description** (3–6 plain-English sentences) above the formal User Story. Stories without a Description are invalid. The Description is what flows into the Jira ticket's Description field at export.
+- **Every Epic must have a Description** (3–6 plain-English sentences) captured at Step 1.5 and persisted in `_pipeline-state.json` → `user_stories.epics[].description`. Epics without a Description are invalid. The Description flows into the Jira Epic's Summary block at export.
 - **Every story must have a Wave assignment** from Step 2.5. Cycles in the dependency graph are CRITICAL findings — surface them, do not paper over.
 - **FE/BE pair (Related To) is not a hard dependency** unless the FE story's AC explicitly requires the BE deployed first. Pairs commonly land in the same wave.
 - **DRAFT mode is opt-in.** Default is full mode (designs required). DRAFT mode requires explicit PM choice at Step 0.5.

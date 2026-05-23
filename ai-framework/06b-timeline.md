@@ -266,17 +266,28 @@ Build a self-contained HTML file (no external dependencies, no CDN, opens offlin
 
     <div class="row phase-row" data-id="P1" data-kind="phase" data-phase="1">
       <div class="row-label">PHASE 1 — [name]</div>
-      <div class="bar phase" data-start="[N]" data-span="[N]">PHASE 1</div>
+      <div class="bar-cells">
+        <div class="bar phase" data-start="[N]" data-span="[N]">PHASE 1</div>
+      </div>
     </div>
     <div class="row epic-row" data-id="E1" data-kind="epic" data-phase="1" data-depends-on="">
       <div class="row-label">Epic 1.1 — [name]</div>
-      <div class="bar epic" data-start="[N]" data-span="[N]"
-           data-hover="Start: [date] · End: [date] · FE [N]d · BE [N]d · Buffered [N]d">
-        <span class="bar-label">Epic 1.1</span>
-        <span class="resize-handle" aria-hidden="true"></span>
+      <div class="bar-cells">
+        <div class="bar epic" data-start="[N]" data-span="[N]"
+             data-hover="Start: [date] · End: [date] · FE [N]d · BE [N]d · Buffered [N]d">
+          <span class="bar-label">Epic 1.1</span>
+          <span class="resize-handle" aria-hidden="true"></span>
+        </div>
       </div>
     </div>
     <!-- ... more epics ... -->
+
+    <!-- IMPORTANT: Every `.bar.phase`, `.bar.epic`, `.bar.early-start` MUST be wrapped
+         in a `<div class="bar-cells">` container. The container owns the per-row day grid
+         (`grid-template-columns: repeat(var(--days), var(--px-per-day))`); the bar inside
+         positions itself in that grid via its `data-start` / `data-span` attributes.
+         Skipping the container is a known regression — bars then position against the
+         row's outer 2-column grid (label + data) and visibly clamp to the right edge. -->
 
     <div class="today-line" data-day="[N]"></div>
     <div class="target-line" data-day="[N]"></div>
@@ -294,7 +305,12 @@ Build a self-contained HTML file (no external dependencies, no CDN, opens offlin
 
 ### CSS rules (embed inline)
 
-- **Layout via CSS Grid.** The `.gantt` container has `grid-template-columns: repeat(var(--days), var(--px-per-day, 24px))` where `--days` is total working days. Each `.bar` uses `grid-column: calc(var(--start) + 1) / span var(--span)` driven by `data-start` and `data-span` attributes (read into CSS custom properties by JS on render).
+- **Layout via three-level CSS Grid.** The structure is `gantt → row → bar-cells → bar` — each level handles one concern.
+  - `.gantt { display: grid; grid-template-columns: 320px 1fr; }` — outer 2-column grid: label gutter + data gutter.
+  - `.row  { display: grid; grid-template-columns: 320px 1fr; }` — each row mirrors `.gantt`'s columns so `.row-label` sits in column 1 and `.bar-cells` sits in column 2.
+  - `.row .bar-cells { grid-column: 2 / 3; display: grid; grid-template-columns: repeat(var(--days), var(--px-per-day, 24px)); position: relative; }` — **the per-row day grid lives here**, not on `.row` itself. `--days` is total working days.
+  - `.row .bar { grid-column: calc(var(--start) + 1) / span var(--span); }` — bars position within `.bar-cells`'s day grid, driven by `data-start` / `data-span` attributes (read into CSS custom properties by JS on render).
+- **Why the container layer is mandatory.** If `.bar` is placed as a direct child of `.row` (no `.bar-cells` wrapper), its `grid-column` resolves against `.row`'s 2-column outer grid — so any `grid-column: N` with N > 2 clamps to the right edge of the row and every epic bar visibly collapses to the right while the row labels look cut off. This is a recurring regression; the wrapper is not optional.
 - **Phase header bars** span the full epic group inside their phase and use a slightly darker hue than the epics. Distinct hue per phase (use a 5-color palette cycling per phase index).
 - **Bars are draggable**: `.bar { cursor: grab; }` and `.bar.dragging { cursor: grabbing; opacity: 0.7; }`. Edited bars get a subtle outline: `.bar.edited { outline: 2px solid currentColor; }`.
 - **Resize handle**: the `.resize-handle` is an 8px-wide strip on the right edge of every epic bar with `cursor: col-resize` and high z-index so it captures pointer events before the bar's drag handler.

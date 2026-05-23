@@ -1,13 +1,11 @@
-v2.10.0 — 2026-05-22
+v2.11.0 — 2026-05-22
 
-Wave sequencing added to the User Stories Breakdown step.
+/exec-summary skill added + artifact-convention rule (no inline changelogs).
 
-The /user-stories step (and Step 10 of /build-product) now computes a Wave assignment for every story via topological sort on the Depends On column. Wave 1 = stories with no dependencies; Wave N = stories whose dependencies are all in Waves 1..N-1. Global numbering (W1, W2, ... W[N]). Phase ordering respected. FE/BE pairs are NOT treated as hard dependencies (they commonly land in the same wave).
+**New: `/exec-summary` standalone command.** Synthesizes a feature's PRD, system design, user-stories breakdown, timeline, and decision log into a single ~20 KB / ~5–7 PDF page executive summary structured for exec readability: vision, use cases, moving pieces, teams, timeline, open decisions, risks, the ask, what's next. Outputs markdown + PDF + DOCX side-by-side in the feature's root folder. Idempotent — re-running overwrites the same three files.
 
-Cycles in the dependency graph are CRITICAL Gate 3 findings — surfaced with the US-IDs in the cycle, refuse to advance until PM resolves.
+Standalone only — not auto-invoked by `/build-product`. PMs run it whenever an exec or stakeholder needs the "what is this and why" without wading through a 170 KB PRD. PRD is required; other inputs are opportunistic — missing artifacts produce a thinner section with a bracketed note rather than failing.
 
-The Build Sequence Map gains a Wave column; a new Wave Summary table lists theme + story_ids per wave, with annotations for the critical convergence wave and the launch gate wave. State schema adds user_stories.waves[]. Two new Gate 3 quality checks: every_story_has_wave, dependency_graph_acyclic.
-
-Closes the loop with /validate-user-stories Check 7 (which already expected waves to exist).
+**New rule: no inline version-history blocks in generated artifacts.** Added to `ai-framework/style-preferences.md` (new "Artifact Conventions" section) and reinforced in `05-change-propagation.md` (Step 4 Writing). Going forward, artifacts get version in the title line + a single changelog pointer line; no `**v0.X (date):** ...` bullets, no "## Change log" sections inside the file. Full history lives in `changelog/[feature]-changelog.md` + per-run summary files + `_pipeline-state.json` → `change_history[]`. `/change-mode` and the generative commands all respect this.
 
 See CHANGELOG.md for full version history.

@@ -133,6 +133,8 @@ Before writing each artifact, print:
 Writing: ~/Desktop/Resources/PDLC Workflow Docs/[feature-name]/[subfolder]/[filename]
 ```
 
+**Do not add inline version-history blocks to artifacts.** When you bump an artifact's version, update only the version number in the title line and (if missing) add a changelog pointer line. Do not append a new `**v0.X (date):** ...` bullet inside the file. The append-only record for this change-mode run is the changelog entry written in Step 6 — that is the single source of truth for version history. See `ai-framework/style-preferences.md` § Artifact Conventions.
+
 ### Conflict handling
 
 If a conflict is found between what the change requires and what an existing artifact says, surface the conflict explicitly. Do not resolve conflicts autonomously. Pause propagation and ask the PM how to resolve.

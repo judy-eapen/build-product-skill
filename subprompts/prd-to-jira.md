@@ -190,8 +190,8 @@ Every Epic created from the multi-epic grouping needs its own description. The E
 Pull these directly from the PRD content + the specific story scope from the `user_stories.epics[]` entry being processed:
 
 ```markdown
-**Summary** (1–2 sentences, plain English)
-[Theme from user_stories.epics[].theme]. Part of [Feature Name] for [Product].
+**Summary** (3–6 sentences, plain English)
+[Use `user_stories.epics[].description` verbatim — this was authored at the user-stories step specifically for stakeholder consumption. Append: "Part of [Feature Name] for [Product]." if not already implied.]
 
 **Stories in this Epic** ([N])
 [Bulleted list of story_ids + titles in this Epic, e.g., "US-1.1 — View saved searches", ...]
@@ -274,7 +274,7 @@ Map PRD content to these Jira fields. **Keep content in the right place:** User 
 | **Summary** | Story title or one-line summary from the PRD (required). |
 | **User Story** | The narrative: "As a [role], I want [goal] so that [benefit]." From PRD user stories section. **Must be set in your Jira instance's User Story custom field**, not only in Description. The custom field ID is instance-specific — ask the PM to provide their Jira instance's User Story custom field ID at intake, or look it up via `getJiraIssueTypeMetaWithFields` before creating tickets. |
 | **Acceptance criteria** | In **Gherkin format**: `Scenario:`, `Given`, `When`, `Then`, `And` as needed. **Must be set in your Jira instance's Acceptance Criteria custom field**, not only in Description. The custom field ID is instance-specific — ask at intake or look up. |
-| **Description** | A **short description of what the ticket is**: PRD section reference, dependencies, and context. Do not duplicate the full User Story or all Gherkin here; keep it concise (e.g. "PRD Section 6 (US-1). Depends on stats endpoint."). |
+| **Description** | The **thorough plain-English Description** from the user-stories breakdown's per-story `**Description**` block (3–6 sentences explaining what the ticket is trying to do, written for a stakeholder who hasn't read the PRD). Use it verbatim. Do **not** substitute a terse "PRD Section X" pointer — those references are stale and unhelpful. Do not duplicate the full User Story or all Gherkin here; those go in their dedicated fields. |
 | **Parent** | Epic key if known (user provides it or we create an Epic). If Epic creation fails due to required parent, ask the user for Epic key or link. |
 | **Team** | The team or pod label provided at intake. If none was provided, leave blank and note it in the result. |
 | **Labels** | **frontend** and/or **backend**. Infer from the story: UI, screens, components, copy → **frontend**; API, data, integration, calculations → **backend**. Use both if the story spans both. If unclear, default to one and note it. |

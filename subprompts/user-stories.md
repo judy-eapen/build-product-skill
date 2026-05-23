@@ -28,22 +28,25 @@ No prior pipeline run is required. The skill works with just a PRD, but each opt
 `~/Desktop/Resources/PDLC Workflow Docs/[feature-name]/user-stories/[feature-name]-user-stories.md`
 
 Document contents:
+- **Epic grouping** — every Epic with title, theme, and a thorough 3–6 sentence **plain-English Description** stakeholders can read without the PRD. Used verbatim as the Jira Epic Summary block at export.
 - **Build Sequence Map** — every story with type (FE / BE / both), phase, depends-on, related-to, size.
-- **Per-story sections** — As-a / I-want / So-that narrative + exhaustive Gherkin AC (happy + negative + edge + error scenarios) + testing notes (coverage areas, cross-boundary verification, data conditions, HIGH risks).
+- **Per-story sections** — thorough **plain-English Description** (3–6 sentences, distinct from the formal User Story) + As-a / I-want / So-that narrative + exhaustive Gherkin AC (happy + negative + edge + error scenarios) + testing notes (coverage areas, cross-boundary verification, data conditions, HIGH risks).
 - **Build-order summary paragraph** — sprint-planning-ready text.
 - **Limitations header** (if any optional inputs were missing) — explicit note about what couldn't be done.
 
 ## Quality checks (run automatically)
 
-Eight checks before declaring the breakdown ready:
+Ten checks before declaring the breakdown ready:
 1. Every PRD user story appears in the breakdown (no drops).
 2. Every story has a unique US-ID.
-3. Every story has at least 2 Gherkin scenarios.
-4. Every story has at least one edge-case or error-state scenario.
-5. Every linked FE/BE pair has both sides present.
-6. No story sized larger than L without a proposed split.
-7. HIGH risks from codebase review appear in at least one story's testing notes (skipped if no codebase review).
-8. UX state coverage per FE story: empty / loading / error / populated.
+3. Every story has a thorough plain-English Description (3–6 sentences).
+4. Every Epic has a plain-English Description (3–6 sentences).
+5. Every story has at least 2 Gherkin scenarios.
+6. Every story has at least one edge-case or error-state scenario.
+7. Every linked FE/BE pair has both sides present.
+8. No story sized larger than L without a proposed split.
+9. HIGH risks from codebase review appear in at least one story's testing notes (skipped if no codebase review).
+10. UX state coverage per FE story: empty / loading / error / populated.
 
 Any failed check is surfaced as a WARNING. You can fix or proceed anyway.
 

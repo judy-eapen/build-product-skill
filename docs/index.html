@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>/build-product — Work Pipeline v2.10.0</title>
-  <!-- Version: 2.10.0 | Updated: 2026-05-22 | Update this line and the badge/changelog below on every release -->
+  <title>/build-product — Work Pipeline v2.11.0</title>
+  <!-- Version: 2.11.0 | Updated: 2026-05-22 | Update this line and the badge/changelog below on every release -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
@@ -494,7 +494,7 @@
   <header>
     <div class="header-top">
       <span class="cmd-title">/build-product</span>
-      <span class="version-badge">v2.10.0</span>
+      <span class="version-badge">v2.11.0</span>
     </div>
     <p class="header-sub">A Claude Code skill that takes a PM from feature idea → Jira Epic with all linked tickets. Research · Codebase review · PRD · Dual AI review · Design prompts · User stories · Jira export.</p>
     <div class="header-links">
@@ -877,6 +877,23 @@
   <section>
     <p class="section-title">Recent Changes</p>
     <div class="changelog-list">
+
+      <div class="changelog-item">
+        <div class="changelog-header">
+          <span class="changelog-version">v2.11.0</span>
+          <span class="changelog-date">2026-05-22</span>
+          <span class="changelog-major-badge">MINOR</span>
+        </div>
+        <div class="changelog-body">
+          <ul>
+            <li><strong>New <code>/exec-summary</code> standalone command.</strong> Synthesizes a feature's PRD + system design + user-stories breakdown + timeline + decision log into a single ~20 KB / 5–7 PDF page executive summary using a fixed 9-section structure (vision, use cases, moving pieces, teams &amp; roles, timeline alignment, open decisions, risks, the ask, what's next). Outputs markdown + PDF + DOCX side-by-side in the feature's root folder. Idempotent — re-running overwrites the same three files. Standalone only, not auto-invoked by <code>/build-product</code>.</li>
+            <li><strong>Graceful degradation.</strong> PRD is required; system design / user stories / timeline / decision log are opportunistic. Missing artifacts produce a thinner section with a bracketed note rather than failing the run. PDF/DOCX tooling is best-effort — markdown always lands.</li>
+            <li><strong>Artifact-convention rule added.</strong> Generated artifacts no longer carry inline version-history blocks. Version lives in the title, full history lives in <code>changelog/[feature]-changelog.md</code> + per-run summary files + <code>_pipeline-state.json</code> → <code>change_history[]</code>. New "Artifact Conventions" section in <code>ai-framework/style-preferences.md</code>; reinforcing rule in <code>05-change-propagation.md</code> Step 4 Writing. Future <code>/change-mode</code> runs no longer append <code>**v0.X (date):** ...</code> bullets to artifacts.</li>
+            <li><strong>Why this matters:</strong> the same change history was being recorded in three places (the artifact, the <code>changelog/</code> folder, and pipeline state); two of those was redundant. PRDs and user-stories breakdowns were becoming unreadable as <code>/change-mode</code> passes layered inline bullets onto them. <code>/exec-summary</code> gives PMs a repeatable way to produce an exec-readable synthesis without manually re-creating the format every time.</li>
+          </ul>
+          <a class="changelog-link" href="https://github.com/judy-eapen/build-product-skill/blob/main/CHANGELOG.md" target="_blank">Full changelog →</a>
+        </div>
+      </div>
 
       <div class="changelog-item">
         <div class="changelog-header">

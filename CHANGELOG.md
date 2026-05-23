@@ -4,6 +4,30 @@ All notable changes are documented here. Follows [Semantic Versioning](https://s
 
 ---
 
+## v2.11.0 — 2026-05-22
+
+### Added
+
+- **`/exec-summary` standalone command.** Synthesizes a feature's PRD + system design + user-stories breakdown + timeline + decision log into a single ~20 KB / 5–7 PDF page executive summary. Fixed 9-section structure: masthead, vision, use cases table, moving pieces (external vendors / internal Bright systems / cross-cutting work), teams & roles, critical timeline alignment, open decisions, risks, the ask, what's next. Outputs markdown + PDF + DOCX side-by-side in the feature's root folder. New file: `subprompts/exec-summary.md`.
+- **Idempotent overwrite.** Re-running on the same feature overwrites all three output files. No version history embedded inline; change history lives in `changelog/[feature]-changelog.md`.
+- **Graceful degradation.** PRD is required; system design / user stories / timeline / decision log are opportunistic. Missing artifacts produce a thinner section with `[NOTE: ...]` rather than failing the run. PDF/DOCX tooling is best-effort — markdown always lands.
+- **Standalone only.** Not auto-invoked by `/build-product`. PMs run on demand. Pipeline state's `artifacts.exec_summary` block is updated on each run with `path`, `pdf_path`, `docx_path`, `generated_against_prd_version`, `generated_at`.
+
+### Changed
+
+- **`ai-framework/style-preferences.md` — new "Artifact Conventions" section.** Generated artifacts must not embed inline version-history blocks. Version number lives in the title line; full change history lives in `changelog/[feature]-changelog.md`. Decision logs, content-level product version concepts (e.g., "v1 ships in October"), and cross-artifact source pointers are explicitly distinguished from this rule and remain in artifacts.
+- **`ai-framework/05-change-propagation.md` Step 4 Writing — reinforcing rule.** Future `/change-mode` runs must not append `**v0.X (date):** ...` bullets to artifacts during propagation. The changelog entry written by Step 6 of the pass is the single audit-trail record per change-mode run.
+
+### Why this matters
+
+PMs (Judy on nestfully-ai) flagged that downstream artifacts were becoming unreadable as `/change-mode` passes layered inline version bullets onto the same files. The same change history was being recorded in three places (the artifact, the `changelog/` folder, and pipeline state); two of those was redundant. The Artifact Conventions rule eliminates the redundancy and the `/exec-summary` skill gives PMs a way to produce an exec-readable synthesis without manually re-creating a format from scratch every time.
+
+### Migration
+
+No data migration needed. The rule applies prospectively to all generative skills and to future `/change-mode` runs. Retroactive cleanup of an existing feature's inline changelogs is a manual edit (or use `/change-mode` with the cleanup framed as a scope_change). The skill itself does not auto-clean prior artifacts.
+
+---
+
 ## v2.10.0 — 2026-05-22
 
 ### Added

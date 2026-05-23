@@ -139,6 +139,7 @@ Any integration the skill cannot reach is skipped cleanly. It never blocks the r
 | `/user-stories` | User Stories Breakdown from an approved PRD. Multi-epic grouping (skill proposes, PM tunes). Wave sequencing via topological sort on dependencies. DRAFT mode for missing designs — refresh later via `/change-mode` → "Designs arrived" |
 | `/timeline` | Gantt timeline (Figma FigJam + editable HTML) at Epic + Phase level. Drag-to-shift / drag-edge-to-resize with auto-cascade in the browser. 💾 Save to skill writes plan JSON directly to disk (Chrome/Edge). `/timeline apply` (no args) auto-discovers the latest plan and round-trips it into the skill state. |
 | `/prd-to-jira` | Create Jira tickets from a breakdown or PRD |
+| `/exec-summary` | Synthesize PRD + system design + user stories + timeline + decision log into a single ~20 KB / ~5–7 PDF page executive summary (markdown + PDF + DOCX). 9-section structure: vision, use cases, moving pieces, teams, timeline, open decisions, risks, the ask, what's next. Standalone — not auto-invoked by `/build-product`. Idempotent on re-run. |
 | `/drive-sync` | Sync artifacts to Google Drive |
 | `/publish-to-confluence` | Publish the whole feature workspace as a Confluence hub + one numbered child page per artifact. Per-file mtime tracking — only re-publishes pages whose source actually changed. |
 | `/export-transcript` | Write the full PM↔model conversation for a feature's pipeline run to two markdown files (clean reading version + full forensic version). |
@@ -224,7 +225,7 @@ As of v2.1.0, Jira conventions (labels, title format, BE/FE split, custom field 
 
 ## Version
 
-**v2.10.0** — **Wave sequencing in the User Stories Breakdown.** Step 10 now computes a Wave assignment for every story via topological sort on the `Depends On` column. Waves group stories that can ship in parallel; later waves depend on earlier ones. Global numbering (W1, W2, ... W[N]). Critical convergence waves and the launch-gate wave are annotated. **Cycles in the dependency graph are CRITICAL Gate 3 findings** — surfaced, not silently papered over. The Build Sequence Map gains a Wave column; a new Wave Summary table lists what ships in each wave. State schema adds `user_stories.waves[]`. Closes the loop with `/validate-user-stories` Check 7 (which already expected waves to exist). See [CHANGELOG.md](./CHANGELOG.md) for full version history.
+**v2.11.0** — **`/exec-summary` standalone command + artifact-convention rule.** New `/exec-summary` synthesizes PRD + system design + user stories + timeline + decision log into a single ~20 KB / 5–7 PDF page executive summary (markdown + PDF + DOCX) using a fixed 9-section structure: vision, use cases, moving pieces, teams & roles, timeline alignment, open decisions, risks, the ask, what's next. Standalone — not auto-invoked by `/build-product`. Idempotent on re-run. Concurrent rule change: artifacts no longer carry inline version-history blocks. Version lives in the title, full history lives in `changelog/[feature]-changelog.md`, and `/change-mode` runs no longer append `**v0.X (date):** ...` bullets to artifacts during propagation. See [CHANGELOG.md](./CHANGELOG.md) for full version history.
 
 ## License
 
