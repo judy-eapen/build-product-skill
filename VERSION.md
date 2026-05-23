@@ -1,3 +1,13 @@
+v2.12.0 — 2026-05-23
+
+/push-to-figma command added — MCP-driven Figma frame generation from design prompts.
+
+**New: `/push-to-figma` standalone command.** Generates real, editable Figma frames programmatically from a feature's design prompts file via the Figma MCP. Each frame is wired to the team's design system color variables (and components where they fit) — when brand tokens change, every frame updates. Output is the standard design catalog at `design/[feature]-figma-catalog.md` with one row per frame and its direct node URL. Companion to `/design-prompts`: the typical flow is `/design-prompts` → review → `/push-to-figma`. No v0 equivalent (v0 has no programmatic-push API).
+
+Validated on the nestfully-ai feature — 29 mobile frames across 13 categories, generated against the 🐦 Nestfully Mobile library.
+
+---
+
 v2.11.0 — 2026-05-22
 
 /exec-summary skill added + artifact-convention rule (no inline changelogs).

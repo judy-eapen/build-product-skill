@@ -32,6 +32,7 @@ Full setup instructions are in [GETTING-STARTED.md](./GETTING-STARTED.md).
 | System Design doc (if architecture is non-trivial) | Your computer |
 | Visual diagram (Figma FigJam if connected, Mermaid otherwise) | Figma + your computer |
 | Screen design prompts for v0 or Figma Make | Your computer |
+| Optional: Real Figma frames generated from the prompts via Figma MCP, wired to your team's design system (one page per category, mid-fi but on-brand) | Figma |
 | User Stories Breakdown with Gherkin AC, FE/BE pairs, sizing | Your computer |
 | Gantt timeline (Figma FigJam + interactive HTML) at Epic + Phase level | Figma + your computer |
 | Jira Epic + Stories with labels, links, and custom fields | Your team's Jira |
@@ -106,7 +107,7 @@ To see what changed in this update, check [CHANGELOG.md](./CHANGELOG.md).
 | **Jira** | Atlassian MCP | Step 11a — ticket creation (required for the export step) |
 | **Confluence** | Atlassian MCP | Step 11c (publishes feature hub + child page per stakeholder-relevant artifact, with per-file mtime change detection. v2.8.0+: Product/Technical Reviews and the full Gherkin breakdown are kept local; the Step 10 page is a lightweight Jira Epic index instead), `/publish-to-confluence`, `/read-feedback` |
 | **Google Drive** | Drive MCP | Step 11b, `/drive-sync` |
-| **Figma** | Figma MCP | Step 7 — FigJam diagram generation |
+| **Figma** | Figma MCP | Step 7 — FigJam diagram generation. Also `/push-to-figma` — programmatically generate one Figma frame per screen from the design prompts file, wired to the team's design system color variables. |
 | **Slack** | Slack MCP | `/share-for-review` — post review links with reviewers tagged |
 
 Any integration the skill cannot reach is skipped cleanly. It never blocks the rest of the pipeline.
@@ -152,6 +153,7 @@ Any integration the skill cannot reach is skipped cleanly. It never blocks the r
 | Command | What it does |
 |---------|--------------|
 | `/design-prompts` | Screen design prompts for v0 or Figma Make |
+| `/push-to-figma` | **v2.12.0+** — Generate real, editable Figma frames programmatically from the design prompts file via the Figma MCP. Wires every frame to the team's design system color variables (and components where they fit); when brand tokens change, every frame updates. One Figma page per category (A, B, C, …) with sub-frames laid out horizontally. Frame dimensions picked from intake's product type (mobile 390×844 or web 1440×900). Output catalog at `design/[feature]-figma-catalog.md` with every frame's direct node URL. Companion to `/design-prompts`; typical flow is `/design-prompts` → PM review → `/push-to-figma`. No v0 equivalent — v0 has no programmatic-push API. |
 | `/update-prd-from-designs` | Sync PRD with finalized design catalog |
 | `/compare-figma-prd` | Figma vs PRD and Jira gap analysis after designer delivers |
 
@@ -225,7 +227,7 @@ As of v2.1.0, Jira conventions (labels, title format, BE/FE split, custom field 
 
 ## Version
 
-**v2.11.0** — **`/exec-summary` standalone command + artifact-convention rule.** New `/exec-summary` synthesizes PRD + system design + user stories + timeline + decision log into a single ~20 KB / 5–7 PDF page executive summary (markdown + PDF + DOCX) using a fixed 9-section structure: vision, use cases, moving pieces, teams & roles, timeline alignment, open decisions, risks, the ask, what's next. Standalone — not auto-invoked by `/build-product`. Idempotent on re-run. Concurrent rule change: artifacts no longer carry inline version-history blocks. Version lives in the title, full history lives in `changelog/[feature]-changelog.md`, and `/change-mode` runs no longer append `**v0.X (date):** ...` bullets to artifacts during propagation. See [CHANGELOG.md](./CHANGELOG.md) for full version history.
+**v2.12.0** — **`/push-to-figma` standalone command.** Generates real, editable Figma frames programmatically from a feature's design prompts file via the Figma MCP. Wires every frame to the team's design system color variables (and components where they fit) — when brand tokens change, every frame updates automatically. One Figma page per category (A, B, C, …); sub-frames land horizontally on the same page. Frame dimensions picked from intake's product type (mobile 390×844 / web 1440×900). Output catalog at `design/[feature]-figma-catalog.md` with every frame's direct node URL and the design tokens used. Companion to `/design-prompts`: typical flow is `/design-prompts` → PM review → `/push-to-figma`. No v0 equivalent — v0 has no programmatic-push API. Validated on `nestfully-ai` (29 mobile frames across 13 categories, generated against the 🐦 Nestfully Mobile library). See [CHANGELOG.md](./CHANGELOG.md) for full version history.
 
 ## License
 

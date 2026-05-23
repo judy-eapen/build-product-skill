@@ -4,6 +4,41 @@ All notable changes are documented here. Follows [Semantic Versioning](https://s
 
 ---
 
+## v2.12.0 — 2026-05-23
+
+### Added
+
+- **`/push-to-figma` standalone command.** Generates real, editable Figma frames programmatically from a feature's design prompts file via the Figma MCP. New file: `subprompts/push-to-figma.md`.
+  - **Wires every frame to the team's design system.** Color tokens are referenced by variable binding (not hardcoded hex). When the source library updates a color, every generated frame updates automatically. Components are imported by key where they fit; primitives bound to variables are used otherwise.
+  - **One page per category.** The skill reads the prompts file's category-level structure (A, B, C, …) and creates one Figma page per category. Sub-frames within a category land horizontally on the same page.
+  - **Mobile vs. desktop dimensions** are picked from `intake.product_type`: mobile = 390 × 844 (iPhone 14 Pro), web = 1440 × 900.
+  - **Companion to `/design-prompts`.** Typical flow: `/design-prompts` to generate the text prompts → PM review → `/push-to-figma` to produce real Figma frames from those prompts. Both commands run standalone.
+  - **State persistence.** Writes `figma_generation` block to `_pipeline-state.json` with file URL, page IDs, frame IDs, and discovered variable/component keys — so `/change-mode` and re-runs can reference the existing file rather than recreating it.
+  - **No v0 equivalent.** v0 is a browser chat product with no public API for programmatic prompt submission; if PM wants v0 output, run `/design-prompts` and paste manually.
+- **Output catalog at `design/[feature]-figma-catalog.md`.** Distinct from `/design-prompts`'s `design/[feature]-phase-[N]-designs.md` so the two outputs don't collide. The Figma catalog includes every frame's direct node URL, the design tokens applied (with variable keys), and the open design questions carried forward from the prompts file.
+
+### Why this matters
+
+PMs (Judy on nestfully-ai) ran the prompts-to-Figma workflow manually for v1 — every screen had to be generated one by one via the MCP. That worked but took dozens of tool calls and was non-repeatable. The new command captures the workflow as a real pipeline step: variable discovery, file creation, page setup, per-frame generation, screenshot validation, catalog write-out, and state save are all built in.
+
+The output is meaningfully better than v0 for teams with a real design system: v0 produces components from scratch (off-brand by default); `/push-to-figma` produces frames already wired to the team's actual color variables and component library, so even mid-fi output looks like the team's product.
+
+### Validated on
+
+`nestfully-ai` — 29 mobile frames across 13 categories generated against the 🐦 Nestfully Mobile library. Catalog at `~/Desktop/Resources/PDLC Workflow Docs/nestfully-ai/design/nestfully-ai-figma-catalog.md`. Generated Figma file: https://www.figma.com/design/1iX0hpldO5R9QrCL5mEzyi.
+
+### Limitations
+
+- **Image fills not supported** — `use_figma` can't fetch external URLs, so listing photos / hero images land as placeholder rectangles. For web apps the designer can run `generate_figma_design` in parallel to capture pixel-perfect images (see the `figma-generate-design` MCP skill).
+- **Production-trace ≠ Gate 2 spec.** Output is mid-fi: real IA, real tokens, illustrative copy from the PRD. Typography hierarchy, illustrations, and per-state polish are the designer's job. The catalog says this explicitly.
+- **Re-runs create new frames by default.** Idempotent overwrite is supported only if PM explicitly requests it (then existing frames are modified in place by name, never deleted-and-recreated, to preserve any designer edits).
+
+### Migration
+
+No data migration. PMs can keep using `/design-prompts` standalone; `/push-to-figma` is purely additive. Existing features can run `/push-to-figma` against their existing prompts file at any time.
+
+---
+
 ## v2.11.0 — 2026-05-22
 
 ### Added

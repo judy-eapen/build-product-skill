@@ -293,6 +293,8 @@ Skip entirely if PM said no at Gate 1.
 
 Update `_pipeline-state.json`.
 
+**Next: Step 7 — Visual Diagram. Continue automatically whether Step 6 ran (system design was needed) or was skipped (no system design needed per Gate 1 answer).** Do not stop and wait — Step 7 always runs after Step 6 resolves.
+
 ---
 
 ### Step 7 — Visual Diagram [AUTO]

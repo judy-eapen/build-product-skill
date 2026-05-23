@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>/build-product — Work Pipeline v2.11.0</title>
-  <!-- Version: 2.11.0 | Updated: 2026-05-22 | Update this line and the badge/changelog below on every release -->
+  <title>/build-product — Work Pipeline v2.12.0</title>
+  <!-- Version: 2.12.0 | Updated: 2026-05-23 | Update this line and the badge/changelog below on every release -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
@@ -494,7 +494,7 @@
   <header>
     <div class="header-top">
       <span class="cmd-title">/build-product</span>
-      <span class="version-badge">v2.11.0</span>
+      <span class="version-badge">v2.12.0</span>
     </div>
     <p class="header-sub">A Claude Code skill that takes a PM from feature idea → Jira Epic with all linked tickets. Research · Codebase review · PRD · Dual AI review · Design prompts · User stories · Jira export.</p>
     <div class="header-links">
@@ -513,7 +513,7 @@
     <div class="stat"><div class="stat-number">13</div><div class="stat-label">Pipeline steps</div></div>
     <div class="stat"><div class="stat-number">3</div><div class="stat-label">Approval gates</div></div>
     <div class="stat"><div class="stat-number">2</div><div class="stat-label">Parallel blocks</div></div>
-    <div class="stat"><div class="stat-number">25+</div><div class="stat-label">Slash commands</div></div>
+    <div class="stat"><div class="stat-number">26+</div><div class="stat-label">Slash commands</div></div>
     <div class="stat"><div class="stat-number">5</div><div class="stat-label">Optional integrations</div></div>
   </div>
 
@@ -792,6 +792,7 @@
         <div class="cmd-group-title">Design</div>
         <div class="cmd-list">
           <div class="cmd-item"><span class="cmd-name">/design-prompts</span><span class="cmd-desc">Screen design prompts for v0 or Figma Make</span></div>
+          <div class="cmd-item"><span class="cmd-name">/push-to-figma</span><span class="cmd-desc"><strong>v2.12.0+</strong> — Generate real, editable Figma frames programmatically from the design prompts file via the Figma MCP. Wires every frame to the team's design system color variables. One Figma page per category; sub-frames laid out horizontally. Companion to <code>/design-prompts</code>. No v0 equivalent.</span></div>
           <div class="cmd-item"><span class="cmd-name">/update-prd-from-designs</span><span class="cmd-desc">Sync PRD with finalized design catalog</span></div>
           <div class="cmd-item"><span class="cmd-name">/compare-figma-prd</span><span class="cmd-desc">Figma vs PRD & Jira gap analysis after designer delivers</span></div>
         </div>
@@ -877,6 +878,25 @@
   <section>
     <p class="section-title">Recent Changes</p>
     <div class="changelog-list">
+
+      <div class="changelog-item">
+        <div class="changelog-header">
+          <span class="changelog-version">v2.12.0</span>
+          <span class="changelog-date">2026-05-23</span>
+          <span class="changelog-major-badge">MINOR</span>
+        </div>
+        <div class="changelog-body">
+          <ul>
+            <li><strong>New <code>/push-to-figma</code> standalone command.</strong> Generates real, editable Figma frames programmatically from a feature's design prompts file via the Figma MCP. Wires every frame to the team's design system color variables (and components where they fit) — when brand tokens change in the source library, every generated frame updates automatically. Output catalog at <code>design/[feature]-figma-catalog.md</code> with every frame's direct node URL and the design tokens used.</li>
+            <li><strong>One Figma page per category.</strong> The skill reads the prompts file's category-level structure (A, B, C, …) and creates one Figma page per category; sub-frames land horizontally on the same page. Frame dimensions are picked from intake's product type — mobile = 390×844 (iPhone 14 Pro), web = 1440×900.</li>
+            <li><strong>Companion to <code>/design-prompts</code>.</strong> Typical flow: <code>/design-prompts</code> to generate the text prompts → PM review → <code>/push-to-figma</code> to produce real Figma frames from those prompts. Both commands run standalone. No v0 equivalent — v0 is a browser chat product with no public API for programmatic prompt submission.</li>
+            <li><strong>State persistence.</strong> Writes a <code>figma_generation</code> block to <code>_pipeline-state.json</code> with file URL, page IDs, frame IDs, and discovered variable/component keys, so <code>/change-mode</code> and re-runs can reference the existing file rather than recreating it.</li>
+            <li><strong>Why this matters:</strong> v0 produces components from scratch (off-brand by default); <code>/push-to-figma</code> produces frames already wired to the team's actual color variables and component library, so even mid-fi output looks like the team's product. Captures the manual MCP workflow as a real pipeline step so it's repeatable across features.</li>
+            <li><strong>Validated on</strong> <code>nestfully-ai</code> — 29 mobile frames across 13 categories generated against the 🐦 Nestfully Mobile library. <strong>Limitations:</strong> image fills not supported (placeholder rectangles instead); production-trace ≠ Gate 2 spec (output is mid-fi); re-runs create new frames by default (idempotent overwrite supported on explicit request).</li>
+          </ul>
+          <a class="changelog-link" href="https://github.com/judy-eapen/build-product-skill/blob/main/CHANGELOG.md" target="_blank">Full changelog →</a>
+        </div>
+      </div>
 
       <div class="changelog-item">
         <div class="changelog-header">

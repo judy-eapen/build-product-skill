@@ -62,6 +62,7 @@ Do NOT pre-load all framework files at the start of the session. Load other file
 - `ai-framework/05-parallel-rules.md` — load only when about to execute a parallel block
 - `ai-framework/personas.md` — load only when composing agent prompts for a review step
 - `subprompts/design-prompts.md` — load only at Step 8 (design)
+- `subprompts/push-to-figma.md` — load only when `/push-to-figma` is invoked (standalone)
 - `ai-framework/06-user-stories.md` — load only at Step 10
 - `ai-framework/06b-timeline.md` — load only at Step 10.5 (Timeline)
 - `ai-framework/07-drive-sync.md` — load only if Drive export was enabled at Step 11 pre-flight
@@ -193,6 +194,7 @@ If an instrumentation write fails or is skipped, the timing report falls back to
 | `system-design.md` | `technical-review/[feature]-system-design.md` |
 | `03c-visual-diagram.md` | `diagrams/[feature]-feature-diagram.md` |
 | `design-prompts.md` | `design/[feature]-phase-[N]-designs.md` |
+| `push-to-figma.md` | `design/[feature]-figma-catalog.md` |
 | `03b-update-prd-from-designs.md` | `prd/[feature]-prd.md` (overwrite in place) |
 | `prd-to-jira.md` | `jira-export/[feature]-jira-export.md` |
 | `prd-to-jira.md` (manifest) | `jira-export/[feature]-jira-manifest.md` |
@@ -412,6 +414,8 @@ Same as Personal Full Step 5a (without the Phase 1 screen inventory prep agent �
 **Fast mode:** `✓ Step 6 — System design complete → [path]` (or `✓ Step 6 — Skipped (no system design needed)`)
 
 Update `_pipeline-state.json`.
+
+**Next: Step 7 — Visual Diagram. Continue automatically whether Step 6 ran (system design was needed) or was skipped (no system design needed per Gate 1 answer).** Do not stop and wait — Step 7 always runs after Step 6 resolves.
 
 ### Step 7 — Visual Diagram [AUTO]
 

@@ -63,6 +63,7 @@ Each command runs one stage of the pipeline independently. Each asks for the inp
 
 ### Design
 - `/design-prompts` — Generate screen design prompts for v0 or Figma Make from an approved PRD.
+- `/push-to-figma` — Generate real Figma frames programmatically from the design prompts file via the Figma MCP. Wires each frame to your team's design system color variables (and components where they fit). Output is editable Figma frames bound to the source library — not static images. Companion to `/design-prompts`; typical flow is `/design-prompts` → review → `/push-to-figma`. Requires Figma MCP connected. Frame dimensions are mobile (390×844) or desktop (1440×900) based on intake's product type. No v0 equivalent — v0 has no programmatic-push API.
 - `/update-prd-from-designs` — Sync PRD with finalized design catalog.
 - `/compare-figma-prd` — Figma vs PRD & Jira gap analysis after designer delivers.
 
