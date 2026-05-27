@@ -45,7 +45,7 @@ If the breakdown is very large (>500KB), tell the PM upfront: "This breakdown is
 
 ---
 
-## Step 1 — Run the seven checks
+## Step 1 — Run the nine checks
 
 ### Check 1: Story ↔ PRD traceability
 
@@ -168,6 +168,46 @@ Check:
 
 Severity: **CRITICAL** for cycles or phase-order violations. **WARNING** for wave-order violations. **INFO** for wave-size imbalances.
 
+### Check 8: Layout — meat-first / appendix structure
+
+Per the breakdown spec (`ai-framework/06-user-stories.md` Step 5), the document is **meat-first**: front matter → at a glance → how to read → epic outlines → wave overview → per-story blueprints. Maintenance content (ID Stability Policy, refactor history, full per-story dependency table, format conventions, vendor-sprint detail) lives in appendices at the end.
+
+Scan the document top-to-bottom and find the line number of the **first** `### US-` blueprint header (call it `meat_start`). For every `## ` (level-2) header above `meat_start`, flag any of the following:
+
+- `## ID Stability Policy` (or any header containing "ID Stability")
+- `## Refactor summary` (or any header containing "Refactor summary" / "Refactor lineage" / "Refactor authority")
+- `## Build Sequence Map` if it contains the full per-story dependency table (a single-row-per-story table with `Depends on`, `Size`, `Type` columns). The small wave-overview table is fine in the meat; the big per-story table belongs in Appendix D.
+- `## Format Conventions` / `## Story archetype reference`
+- `## Pass 1 status` / `## Pass 2 status` / similar `## Pass N` markers
+- Vendor sprint detail blocks at section level (e.g., `### REA delivery alignment` outside the wave-overview)
+
+For each finding: report the line number, the header text, and the recommended appendix destination (A through F).
+
+Severity: **WARNING** for each section in the wrong place. If the cumulative front-matter is >100 lines above `meat_start`, escalate the bundle to a single **CRITICAL** finding with the recommendation to refactor to appendix-style.
+
+### Check 9: Count parity (prose claims vs actual blueprint count)
+
+The number of unique `### US-` blueprint headers is the source of truth. Every prose claim must match.
+
+1. **Compute the truth.** Count unique `### US-X.Y` blueprint headers in the document. This is `total_blueprint_count`. Count per-epic by scanning `### US-` headers under each `## Epic [N]:` section. This gives `epic_blueprint_count[N]`.
+2. **Extract every numeric story-count claim from prose.** Search for patterns:
+   - `Total v[N] stories.*\b(\d+)\b`
+   - `\bTotal stories\b.*\b(\d+)\b`
+   - `\b(\d+) v\d+ stories\b`
+   - `\bAll (\d+) stories\b`
+   - `\b(\d+) stories (written|done|remaining)\b`
+   - Per-epic openers like `\b(\d+) stories\.` immediately following an Epic section header.
+3. **Compare.** For each claim, report:
+   - The line number and exact quoted claim.
+   - The claimed number vs the actual count (total or per-epic as appropriate).
+   - The delta.
+4. **Per-epic claims** match against `epic_blueprint_count[N]` for the epic the claim appears under (look up by nearest preceding `## Epic [N]:` header).
+5. **Cut stories** (with `Status: CUT` in their blueprint) are excluded from "active" counts but included in "written" counts. If the doc uses both framings, validate each against the appropriate basis.
+
+For each mismatch: severity is **WARNING** if delta ≤ 5%, **CRITICAL** if delta > 5% or if the claim is in a prominent location (At-a-glance row, document title, executive summary line). Propose the corrected number; do not auto-edit until Step 3 walkthrough.
+
+DRAFT-only counts (e.g., "Mode: DRAFT · 12 DRAFT stories") are validated against `user_stories.draft_stories[].length` in `_pipeline-state.json`, not the blueprint header count.
+
 ---
 
 ## Step 2 — Compose findings
@@ -190,13 +230,15 @@ Check 4: AC specificity              — [N] WARNING · [N] INFO
 Check 5: Sizing sanity               — [N] WARNING · [N] INFO
 Check 6: DRAFT consistency           — [N] WARNING · [N] INFO
 Check 7: Wave / dependency sanity    — [N] CRITICAL · [N] WARNING · [N] INFO
+Check 8: Layout (meat-first / appendix) — [N] CRITICAL · [N] WARNING
+Check 9: Count parity (prose ↔ blueprints) — [N] CRITICAL · [N] WARNING
 
 Summary: [N] CRITICAL · [N] WARNING · [N] INFO
 
 Full report: ~/Desktop/Resources/PDLC Workflow Docs/[feature]/validation/[feature]-validate-stories-[YYYY-MM-DD-HHMM].md
 ```
 
-If zero findings: `✓ All 7 checks passed — breakdown is internally coherent.`
+If zero findings: `✓ All 9 checks passed — breakdown is internally coherent.`
 
 ### Full markdown report
 
@@ -235,6 +277,8 @@ Apply approved fixes:
 - **Missing FE/BE half** (Check 1): do NOT auto-create — propose running `/user-stories` or `/change-mode` to add the missing story properly.
 - **Endpoint contract mismatches** (Check 3): do NOT auto-fix — these are real architectural decisions; flag for PM + tech-lead resolution.
 - **Dependency cycles** (Check 7): do NOT auto-fix — propose specific edge to break.
+- **Layout findings** (Check 8): per-section, propose moving the section to the named appendix (A–F). Move the entire section verbatim — do not rewrite it. Update internal cross-references if any pointed at the old location. Apply only on PM approval.
+- **Count parity** (Check 9): for each prose claim that drifted, edit the number in place to match the actual blueprint count (or the per-epic count for per-epic claims). Show before/after for each. Batch-apply on confirmation is acceptable for count fixes since the source-of-truth basis is unambiguous.
 
 After applying fixes, append a "Fixes applied in this run" section to the report (same pattern as validate-prd).
 

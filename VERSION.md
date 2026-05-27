@@ -1,3 +1,53 @@
+v2.16.0 — 2026-05-26
+
+User-stories breakdown layout is now **meat-first with appendix-style metadata**, and a count-parity rule prevents drift between prose count claims and actual blueprint headers.
+
+**New: Meat-first layout spec (`ai-framework/06-user-stories.md` Step 5).** Per-story blueprints (the content stakeholders actually open the doc to read) now appear near the top of the document, behind only the front matter, At-a-glance, How-to-read, Epic outlines (with "What this delivers"), and a small Wave overview table. Operational metadata — ID Stability Policy, refactor history, format conventions, full per-story dependency table, vendor sprint detail, PRD cross-reference — moves to Appendices A through F at the end. Closes the failure mode where the nestfully-ai v1.2 breakdown accreted 460 lines of front-matter through repeated `/change-mode` runs, pushing the first per-story blueprint to line 463 and making the doc unreadable for sponsors and designers.
+
+**New: Source-of-truth count rule.** The number of unique `### US-` blueprint headers is the single computed count. Every prose claim ("Total v1 stories: N", "All N stories written", per-epic "N stories" openers) reads from that computed value. `/user-stories`, `/change-mode`, and `/validate-user-stories` all recompute and reconcile claim sites in the same pass — hand-narrated counts are not allowed.
+
+**New: Validation Checks 8 and 9 in `/validate-user-stories`.** Check 8 flags any policy / refactor / Pass-N / full-dependency-table section appearing above the first `### US-` blueprint header. Check 9 extracts every numeric story-count claim and compares to the actual blueprint count (per-doc and per-epic). Drifted claims are surfaced for fix with the corrected number proposed; layout findings propose moving the section to its named appendix.
+
+**New: `/sync-artifacts` internal-consistency hop.** Agent C now also runs count parity and meat-first layout checks against the breakdown itself, not just PRD-vs-breakdown drift. HIGH internal-consistency findings route the user to `/validate-user-stories` for the per-line walkthrough.
+
+**New: Workspace-level CLAUDE.md reminder** under "User-Stories Document Layout" — the same pattern as the existing Diagram Rendering and ID Stability Policy reminders. The feature-level spec in `ai-framework/06-user-stories.md` Step 5 remains load-bearing; the workspace reminder keeps the rule visible across every regeneration step.
+
+Closes the readability failure mode raised on nestfully-ai v1.2: when the per-story blueprints live behind a wall of maintenance content, the doc stops serving its primary audience.
+
+---
+
+v2.15.0 — 2026-05-25
+
+`/publish-to-confluence` gains a pre-flight drift + comment check that runs before any `update` API call, so the PM sees Confluence-side edits and at-risk inline comments before deciding to overwrite a page.
+
+**New: Pre-flight (Step 2 expanded).** For every page resolving to `update`, the skill fetches `getConfluencePage` + `getConfluencePageInlineComments` + `getConfluencePageFooterComments` in parallel and surfaces three signals in the publish plan: (a) **drift** — current Confluence version vs `last_published_version` in state, flagged `🚨 DRIFT` when someone edited outside the skill; (b) **inline comments** — count + author + anchor-text excerpt for each, flagged `⚠ N inline` because `updateConfluencePage` may orphan them; (c) **footer comments** — count only, marked safe (they survive overwrites). The PM picks per-page: proceed / skip / **pull-comments** (writes a sidecar at `confluence-feedback/[YYYY-MM-DD]/[step-N]-comments.md` and skips the publish for that page) / show-drift / show-comments. Drift never auto-resolves — explicit PM choice required.
+
+**New state field: `last_published_version`** captured from every successful create/update API response and persisted per artifact. Legacy state files (pre-v2.15.0) without the field are treated as `last_published_version = 0`, so the first post-upgrade run never triggers a false drift alarm.
+
+Closes the silent-overwrite failure mode that v2.14.0's auto-Figma-push did not address: PMs can now see and act on Confluence-side edits + inline comments before the skill overwrites the page body.
+
+---
+
+v2.14.0 — 2026-05-24
+
+`/publish-to-confluence` now auto-pushes Mermaid diagrams + timelines to Figma before publishing, so Step 7 (Visual Diagram) and Step 10½ (Timeline) embed as Figma iframes instead of falling back to raw Mermaid code blocks that Confluence can't render without a third-party plugin.
+
+**New: Step 3.5 — Figma auto-push pre-composition.** When the Figma MCP is connected and `_pipeline-state.json` → `export_urls.figma_diagram_url` / `figma_timeline_url` is missing for a Mermaid-bearing artifact being created or updated this run, `/publish-to-confluence` invokes the existing `/visual-diagram` and `/timeline` skills to push to Figma, captures the returned URLs, persists them to state, then composes the Confluence pages with the iframe-embed branch. Opt-out via "skip figma push" at the Step 2 confirmation prompt; falls back gracefully to the Mermaid-source note on push failure or when the Figma MCP is unavailable. Existing Figma URLs in state are treated as authoritative — no silent re-push when the local source changes.
+
+Closes the rendering gap that was sending stakeholders to raw Mermaid code blocks in Confluence, and removes the need for PMs to manually chain `/visual-diagram` + `/timeline` + `/publish-to-confluence`.
+
+---
+
+v2.13.0 — 2026-05-23
+
+/pull-from-figma command added — reverse direction of /push-to-figma. Pulls the post-iteration state of a Figma file (screenshots, metadata, variable bindings) back into the feature workspace after the designer has refined frames.
+
+**New: `/pull-from-figma` standalone command.** Reads the current state of the Figma file `/push-to-figma` seeded (or any file URL the PM provides), refreshes the design catalog with real screenshots + URLs, then optionally diffs against the PRD and user stories and offers to apply updates. Surfaces designer changes since the last push: renamed / deleted / added frames, plus token swaps where the designer bound a different variable. Standalone — not part of the auto-run pipeline, because designers iterate asynchronously (days or weeks after the push). Read-only on Figma; writes only to the local workspace (and Jira via MCP if connected). Screenshots are written to a dated `figma-pulls/[YYYY-MM-DD]/` subfolder so old snapshots are preserved for audit.
+
+Closes the round-trip loop: `/design-prompts` → `/push-to-figma` → designer iterates → `/pull-from-figma` → PRD + user stories synced.
+
+---
+
 v2.12.0 — 2026-05-23
 
 /push-to-figma command added — MCP-driven Figma frame generation from design prompts.

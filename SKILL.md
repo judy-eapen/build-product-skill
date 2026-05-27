@@ -63,6 +63,7 @@ Do NOT pre-load all framework files at the start of the session. Load other file
 - `ai-framework/personas.md` — load only when composing agent prompts for a review step
 - `subprompts/design-prompts.md` — load only at Step 8 (design)
 - `subprompts/push-to-figma.md` — load only when `/push-to-figma` is invoked (standalone)
+- `subprompts/pull-from-figma.md` — load only when `/pull-from-figma` is invoked (standalone)
 - `ai-framework/06-user-stories.md` — load only at Step 10
 - `ai-framework/06b-timeline.md` — load only at Step 10.5 (Timeline)
 - `ai-framework/07-drive-sync.md` — load only if Drive export was enabled at Step 11 pre-flight

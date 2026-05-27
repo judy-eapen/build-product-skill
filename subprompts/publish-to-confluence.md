@@ -72,32 +72,136 @@ For every artifact that exists locally:
 4. If prior mtime < current mtime → artifact has **changed** → republish it (update existing page).
 5. If prior mtime == current mtime → artifact is **unchanged** → skip (do not call updateConfluencePage; preserve existing version).
 
-Build a publish plan and present it to the PM before any API calls:
+### Pre-publish drift + comment check (v2.15.0+)
+
+For every artifact in the publish plan that resolves to `update` (not `create`, not `skip`), run a pre-publish check **before presenting the plan to the PM**. This protects against two failure modes: silently overwriting Confluence-side edits made by a stakeholder, and silently orphaning inline comments anchored to body text that's about to be replaced.
+
+Three lightweight MCP calls per `update` artifact:
+
+1. **Drift detection.** Call `getConfluencePage(pageId)` for the artifact's recorded `page_id`. Compare the returned `version.number` against `_pipeline-state.json` → `confluence_hub.artifacts.[artifact_key].last_published_version`. If `current_version > last_published_version`, the page has been edited outside the skill since the last publish. Legacy state files (pre-v2.15.0) without `last_published_version` are treated as `last_published_version = 0` — the first drift check always passes, then the field starts tracking on the next successful publish.
+2. **Inline comment fetch.** Call `getConfluencePageInlineComments(pageId)`. These are the risky ones — they're anchored to specific text in the body. `updateConfluencePage` may orphan them if the anchored text changes or moves between composition runs.
+3. **Footer comment fetch.** Call `getConfluencePageFooterComments(pageId)`. These are attached to the page itself (not body text) and survive `updateConfluencePage` automatically. Surface them for context but do not gate on them.
+
+Run all three calls in parallel per artifact to keep the pre-flight fast. If any call fails (permissions, rate limit, transient API error), record the failure for that artifact and treat its drift + comment state as `unknown` — surfaced as `❓` in the plan rather than blocking the run.
+
+Build a publish plan and present it to the PM before any update API calls:
 
 ```
 ━━━ Confluence publish plan — [Feature Name] ━━━
 
-Parent hub:    [Existing URL] (will update) | [New page — will be created]
+Parent hub:    [Existing URL] (will update · v8 → v9) | [New page — will be created]
 
 Artifacts:
   Step 1:   Research                  → unchanged · skip
-  Step 2:   Codebase Review           → changed · update
-  Step 3:   PRD                       → changed · update
+  Step 2:   Codebase Review           → changed · update     · v3 → v4  · ✓ no comments
+  Step 3:   PRD                       → changed · update     · v5 → v6  · 🚨 DRIFT (v5 > last-published v2) · ⚠ 3 inline + 1 footer
+                                          └─ inline: Sarah on "60-day TTL on chat-log…", Mike on "Path B saves ~1–1.5 weeks", David ✓ on "Phase 4 cutover…"
+                                          └─ footer: 1 thread (David, 2026-05-24, "Approved overall — see inline.")
   Step 6:   System Design             → not generated · skip
-  Step 7:   Visual Diagram            → new · create
+  Step 7:   Visual Diagram            → new · create        · 🎨 push diagram to Figma first (no URL in state)
   Step 8:   Design Catalog — Phase 1  → unchanged · skip
   Step 10:  User Stories (Jira index) → new · create
-  Step 10½: Timeline                  → new · create
+  Step 10½: Timeline                  → new · create        · 🎨 push timeline to Figma first (no URL in state)
 
 Total: 4 page operations (4 create/update, 4 skipped)
+Figma pre-push: 2 generations (diagram + timeline)
+Pre-flight: 1 drift detected (Step 3 PRD), 3 inline comments at risk, 1 footer thread (safe)
 
 Kept local (not published):
   Step 4a: Product Review
   Step 4b: Technical Review
   Full User Stories Breakdown (Gherkin AC — kept local + attached to Jira Epics)
 
-Proceed? (yes / no / show diff for one of these)
+Per-page actions for pages with ⚠ or 🚨:
+  Step 3 PRD:
+    1. proceed       — publish overwrites; inline anchors may orphan; drift gets overwritten
+    2. skip          — leave this page alone this run; revisit after resolving manually
+    3. pull-comments — pull comments into local source (see below) + skip this page this run
+    4. show-drift    — show unified diff of current Confluence body vs the last-published body
+    5. show-comments — show full comment thread bodies
+
+Global options: yes (proceed all) / no (abort run) / skip figma push / show diff for one of these
 ```
+
+### Annotations explained
+
+- **`v[N] → v[N+1]`** — Confluence's own page version number; the page is at version N now, the publish will bump it to N+1. Missing for `create` and `skip`.
+- **`🚨 DRIFT (v[N] > last-published v[M])`** — current Confluence version is higher than what the skill last published. Someone edited the page outside the skill. Always pair with the `show-drift` per-page action so the PM can see what changed before deciding.
+- **`⚠ N inline + M footer`** — N inline comments anchored to body text (at risk of orphaning on overwrite) + M footer threads (safe — survive `updateConfluencePage`). Inline comments are surfaced with `[author] on "[anchor-text excerpt up to 80 chars]"` so the PM can recognize them without leaving the terminal.
+- **`✓ no comments`** — page has no comments at all; safe to update.
+- **`❓ pre-flight check failed`** — getConfluencePage / getInlineComments / getFooterComments returned an error for this page (permissions, rate-limit, transient). The PM can still choose to proceed but the skill couldn't verify drift or comments. Treat this conservatively: when in doubt, ask the PM to retry the run.
+
+### Per-page resolution mechanics
+
+When the PM picks an action other than `proceed` for a flagged page, here's what happens before publish kicks off:
+
+- **`skip`** — remove this artifact from the publish plan. State is not updated for this page (no new `last_published_version`, no new `source_mtime`). The local file mtime stays in state from prior run, so the next run will still detect it as changed and re-prompt.
+- **`pull-comments`** — write a sidecar file to `[feature-workspace]/confluence-feedback/[YYYY-MM-DD]/[step-N]-comments.md` with structured comment dumps (see "Comment sidecar format" below), then `skip` this page from the current publish plan. The PM resolves comments in the local source file, then re-runs `/publish-to-confluence`. For Step 3 (PRD) specifically, the sidecar also includes a pointer line: "To synthesize these into PRD edits, run `/read-feedback`."
+- **`show-drift`** — fetch the current Confluence page body (HTML format for readable diff), compare against the last-published body if cached, present a unified diff to the PM, then re-prompt for the per-page action. Note: the skill does not currently cache last-published body content — drift display falls back to "current Confluence body vs the body the skill is about to publish" so the PM can see what's at risk.
+- **`show-comments`** — print the full comment thread bodies (already fetched in the pre-flight, no extra API call), then re-prompt.
+
+### Comment sidecar format
+
+When `pull-comments` is picked, write to `[feature-workspace]/confluence-feedback/[YYYY-MM-DD]/[step-N]-comments.md`:
+
+```markdown
+# Confluence comments pulled from [Page Title] — [YYYY-MM-DD]
+
+**Source page:** [Confluence URL]
+**Pulled at:** [ISO-8601 timestamp]
+**Skill:** /publish-to-confluence v2.15.0+ (pre-flight comment pull)
+
+> The Confluence page was not updated this run. Resolve these comments in the local source file ([source_path]), then re-run /publish-to-confluence to push the resolved version. After the next successful publish, mark these comments as resolved in Confluence manually (the skill does not resolve comments — comment-resolution would require write access to comments which is a separate flow).
+
+## Inline comments
+
+### Comment 1 — [Author Name] · [Date] · status: [unresolved | resolved]
+
+**Anchored to:** "[full anchored text from Confluence, verbatim]"
+
+**Body:**
+[full comment body, markdown if available]
+
+[If there are replies, render as nested blockquote with author + date prefix]
+
+### Comment 2 — …
+
+## Footer comments
+
+### Thread 1 — [Author Name] · [Date]
+
+**Body:**
+[full comment body]
+
+[Replies under the thread]
+```
+
+If the artifact is `prd/[feature]-prd.md`, append a pointer line at the bottom: `**Auto-synthesis available:** Run `/read-feedback [step-3-comments.md]` to translate these comments into proposed PRD edits.` (The `/read-feedback` command remains PRD-specific in this release; sidecar dumps for non-PRD pages are read-and-edit-by-hand for v2.15.0.)
+
+### Drift display detail
+
+For pages flagged with `🚨 DRIFT`, the `show-drift` action presents:
+
+```
+━━━ Drift detail — Step 3: PRD ━━━
+
+Page ID:                 2042036255
+Last published version:  2 (2026-05-24 01:54)
+Current version:         5 (last edit 2026-05-24 14:22 by Sarah Chen)
+
+The page has been edited 3 times in Confluence since /publish-to-confluence last
+ran on it. The skill does not cache prior page bodies, so a full prior-vs-current
+diff is not available. Below is the diff between the CURRENT Confluence body and
+the body /publish-to-confluence would publish if you proceed.
+
+[unified diff — current Confluence body vs the freshly composed body]
+
+Choose: proceed / skip / pull-comments / abort
+```
+
+Wait for PM confirmation before any update API calls. If the PM picks `proceed` for all flagged pages and resolves any `❓` cases, advance to Step 3 (input collection) or Step 3.5 (Figma auto-push) as the existing flow specifies.
+
+The `🎨 push diagram/timeline to Figma first` annotation appears for Step 7 and Step 10½ only when **all three** conditions hold: (a) the artifact is being created or updated this run, (b) the corresponding URL (`export_urls.figma_diagram_url` for Step 7, `export_urls.figma_timeline_url` for Step 10½) is missing from `_pipeline-state.json`, and (c) the Figma MCP is connected (probed via a lightweight `whoami` or `get_metadata` call at the start of Step 2). If the PM responds with "skip figma push", proceed without the push and fall back to the Mermaid-source note in those pages. If the URL is already in state, no annotation appears and Step 3.5 is skipped for that artifact.
 
 Wait for PM confirmation before any API calls. If the PM says "show diff for X", show a unified diff between the local file and the published version (fetch via `getConfluencePage`), then re-present the plan.
 
@@ -130,6 +234,66 @@ parent hub page. The legacy URL is preserved so existing bookmarks keep working.
 If yes: create the new parent hub, reparent the legacy PRD page under it (call `updateConfluencePage` with the new `parentId`), then proceed with the publish plan for the remaining artifacts. Record both the new `confluence_hub.parent_page_id` and the migrated page's ID in `confluence_hub.artifacts.step_3_prd.page_id`.
 
 If no: bail out of this run — do not mix the two models. Tell the PM they can run `/publish-to-confluence` again later if they change their mind.
+
+---
+
+## Step 3.5 — Figma auto-push pre-composition (Visual Diagram + Timeline)
+
+Confluence cannot render Mermaid syntax without a third-party plugin, so Mermaid-bearing artifacts (Step 7 Visual Diagram and Step 10½ Timeline) ship as raw code blocks unless a Figma equivalent is available to embed via iframe. This step closes that gap: before composing page content, push Mermaid diagrams to Figma so the iframe-embed branch of Step 4 lights up.
+
+### Eligibility check (per artifact, per run)
+
+Run Step 3.5 only for **Step 7: Visual Diagram** and **Step 10½: Timeline**, and only when **all** of the following hold:
+
+1. The artifact appears in the Step 2 publish plan as `new · create` or `changed · update` (skip for `unchanged · skip` and `not generated · skip`).
+2. The corresponding URL in state is null or missing:
+   - Visual Diagram: `_pipeline-state.json` → `export_urls.figma_diagram_url`
+   - Timeline: `_pipeline-state.json` → `export_urls.figma_timeline_url`
+3. The Figma MCP is connected — probed at the start of Step 2 via a single lightweight call (`whoami` or any read-only Figma tool). Cache the probe result for the duration of the run.
+4. The PM did not respond "skip figma push" at the Step 2 confirmation prompt.
+
+If any condition fails, skip Step 3.5 for that artifact and continue to Step 4. The Step 4 composition logic already handles both branches (URL present → embed; URL absent → Mermaid-source note), so no further action is needed.
+
+### Push mechanics
+
+For each eligible artifact, call the dedicated generation skill to produce a Figma deliverable and capture the returned URL:
+
+| Artifact | Skill to invoke | Figma surface | What gets pushed |
+|---|---|---|---|
+| Step 7: Visual Diagram | `/visual-diagram` (Figma-MCP branch) | FigJam file | The architecture diagram(s) from `diagrams/[feature]-feature-diagram(s).md` — §1 high-level and §2 detailed v1 layout at minimum. User-journey sequence diagrams (§3) are pushed if the skill supports them; otherwise the FigJam contains only the architecture views with a note pointing to the Mermaid source for journeys. |
+| Step 10½: Timeline | `/timeline` (Figma-MCP branch) | FigJam timeline | The Gantt bars from `timeline/[feature]-timeline.md` — phase windows + epic-level bars + milestone markers + REA cadence overlay. Parameter snapshot stays local (text-only, not a visual). |
+
+The publish-to-confluence skill does **not** reimplement the Figma generation — it delegates to the existing commands so authoring stays in one place. If the dedicated skill fails (Figma MCP rate-limit, generation error, file-creation refusal), capture the error message, persist what was created (if anything), and fall through to the Mermaid-source note for that artifact this run. The PM can retry the push standalone via `/visual-diagram` or `/timeline` and the next `/publish-to-confluence` run picks up the URL via the existing eligibility check.
+
+### State persistence (immediately after each push)
+
+On successful push, write to `_pipeline-state.json` **before composing Step 4 content** so the composition step reads the fresh URL:
+
+```json
+"export_urls": {
+  "figma_diagram_url": "https://www.figma.com/file/...",
+  "figma_diagram_pushed_at": "ISO-8601 timestamp",
+  "figma_timeline_url": "https://www.figma.com/file/...",
+  "figma_timeline_pushed_at": "ISO-8601 timestamp"
+}
+```
+
+Also append a one-line entry to `changelog/[feature]-changelog.md` if the feature has a changelog folder convention in use: `[date] · Figma diagram pushed during /publish-to-confluence: [URL]`. This is best-effort — skip if no changelog folder exists.
+
+### PM-visible progress
+
+Surface a short progress line per push so the PM knows what's happening between confirmation and the page-creation API calls:
+
+```
+🎨 Pushing diagram to Figma via /visual-diagram (FigJam) … done · [URL]
+🎨 Pushing timeline to Figma via /timeline (FigJam) … done · [URL]
+```
+
+On failure: `🎨 Diagram push failed (Figma MCP error: [message]). Falling back to Mermaid-source note for this run.`
+
+### Re-push behavior
+
+If the URL is already in state (eligibility condition #2 fails), Step 3.5 is skipped. To force a re-push (e.g., because the underlying diagram changed materially and the existing Figma file is stale), the PM clears the URL from state manually or runs `/visual-diagram` or `/timeline` directly — that's the explicit re-generation path. `/publish-to-confluence` deliberately does not auto-re-push on every diagram-source change, because Figma files are stakeholder-visible artifacts and silent overwrites would surprise designers iterating on them.
 
 ---
 
@@ -288,12 +452,16 @@ The PRD page keeps the existing PRD-page structure but adds the breadcrumb at th
 **Source:** `diagrams/[feature]-feature-diagram.md`
 **Pipeline:** [← Step 6: System Design] · [↑ Parent hub] · [Next: Step 8: Design Catalog →]
 
-[If Figma diagram URL is available from _pipeline-state.json → export_urls.figma_diagram_url, embed it:]
+[Read _pipeline-state.json → export_urls.figma_diagram_url. By the time Step 4 runs, Step 3.5 has already populated this URL if the Figma MCP was connected and the URL was missing. Three composition branches:]
+
+[Branch A — URL present (most common path post-Step-3.5): embed as Figma iframe.]
 <iframe src="https://www.figma.com/embed?embed_host=confluence&url=[figma_diagram_url]" width="800" height="450" allowfullscreen></iframe>
 
 [Below the embed, paste the traceability table from the source file mapping each node to its PRD user story.]
 
-[If no Figma URL available, omit the embed entirely. Do not embed Mermaid syntax — it does not render visually in Confluence without a third-party plugin. State at the top of the page: "Diagram is in Mermaid format. View source file at [path] for a renderable version."]
+[Branch B — URL absent because Figma MCP unavailable or PM said "skip figma push": state at the top of the page "Diagram is in Mermaid format. View source file at [path] for a renderable version." Do NOT embed Mermaid syntax as a code block — it does not render visually in Confluence without a third-party plugin. Paste the traceability table below the note.]
+
+[Branch C — URL absent because Step 3.5 push failed: state at the top of the page "Figma push attempted but failed during this run ([error message from Step 3.5]). Diagram is in Mermaid format — view source file at [path] for a renderable version, or retry the push via /visual-diagram." Paste the traceability table below the note.]
 ```
 
 ### Step 8: Design Catalog (one page per phase)
@@ -366,10 +534,16 @@ Stories under this Epic:
 **Source:** `timeline/[feature]-timeline.md`
 **Pipeline:** [← Step 10: User Stories Breakdown] · [↑ Parent hub]
 
-[If Figma timeline URL is available from _pipeline-state.json → export_urls.figma_timeline_url:]
+[Read _pipeline-state.json → export_urls.figma_timeline_url. Step 3.5 populates this URL when the Figma MCP is connected and the URL was missing. Three branches mirroring the Visual Diagram page:]
+
+[Branch A — URL present: embed as Figma iframe.]
 <iframe src="https://www.figma.com/embed?embed_host=confluence&url=[figma_timeline_url]" width="800" height="450" allowfullscreen></iframe>
 
-[Below: parameter snapshot table, proposed-timeline table, traceability mapping. Note the HTML Gantt is local-only: "Open the interactive HTML Gantt: timeline/[feature]-timeline.html (local file — not embedded in Confluence)."]
+[Branch B — URL absent because Figma MCP unavailable or PM said "skip figma push": state at the top "Figma timeline not yet generated — view source file at [path] (markdown tables) or open timeline/[feature]-timeline.html locally for the interactive Gantt."]
+
+[Branch C — URL absent because Step 3.5 push failed: state at the top "Figma push attempted but failed during this run ([error]). Source markdown + local HTML Gantt remain authoritative — retry via /timeline."]
+
+[Below the iframe or note: parameter snapshot table, proposed-timeline table, traceability mapping. Always include the HTML Gantt pointer: "Open the interactive HTML Gantt: timeline/[feature]-timeline.html (local file — not embedded in Confluence)."]
 ```
 
 ---
@@ -383,9 +557,10 @@ API calls run in this sequence — child pages depend on the parent existing fir
    - If `confluence_hub.parent_page_id` exists: call `updateConfluencePage` with the parent body. Preserve the existing pageId.
 
 2. **Each child page in the publish plan**, in step order.
-   - If a child has no existing `confluence_hub.artifacts.[key].page_id`: call `createConfluencePage` with `parentId = confluence_hub.parent_page_id`. Record the new `page_id`, `page_url`, and `source_mtime` (current file mtime at publish time).
-   - If a child has an existing `page_id`: call `updateConfluencePage` on that pageId. Update `source_mtime`.
+   - If a child has no existing `confluence_hub.artifacts.[key].page_id`: call `createConfluencePage` with `parentId = confluence_hub.parent_page_id`. Record the new `page_id`, `page_url`, `source_mtime` (current file mtime at publish time), and **`last_published_version`** (the `version.number` from the create response — typically `1`).
+   - If a child has an existing `page_id`: call `updateConfluencePage` on that pageId. Update `source_mtime` and **`last_published_version`** (the `version.number` from the update response — typically the prior version + 1, but always use what the API actually returned).
    - **Critical:** never delete + recreate. Always update in place to preserve URLs.
+   - **Pages skipped from the publish plan** (PM picked `skip` or `pull-comments` at the Step 2 pre-flight): do not call `updateConfluencePage` and do not update state for these pages. Their `last_published_version` and `source_mtime` from the prior run remain authoritative, so the next `/publish-to-confluence` run will detect them as `update` candidates again and re-run the pre-flight.
 
 3. **API call format** — for every create/update, use:
    - `cloudId`: from `getAccessibleAtlassianResources`.
@@ -414,21 +589,24 @@ Write to `_pipeline-state.json`:
   "parent_page_id": "...",
   "parent_page_url": "...",
   "last_published_at": "ISO-8601 timestamp",
+  "last_published_version": 9,  // v2.15.0+ — Confluence version.number after the most recent successful update of the parent hub
   "artifacts": {
-    "step_1_research":          { "page_id": "...", "page_url": "...", "source_path": "research/...", "source_mtime": 1700000000.0, "last_published_at": "..." },
-    "step_2_codebase_review":   { "page_id": "...", "page_url": "...", "source_path": "...", "source_mtime": ..., "last_published_at": "..." },
-    "step_3_prd":               { ... },
-    "step_6_system_design":     { ... },
-    "step_7_visual_diagram":    { ... },
+    "step_1_research":          { "page_id": "...", "page_url": "...", "source_path": "research/...", "source_mtime": 1700000000.0, "last_published_at": "...", "last_published_version": 1 },
+    "step_2_codebase_review":   { "page_id": "...", "page_url": "...", "source_path": "...", "source_mtime": ..., "last_published_at": "...", "last_published_version": 4 },
+    "step_3_prd":               { "page_id": "...", "page_url": "...", "source_path": "...", "source_mtime": ..., "last_published_at": "...", "last_published_version": 6 },
+    "step_6_system_design":     { "page_id": "...", "page_url": "...", "source_path": "...", "source_mtime": ..., "last_published_at": "...", "last_published_version": 1 },
+    "step_7_visual_diagram":    { "page_id": "...", "page_url": "...", "source_path": "...", "source_mtime": ..., "last_published_at": "...", "last_published_version": 1 },
     "step_8_design_catalog": [
-      { "phase": 1, "page_id": "...", "page_url": "...", "source_path": "design/[feature]-phase-1-designs.md", "source_mtime": ..., "last_published_at": "..." },
-      { "phase": 2, "page_id": "...", "page_url": "...", "source_path": "design/[feature]-phase-2-designs.md", "source_mtime": ..., "last_published_at": "..." }
+      { "phase": 1, "page_id": "...", "page_url": "...", "source_path": "design/[feature]-phase-1-designs.md", "source_mtime": ..., "last_published_at": "...", "last_published_version": 2 },
+      { "phase": 2, "page_id": "...", "page_url": "...", "source_path": "design/[feature]-phase-2-designs.md", "source_mtime": ..., "last_published_at": "...", "last_published_version": 1 }
     ],
-    "step_10_user_stories":     { "page_id": "...", "page_url": "...", "source_path": "user-stories/[feature]-user-stories.md", "source_mtime": ..., "last_published_at": "...", "format": "lightweight-jira-index" },
-    "step_10_5_timeline":       { ... }
+    "step_10_user_stories":     { "page_id": "...", "page_url": "...", "source_path": "user-stories/[feature]-user-stories.md", "source_mtime": ..., "last_published_at": "...", "last_published_version": 3, "format": "lightweight-jira-index" },
+    "step_10_5_timeline":       { "page_id": "...", "page_url": "...", "source_path": "...", "source_mtime": ..., "last_published_at": "...", "last_published_version": 1 }
   }
 }
 ```
+
+**Note (v2.15.0+):** `last_published_version` is a new field. Legacy state files without it are treated as `last_published_version = 0` during the next pre-flight drift check, so the first post-upgrade run never triggers a false drift alarm. After that first successful update, the field is populated from the API response and drift detection becomes authoritative.
 
 **Note (v2.8.0+):** `step_4a_product_review` and `step_4b_technical_review` are no longer published. If they appear in legacy state files from a pre-v2.8.0 pipeline run, the entries are ignored on subsequent runs — the corresponding Confluence pages are **not** deleted automatically (preserving stakeholder bookmarks). If you want to delete the prior review pages from Confluence after upgrading, do so manually in Confluence. The hub's "Kept local — not published" section will note that the reviews are no longer mirrored.
 
@@ -486,3 +664,11 @@ When called by `/change-mode` after diff propagation:
 - **Respect space access.** Don't publish to a space the PM doesn't have permission for. The MCP will fail; surface the error clearly with the artifact name.
 - **Keep the local files as source of truth.** Confluence is a published mirror. Edits should happen in the local files first (via the skill or manually); then `/publish-to-confluence` syncs them up.
 - **Numbered titles are exact.** Use the literal page-title strings from the Step 2 table (`Step 1: Research`, `Step 4a: Product Review`, `Step 10½: Timeline`, etc.) so cross-feature search in Confluence ("step 3: prd") finds them consistently.
+- **Pre-flight is mandatory for `update` pages (v2.15.0+).** Every page resolving to `update` runs the drift + comment pre-flight before the PM sees the publish plan. The PM cannot skip the pre-flight, only act on its findings. Pages resolving to `create` skip the pre-flight (no prior version, no prior comments to disturb).
+- **Footer comments survive `updateConfluencePage` automatically.** They're attached to the page, not anchored to body text. Surface their count for context but do not gate on them.
+- **Inline comments are at risk on every update.** The skill composes pages from scratch rather than surgically updating sections, so even semantically-identical body text may orphan inline anchors. The pre-flight makes this visible per page; the PM decides. There is no automatic "preserve anchors" path — `markdown` contentFormat (current default) is not round-trip safe for inline-comment markers.
+- **`pull-comments` is the non-destructive path.** Picking it writes comments to a dated sidecar at `confluence-feedback/[YYYY-MM-DD]/[step-N]-comments.md` and skips that page from the current publish run. The Confluence page is not modified — inline comments stay anchored, the page stays at its current version. PM resolves the comments in the local source file and re-runs `/publish-to-confluence`.
+- **Drift never auto-resolves.** When `🚨 DRIFT` is detected on a page, the PM must explicitly pick an action (proceed / skip / pull-comments) — the skill will not proceed-by-default. This protects against silent overwrite of stakeholder edits.
+- **Figma push is opt-out, not opt-in.** Step 3.5 fires automatically whenever the Figma MCP is connected and the Figma URL is missing from state for a Mermaid-bearing artifact (Visual Diagram, Timeline). To skip it, the PM answers "skip figma push" at the Step 2 confirmation prompt or clears the Figma MCP connection. This favors fewer manual re-runs of `/publish-to-confluence` over silent fallback to unreadable Mermaid code blocks.
+- **Push delegates to dedicated skills.** Step 3.5 invokes `/visual-diagram` and `/timeline`; it does not call the Figma MCP directly. Centralizes Figma authoring so changes to diagram/timeline generation only need to be made in one place.
+- **Never re-push silently.** Once a Figma URL is in state, `/publish-to-confluence` treats it as authoritative and does not regenerate even if the local Mermaid source has changed. Re-pushing requires explicit PM action (clear the URL in state OR run `/visual-diagram` / `/timeline` directly). This protects designer iterations on the existing Figma file from being overwritten.

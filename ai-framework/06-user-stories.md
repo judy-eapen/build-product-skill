@@ -462,6 +462,8 @@ Before presenting the breakdown to the PM, run the quality checks:
 9. **No story is sized L+ without a proposed split.** If you marked L+, the per-story section must include a "Proposed split into US-X.Y + US-X.Z" note. (Applies to DRAFT stories too — sized as L+* gets the same treatment.)
 10. **HIGH risks from the codebase review appear in at least one story's testing notes.** Traceability check. Read the codebase review file and confirm.
 11. **UX state coverage per non-DRAFT FE story.** Empty / loading / error / populated — all four states have at least one scenario between them. DRAFT FE stories are exempt and counted as known gaps.
+12. **Layout is meat-first.** No `## ID Stability Policy`, `## Refactor summary`, `## Per-story sequence table`, or `## Format Conventions` section appears in the document **above** the first `### US-` blueprint header. These belong in Appendix A–F at the end. If they appear above the meat, the layout is wrong — flag as WARNING and propose moving them to appendices.
+13. **Count parity.** The number of unique `### US-` blueprint headers in the document is the source of truth. Every prose claim of the form "Total [N] stories", "[N] v1 stories", "All [N] stories written", or per-epic "[N] stories" must match this computed count. Run the parity check at write time: extract every numeric story-count claim, compare to the actual blueprint count (or per-epic blueprint count for per-epic claims), and either auto-correct or surface as WARNING. Hand-narrated counts that drift are the exact failure mode this check exists to prevent.
 
 If any check fails, flag as a WARNING (severity: WARNING) for Gate 3. Do not silently auto-fix. Surface to the PM at Gate 3 so they can decide to fix-first or approve-anyway.
 
@@ -488,14 +490,29 @@ Write the complete document to:
 ~/Desktop/Resources/PDLC Workflow Docs/[feature-name]/user-stories/[feature-name]-user-stories.md
 ```
 
-Structure:
-1. Front matter (Source PRD, Generated date, Phases covered, Mode: full / DRAFT / MIXED, DRAFT story count, total wave count).
-2. Epic grouping table from Step 1.5.
-3. Build Sequence Map table (with Wave column populated from Step 2.5).
-4. Build-order summary paragraph (referencing wave numbers).
-5. Wave Summary table from Step 2.5 — one row per wave with theme, story_ids, and critical/launch-gate annotations.
-6. Per-story sections in US-ID order, grouped under an `## Epic [N]: [name]` header per epic.
-7. Appendix: list of PRD user stories cross-referenced to breakdown US-IDs (for the no-drops check).
+Structure — **meat-first, operational metadata in appendices**. Stakeholders (sponsors, designers, engineers, QA) open this doc to find what each story does and how it sequences. They should not have to scroll past hundreds of lines of refactor lineage, ID-stability policy, or full dependency tables to get there. Maintenance/audit content goes in appendices at the end.
+
+**Top of the document (the meat):**
+
+1. **Front matter** (one short block: Source PRD path, Generated date, Phases covered, Mode: full / DRAFT / MIXED, story count = computed from blueprint headers, DRAFT story count, total wave count). Keep to ~10 lines.
+2. **At a glance** table (Total stories, Epics, Waves, Format, Notable dependencies). Counts derive from the single source-of-truth count (see "Source of truth for counts" rule below).
+3. **How to read this document** — three-row table mapping audience (Executive sponsor / Engineer / Designer) to where to start.
+4. **Epic outlines** — one block per Epic with a 2–3 sentence "What this delivers" outcome paragraph written for non-engineers. Pulled from `user_stories.epics[].description` in `_pipeline-state.json`.
+5. **Build Sequence Map — wave overview** (the small table: Wave / Story count / Theme / Vendor dependency). The full per-story dependency table goes to Appendix D, not here.
+6. **━━━ Per-story blueprints ━━━** — the canonical content. Per-story sections in US-ID order, grouped under `## Epic [N]: [name]` headers. This is where the document spends most of its lines and where stakeholders actually live.
+
+**Appendices (end of document — maintenance and audit only):**
+
+- **Appendix A — ID Stability Policy.** Verbatim from the workspace-level policy in `~/CLAUDE.md` plus any feature-specific notes. Required when the doc has been through any `/change-mode` insert/append, because it documents why letter-suffix IDs exist.
+- **Appendix B — Refactor history / changelog.** Every prior version's structural changes (v0.9 → v1.0 → v1.1 → ...). One subsection per version: Structural changes, Format changes, Sequencing changes, Dependency contingency, Cuts. This is what gets appended on every `/change-mode` run, not the top of the document.
+- **Appendix C — Format conventions.** Story blueprint template, adversarial story format if Gherkin is retained for any epic, archetype reference.
+- **Appendix D — Per-story sequence + dependency table.** The full multi-column table (US-ID / Title / Epic / Wave / Type / Skill / Depends on / Size) for every story. Useful for sequencing review; not what a sponsor or designer opens the doc to read.
+- **Appendix E — Vendor / external dependency alignment** (if applicable). Per-vendor sprint mapping, contingency flags, mock-vs-live cutover plan.
+- **Appendix F — PRD user-story cross-reference.** List of PRD user stories ↔ breakdown US-IDs (for the no-drops check).
+
+**Source of truth for counts.** The story count is computed once, at write time, from the number of `### US-` blueprint headers in the body. Every other place that mentions a count ("At a glance", "Total v1 stories", per-epic counts in epic outlines, footer claims) reads from this single computed value. **Never hand-narrate counts in prose.** When `/change-mode` adds or cuts stories, it recomputes from blueprint headers and updates every claim site in the same pass. Per-epic counts are derived from the count of `### US-` headers under each `## Epic [N]:` section, not narrated.
+
+**What does NOT go at the top.** Specifically: ID Stability Policy, Refactor summary (changes vs. prior version), full per-story sequence table, Format conventions / story archetype reference, REA-style vendor sprint detail, Pass 1 / Pass 2 status markers. All of these are maintenance content and live in appendices. The Nestfully-AI v1.2 doc, which accreted 460 lines of front-matter before the first per-story blueprint, is the anti-pattern this rule exists to prevent.
 
 ### Update `_pipeline-state.json`
 

@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>/build-product — Work Pipeline v2.12.0</title>
-  <!-- Version: 2.12.0 | Updated: 2026-05-23 | Update this line and the badge/changelog below on every release -->
+  <title>/build-product — Work Pipeline v2.15.0</title>
+  <!-- Version: 2.13.0 | Updated: 2026-05-23 | Update this line and the badge/changelog below on every release -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
@@ -494,7 +494,7 @@
   <header>
     <div class="header-top">
       <span class="cmd-title">/build-product</span>
-      <span class="version-badge">v2.12.0</span>
+      <span class="version-badge">v2.15.0</span>
     </div>
     <p class="header-sub">A Claude Code skill that takes a PM from feature idea → Jira Epic with all linked tickets. Research · Codebase review · PRD · Dual AI review · Design prompts · User stories · Jira export.</p>
     <div class="header-links">
@@ -513,7 +513,7 @@
     <div class="stat"><div class="stat-number">13</div><div class="stat-label">Pipeline steps</div></div>
     <div class="stat"><div class="stat-number">3</div><div class="stat-label">Approval gates</div></div>
     <div class="stat"><div class="stat-number">2</div><div class="stat-label">Parallel blocks</div></div>
-    <div class="stat"><div class="stat-number">26+</div><div class="stat-label">Slash commands</div></div>
+    <div class="stat"><div class="stat-number">27+</div><div class="stat-label">Slash commands</div></div>
     <div class="stat"><div class="stat-number">5</div><div class="stat-label">Optional integrations</div></div>
   </div>
 
@@ -780,7 +780,7 @@
           <div class="cmd-item"><span class="cmd-name">/timeline</span><span class="cmd-desc">Gantt (Figma + editable HTML at Epic+Phase). Drag/cascade in browser; 💾 Save to skill (Chrome/Edge) or ⬇ Export plan; then <code>/timeline apply</code> (auto-discovers latest)</span></div>
           <div class="cmd-item"><span class="cmd-name">/prd-to-jira</span><span class="cmd-desc">Create Jira tickets from a breakdown or PRD</span></div>
           <div class="cmd-item"><span class="cmd-name">/drive-sync</span><span class="cmd-desc">Sync artifacts to Google Drive</span></div>
-          <div class="cmd-item"><span class="cmd-name">/publish-to-confluence</span><span class="cmd-desc">Publish whole feature workspace: hub + child page per artifact; re-publishes only changed pages</span></div>
+          <div class="cmd-item"><span class="cmd-name">/publish-to-confluence</span><span class="cmd-desc">Publish whole feature workspace: hub + child page per artifact; re-publishes only changed pages. <strong>v2.14.0+</strong> — Step 3.5 auto-pushes Mermaid diagrams + timelines to Figma when the Figma MCP is connected and no URL is in state, then embeds iframes. <strong>v2.15.0+</strong> — pre-flight drift + comment check on every <code>update</code> page: fetches Confluence version + inline + footer comments before overwriting; surfaces 🚨 DRIFT (someone edited outside the skill) and ⚠ N inline at risk; per-page actions <strong>proceed</strong> / <strong>skip</strong> / <strong>pull-comments</strong> (non-destructive sidecar dump) / <strong>show-drift</strong> / <strong>show-comments</strong>. Drift never auto-resolves.</span></div>
           <div class="cmd-item"><span class="cmd-name">/export-transcript</span><span class="cmd-desc">Write the full PM↔model conversation for a feature's pipeline run to clean + full markdown files</span></div>
           <div class="cmd-item"><span class="cmd-name">/pipeline-timing</span><span class="cmd-desc">Wall-clock + active-work timing report (per-step breakdown + per-gate wait time)</span></div>
           <div class="cmd-item"><span class="cmd-name">/share-for-review</span><span class="cmd-desc">Post Confluence link to Slack with reviewers + deadline</span></div>
@@ -793,6 +793,7 @@
         <div class="cmd-list">
           <div class="cmd-item"><span class="cmd-name">/design-prompts</span><span class="cmd-desc">Screen design prompts for v0 or Figma Make</span></div>
           <div class="cmd-item"><span class="cmd-name">/push-to-figma</span><span class="cmd-desc"><strong>v2.12.0+</strong> — Generate real, editable Figma frames programmatically from the design prompts file via the Figma MCP. Wires every frame to the team's design system color variables. One Figma page per category; sub-frames laid out horizontally. Companion to <code>/design-prompts</code>. No v0 equivalent.</span></div>
+          <div class="cmd-item"><span class="cmd-name">/pull-from-figma</span><span class="cmd-desc"><strong>v2.13.0+</strong> — Reverse direction of <code>/push-to-figma</code>. Pulls the post-iteration state of a Figma file back into the feature workspace after the designer has refined frames. Refreshes the catalog with real screenshots, surfaces designer changes (renamed / deleted / added frames, token swaps), then optionally diffs against the PRD and user stories and offers updates. Snapshots screenshots to a dated <code>figma-pulls/[YYYY-MM-DD]/</code> folder for audit. Standalone — designers iterate asynchronously.</span></div>
           <div class="cmd-item"><span class="cmd-name">/update-prd-from-designs</span><span class="cmd-desc">Sync PRD with finalized design catalog</span></div>
           <div class="cmd-item"><span class="cmd-name">/compare-figma-prd</span><span class="cmd-desc">Figma vs PRD & Jira gap analysis after designer delivers</span></div>
         </div>
@@ -878,6 +879,65 @@
   <section>
     <p class="section-title">Recent Changes</p>
     <div class="changelog-list">
+
+      <div class="changelog-item">
+        <div class="changelog-header">
+          <span class="changelog-version">v2.15.0</span>
+          <span class="changelog-date">2026-05-25</span>
+          <span class="changelog-major-badge">MINOR</span>
+        </div>
+        <div class="changelog-body">
+          <ul>
+            <li><strong><code>/publish-to-confluence</code> — pre-flight drift + comment check.</strong> Every page resolving to <code>update</code> now runs three lightweight MCP calls in parallel before the publish plan is presented: <code>getConfluencePage</code> (drift), <code>getConfluencePageInlineComments</code> (orphan risk), <code>getConfluencePageFooterComments</code> (safe — context only). Catches the silent-overwrite + orphaned-anchor failure modes the skill had since v2.0.</li>
+            <li><strong>Drift detection.</strong> Compares Confluence's <code>version.number</code> against <code>last_published_version</code> in state. When Confluence is higher (= someone edited outside the skill), flags <code>🚨 DRIFT (v[N] &gt; last-published v[M])</code> in the publish plan. Drift never auto-resolves — explicit PM choice required.</li>
+            <li><strong>Inline comment surfacing.</strong> Inline comments are anchored to specific text in the body. <code>updateConfluencePage</code> may orphan them when the anchored text changes between composition runs. Pre-flight surfaces <code>⚠ N inline + M footer</code> with author + anchor-text excerpt per comment so the PM can see exactly what's at risk before deciding to overwrite. Footer comments survive automatically — surfaced for context, not gating.</li>
+            <li><strong>Per-page resolution actions.</strong> For each flagged page: <strong>proceed</strong> (overwrites; drift + anchors may go), <strong>skip</strong> (don't update this run; state preserved so next run re-prompts), <strong>pull-comments</strong> (write a structured dump to <code>confluence-feedback/[YYYY-MM-DD]/[step-N]-comments.md</code> and skip publish — non-destructive path), <strong>show-drift</strong> (unified diff of current Confluence body vs about-to-publish body), <strong>show-comments</strong> (full thread bodies, no extra API call).</li>
+            <li><strong>Sidecar dump format.</strong> <code>confluence-feedback/[YYYY-MM-DD]/[step-N]-comments.md</code> with structured per-comment blocks (author, date, anchor text, body, status, replies). For Step 3 PRD specifically, sidecar includes a pointer line to run <code>/read-feedback</code> for auto-synthesis. For other artifacts, read-and-edit-by-hand.</li>
+            <li><strong>New state field <code>last_published_version</code> per artifact.</strong> Captured from every successful create/update API response and persisted under <code>confluence_hub.artifacts.[key].last_published_version</code> (plus on the parent hub). Legacy state files without it are treated as <code>last_published_version = 0</code> — first post-upgrade run never triggers a false drift alarm.</li>
+          </ul>
+          <a class="changelog-link" href="https://github.com/judy-eapen/build-product-skill/blob/main/CHANGELOG.md" target="_blank">Full changelog →</a>
+        </div>
+      </div>
+
+      <div class="changelog-item">
+        <div class="changelog-header">
+          <span class="changelog-version">v2.14.0</span>
+          <span class="changelog-date">2026-05-24</span>
+          <span class="changelog-major-badge">MINOR</span>
+        </div>
+        <div class="changelog-body">
+          <ul>
+            <li><strong><code>/publish-to-confluence</code> — Step 3.5: Figma auto-push pre-composition.</strong> Closes the rendering gap that was sending stakeholders to raw Mermaid code blocks in Confluence. When the Figma MCP is connected and Step 7 (Visual Diagram) or Step 10½ (Timeline) has no Figma URL in <code>_pipeline-state.json</code> for an artifact being published this run, the skill delegates to the existing <code>/visual-diagram</code> and <code>/timeline</code> skills to push the Mermaid source to Figma, captures the returned URL, persists it to state, and composes the Confluence page with the iframe-embed branch.</li>
+            <li><strong>Surfaced in the publish plan.</strong> Step 2's plan output now shows <code>🎨 push diagram/timeline to Figma first (no URL in state)</code> next to eligible artifacts, plus a <code>Figma pre-push: N generations</code> count and a new <code>skip figma push</code> confirmation option for PMs who want to keep the Mermaid fallback this run.</li>
+            <li><strong>Three explicit composition branches per Mermaid-bearing page.</strong> Branch A — URL present → Figma iframe embed (most common post-Step-3.5). Branch B — URL absent because Figma MCP unavailable or PM opted out → "Diagram is in Mermaid format. View source file at [path]." note. Branch C — URL absent because Step 3.5 push failed → explicit "Figma push attempted but failed during this run ([error])" note with a retry pointer.</li>
+            <li><strong>Push is opt-out, not opt-in.</strong> Fires automatically whenever eligibility holds (artifact being created/updated, URL missing, Figma MCP connected). Favors fewer manual re-runs of <code>/publish-to-confluence</code> over silent fallback to unreadable Mermaid code blocks.</li>
+            <li><strong>Never re-pushes silently.</strong> Once a Figma URL is in state, the skill treats it as authoritative and does not regenerate even if the local Mermaid source has changed. Protects designer iterations on the existing Figma file. PMs who want to regenerate clear the URL in state or invoke <code>/visual-diagram</code> / <code>/timeline</code> directly.</li>
+            <li><strong>Delegates to dedicated skills, never reimplements Figma generation.</strong> Step 3.5 invokes <code>/visual-diagram</code> (FigJam — architecture) and <code>/timeline</code> (FigJam — Gantt). Centralizes Figma authoring in one place.</li>
+            <li><strong>Graceful per-artifact fallback on failure.</strong> Push failure (MCP error, generation refusal, rate-limit) falls through to a Mermaid-source note for that artifact this run, with a "retry via <code>/visual-diagram</code> or <code>/timeline</code>" pointer. Other artifacts continue publishing — no global rollback.</li>
+          </ul>
+          <a class="changelog-link" href="https://github.com/judy-eapen/build-product-skill/blob/main/CHANGELOG.md" target="_blank">Full changelog →</a>
+        </div>
+      </div>
+
+      <div class="changelog-item">
+        <div class="changelog-header">
+          <span class="changelog-version">v2.13.0</span>
+          <span class="changelog-date">2026-05-23</span>
+          <span class="changelog-major-badge">MINOR</span>
+        </div>
+        <div class="changelog-body">
+          <ul>
+            <li><strong>New <code>/pull-from-figma</code> standalone command.</strong> Reverse direction of <code>/push-to-figma</code>. Pulls the post-iteration state of a Figma file back into the feature workspace after the designer has refined the pushed frames. Refreshes the design catalog at <code>design/[feature]-figma-catalog.md</code> with real screenshots + URLs and a change summary marking renamed (✏️), deleted (🗑️), and added (🆕) frames.</li>
+            <li><strong>Diffs against the push-state.</strong> Reads <code>_pipeline-state.json</code> → <code>figma_generation.frame_ids</code> and cross-checks with <code>get_metadata</code>. Surfaces designer changes since the last push: matched / renamed / deleted / added frames, plus token swaps where <code>get_variable_defs</code> shows the designer bound a different design system variable.</li>
+            <li><strong>Optional downstream sync.</strong> After the catalog refresh, the PM is offered (a) PRD diff + updates via <code>update-prd-from-designs</code> logic, (b) user-stories diff + AC updates, (c) both. Both are skippable — catalog refresh is the minimum. Jira ticket updates are pushed via MCP if connected.</li>
+            <li><strong>Snapshots preserved.</strong> Screenshots are written to a dated <code>design/figma-pulls/[YYYY-MM-DD]/</code> subfolder. Old snapshots are never overwritten, giving an audit trail of how the design evolved over time.</li>
+            <li><strong>Standalone only.</strong> Not part of the auto-run pipeline. Designers iterate asynchronously (days or weeks after the push), so the PM invokes this manually when designs are ready. No coupling to <code>/build-product</code> sequencing.</li>
+            <li><strong>Round-trip loop closed.</strong> <code>/design-prompts</code> → <code>/push-to-figma</code> → designer iterates → <code>/pull-from-figma</code> → PRD + user stories synced. PMs no longer hand-reconcile designer changes; the skill compares the iterated Figma file to the push-state and offers structured updates.</li>
+            <li><strong>Read-only on Figma.</strong> The skill never writes back to Figma. All writes are local (catalog, PRD, stories, state, changelog) or via Jira MCP if connected. Two approval gates: pull inventory at Step 1, downstream edits at Step 4 / 5.</li>
+          </ul>
+          <a class="changelog-link" href="https://github.com/judy-eapen/build-product-skill/blob/main/CHANGELOG.md" target="_blank">Full changelog →</a>
+        </div>
+      </div>
 
       <div class="changelog-item">
         <div class="changelog-header">

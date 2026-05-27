@@ -33,6 +33,11 @@ The change-propagation prompt asks the PM for:
 
 For Figma updates and Designs-arrived triggers, the PM is asked to paste the Figma link / design catalog file path before the impact assessment runs. The Designs-arrived trigger uses a focused propagation that only touches DRAFT stories — see `ai-framework/05-change-propagation.md` Step 4 for the specific flow.
 
+## What it preserves
+
+- **User-stories layout stays meat-first.** When propagating a change that adds, cuts, or rewrites stories in `[feature]-user-stories.md`, every new section is placed per the layout spec in `ai-framework/06-user-stories.md` Step 5: per-story blueprints stay in the meat (grouped by `## Epic [N]:`), refactor-history notes go to Appendix B, format-convention changes go to Appendix C, never above the first `### US-` blueprint header. Never accrete `## Refactor summary`, `## ID Stability Policy`, or `## Pass [N] status` markers at the top of the document — these belong in appendices.
+- **Counts stay in sync.** After every change-mode run that touches the user-stories breakdown, recompute the story count from the actual `### US-` blueprint header count and update every prose claim site (At-a-glance, Total stories footer, per-epic count openers) in the same pass. Hand-narrated count drift is the failure mode this discipline exists to prevent.
+
 ## What it will NOT do
 
 - It will not silently update any artifact. Every change is shown as a diff and confirmed before being applied.
