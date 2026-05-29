@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>/build-product — Work Pipeline v2.15.0</title>
-  <!-- Version: 2.13.0 | Updated: 2026-05-23 | Update this line and the badge/changelog below on every release -->
+  <title>/build-product — Work Pipeline v2.18.0</title>
+  <!-- Version: 2.18.0 | Updated: 2026-05-29 | Update this line and the badge/changelog below on every release -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
@@ -494,7 +494,7 @@
   <header>
     <div class="header-top">
       <span class="cmd-title">/build-product</span>
-      <span class="version-badge">v2.15.0</span>
+      <span class="version-badge">v2.18.0</span>
     </div>
     <p class="header-sub">A Claude Code skill that takes a PM from feature idea → Jira Epic with all linked tickets. Research · Codebase review · PRD · Dual AI review · Design prompts · User stories · Jira export.</p>
     <div class="header-links">
@@ -879,6 +879,39 @@
   <section>
     <p class="section-title">Recent Changes</p>
     <div class="changelog-list">
+
+      <div class="changelog-item">
+        <div class="changelog-header">
+          <span class="changelog-version">v2.18.0</span>
+          <span class="changelog-date">2026-05-29</span>
+          <span class="changelog-minor-badge">MINOR</span>
+        </div>
+        <div class="changelog-body">
+          <ul>
+            <li><strong>No inline change history in artifacts — enforced by heading name.</strong> Reader docs can no longer carry a <code>## Change log</code>, <code>## Changelog</code>, <code>## Revision history</code>, <code>## Refactor history</code>, or <code>## Refactor summary</code> section (by any wording), nor <code>**v0.X (date):**</code> version blocks or "Document version" / "Last updated" stamps. A version number in the title line plus a one-line changelog pointer is all an artifact carries.</li>
+            <li><strong>Centralized changelog grouped by artifact.</strong> <code>changelog/[feature]-changelog.md</code> is one feature-level file with a <code>## </code> section per artifact (PRD, System Design, User Stories Breakdown, Design Catalog, Timeline, Decision Log…), each append-only and dated. Each <code>/change-mode</code> run writes one dated line under every artifact it touched.</li>
+            <li><strong>Decision log moved out of the PRD into a sidecar.</strong> Locked decisions now live in <code>decisions/[feature]-decision-log.md</code> — the PRD's § 10 is a one-line pointer. Every producer (create-prd, apply-fixes, update-prd-from-designs, read-feedback, conflict resolution, change-mode) appends to the sidecar; every consumer (validate-prd, exec-summary, review-prd, publish-to-confluence, self-checks) reads from it.</li>
+            <li><strong>Two leaks closed + new check.</strong> User Stories Appendix B ("Refactor history / changelog") is now a one-line pointer; <code>/pull-from-figma</code> no longer writes a <code>## Change log</code> into the stories file; <code>/validate-user-stories</code> Check 8b flags inline change history anywhere in a breakdown. New <code>decisions/</code> folder in the output tree and Drive mirror.</li>
+          </ul>
+          <a class="changelog-link" href="https://github.com/judy-eapen/build-product-skill/blob/main/CHANGELOG.md" target="_blank">Full changelog →</a>
+        </div>
+      </div>
+
+      <div class="changelog-item">
+        <div class="changelog-header">
+          <span class="changelog-version">v2.17.0</span>
+          <span class="changelog-date">2026-05-29</span>
+          <span class="changelog-minor-badge">MINOR</span>
+        </div>
+        <div class="changelog-body">
+          <ul>
+            <li><strong>Intake Q3 is now a suggested-defaults checklist, not a blank prompt.</strong> The Jira ticket-conventions question presents proposed conventions the PM confirms or edits: every-ticket labels, per-layer <code>backend</code>/<code>frontend</code> labels, title format with <code>[BE]</code>/<code>[FE]</code> layer prefix (explicitly asking how BE vs. FE should be marked in titles so each ticket's layer is obvious at a glance), BE/FE split, Testable Yes/No on every ticket, Story Points left blank, and BE↔FE "Relates to" / "Blocked by" link conventions. Saying "no conventions yet" makes the suggestions the working defaults.</li>
+            <li><strong>Durable conventions profile (<code>_jira-conventions.json</code>).</strong> Jira project, board, and ticket conventions (Q2 + Q3) save once to <code>~/Desktop/Resources/PDLC Workflow Docs/_jira-conventions.json</code> and are confirm-reused on every future run — intake shows the saved values and asks <strong>reuse / edit / start fresh</strong> instead of re-asking. The profile is rewritten with the latest agreed values after each run; the full per-feature snapshot still lives in that feature's <code>_pipeline-state.json</code> → <code>intake</code>.</li>
+            <li><strong>Q2 now captures the board.</strong> For teams using a shared board with Components as swim lanes, intake records <code>intake.board</code> alongside the Jira project.</li>
+          </ul>
+          <a class="changelog-link" href="https://github.com/judy-eapen/build-product-skill/blob/main/CHANGELOG.md" target="_blank">Full changelog →</a>
+        </div>
+      </div>
 
       <div class="changelog-item">
         <div class="changelog-header">

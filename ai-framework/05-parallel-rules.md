@@ -122,7 +122,7 @@ OUTPUT:
 **After all reviewers return — synthesize in the main orchestrator (not inside any agent):**
 - Agreements (multiple reviewers raised the same issue): apply immediately, high confidence.
 - Conflicts (directly contradictory recommendations): surface as conflict cards per `error-handling.md` Error Type 2. Never auto-resolve.
-- Single-source findings (only one reviewer raised it): apply with a decision log note.
+- Single-source findings (only one reviewer raised it): apply with a decision log note appended to the sidecar `decisions/[feature]-decision-log.md` (not the PRD body).
 
 ### Block 2 — Three-Way Validation (Steps 10a + 10b + 10c)
 

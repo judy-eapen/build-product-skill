@@ -180,6 +180,7 @@ If an instrumentation write fails or is skipped, the timing report falls back to
 ├── design/
 ├── jira-export/
 ├── stakeholders/
+├── decisions/
 └── changelog/
 ```
 
@@ -190,6 +191,7 @@ If an instrumentation write fails or is skipped, the timing report falls back to
 | `00-codebase-review.md` | `codebase-review/[feature]-codebase-review.md` |
 | `01-research-idea.md` | `research/[feature]-research.md` |
 | `02-create-prd.md` | `prd/[feature]-prd.md` |
+| `02-create-prd.md` (decision log) | `decisions/[feature]-decision-log.md` (PRD carries a pointer only) |
 | `review-prd.md` | `product-review/[feature]-product-review.md` |
 | `cto-review.md` | `technical-review/[feature]-technical-review.md` |
 | `system-design.md` | `technical-review/[feature]-system-design.md` |
@@ -205,7 +207,7 @@ If an instrumentation write fails or is skipped, the timing report falls back to
 | `08-export-transcript.md` (clean) | `transcript/[feature]-transcript-clean.md` |
 | `08-export-transcript.md` (full) | `transcript/[feature]-transcript-full.md` |
 | `09-pipeline-timing.md` | `timing/[feature]-timing.md` |
-| `05-change-propagation.md` (changelog) | `changelog/[feature]-changelog.md` (append) |
+| `05-change-propagation.md` (changelog) | `changelog/[feature]-changelog.md` (single file, one `## ` section per artifact, append-only) |
 | `05-change-propagation.md` (summary) | `changelog/[feature]-change-[date]-summary.md` |
 | Stakeholder list | `stakeholders/[feature]-stakeholders.md` |
 | Pipeline state | `_pipeline-state.json` (overwrite each step) |
@@ -608,7 +610,7 @@ Read and follow: `ai-framework/07-drive-sync.md`.
 
 Inputs: the Drive folder location and (optional) team-share emails collected at pre-flight.
 
-Mirrors the local feature folder to Drive: research/, codebase-review/, prd/, product-review/, technical-review/, diagrams/, design/, user-stories/, jira-export/, changelog/. Generates a `_FEATURE_SUMMARY.md` at the feature folder root with quick links to every artifact.
+Mirrors the local feature folder to Drive: research/, codebase-review/, prd/, product-review/, technical-review/, diagrams/, design/, user-stories/, jira-export/, decisions/, changelog/. Generates a `_FEATURE_SUMMARY.md` at the feature folder root with quick links to every artifact.
 
 If the Drive MCP is unavailable, skips cleanly with a notification. Pipeline continues — Jira Export proceeds in parallel.
 

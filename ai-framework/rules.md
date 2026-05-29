@@ -20,7 +20,7 @@ A PRD must include:
 - API contracts (request/response examples, errors, pagination, filtering, sorting)
 - Non-functional requirements (performance, reliability, observability)
 - Open questions
-- Decision log (locked decisions with dates)
+- Decision log — a one-line pointer only; the log itself is a sidecar at `decisions/[feature]-decision-log.md` (locked decisions with dates), never written inline in the PRD body. See `ai-framework/style-preferences.md` § Artifact Conventions.
 
 ## Phasing Rules
 - Split work into independently shippable phases.

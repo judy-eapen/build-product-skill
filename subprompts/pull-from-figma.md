@@ -186,7 +186,7 @@ Skip if PM chose "catalog refresh only" or if the user-stories file doesn't exis
    - [US-15] FE: Bulk delete → no frame depicts this anymore → story may be dropped or deferred
    ```
 4. Ask the PM: "Update affected AC inline? (a) yes; (b) walk through; (c) skip."
-5. If yes/walkthrough, edit the stories file in place. Preserve story IDs. Add a `## Change log` row per edit.
+5. If yes/walkthrough, edit the stories file in place. Preserve story IDs. **Do not add a `## Change log` section to the stories file** — per `ai-framework/style-preferences.md` § Artifact Conventions, change history stays out of reader artifacts. The record of these edits goes to the centralized changelog only (Step 6 below appends to `changelog/[feature]-changelog.md` → "User Stories Breakdown" section).
 6. **If Jira MCP is connected**, also offer to push the AC updates to the corresponding Jira tickets. If not, note in the report that the user-stories markdown is updated but Jira tickets still need manual sync (or `/compare-figma-prd` for the Jira leg).
 
 ---
@@ -222,14 +222,17 @@ Update `_pipeline-state.json` → `figma_generation`:
 }
 ```
 
-Add a row to the feature's `changelog/[feature]-changelog.md` (append):
+Append to the feature's `changelog/[feature]-changelog.md` (the single feature-level file, grouped by artifact — append a dated line under each artifact section this pull touched, e.g. `## Design Catalog`, `## PRD`, `## User Stories Breakdown`; create a section if missing):
 
 ```
-## [YYYY-MM-DD] — Pulled from Figma
-- Pulled N frames from [file URL]
-- Designer changes: [matched / renamed / deleted / added counts]
-- PRD updates applied: [count or "none"]
-- User-story updates applied: [count or "none"]
+## Design Catalog
+- [YYYY-MM-DD] — Pulled from Figma: N frames from [file URL]; designer changes [matched / renamed / deleted / added counts].
+
+## PRD
+- [YYYY-MM-DD] — Pulled from Figma: [count] PRD updates applied (or "no PRD change").
+
+## User Stories Breakdown
+- [YYYY-MM-DD] — Pulled from Figma: [count] AC/story updates applied (or "no story change").
 ```
 
 ---

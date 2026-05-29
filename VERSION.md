@@ -1,3 +1,25 @@
+v2.18.0 — 2026-05-29
+
+Process-tracking content is fully separated from reader-facing artifacts: change/refactor history is banned inline (everywhere, by any heading) and consolidated into one per-artifact-sectioned changelog, and the decision log moves out of the PRD into a `decisions/` sidecar.
+
+**Changed: No inline change history, enforced by name.** `ai-framework/style-preferences.md` § Artifact Conventions now forbids not just `**v0.X (date):**` blocks but any section titled `## Change log` / `## Changelog` / `## Revision history` / `## Refactor history` / `## Refactor summary` — by any wording — and any "Document version" / "Last updated" stamp line. Two leaks that survived the v2.11.0 rule are closed: the User Stories Breakdown's **Appendix B "Refactor history / changelog"** is now a one-line pointer (`06-user-stories.md`), and `/pull-from-figma` no longer adds a `## Change log` to the stories file. `/validate-user-stories` Check 8 gains sub-check **8b** that flags inline change history anywhere in the breakdown, not just above the meat.
+
+**Changed: Centralized changelog is grouped by artifact.** `changelog/[feature]-changelog.md` is now a single feature-level file with one `## ` section per artifact (PRD, System Design, User Stories Breakdown, Design Catalog, Timeline, …), each append-only and dated. `/change-mode` Step 6 writes one dated line under each affected artifact's section, so each artifact's history reads top-to-bottom in its own section.
+
+**Changed: Decision log moves out of the PRD.** The running log of locked decisions now lives in a sidecar `decisions/[feature]-decision-log.md` (its own stakeholder-readable doc). The PRD's § 10 is reduced to a one-line pointer. Every producer (`/create-prd` pre-population, apply-fixes, `/update-prd-from-designs`, `/read-feedback`, conflict resolution, `/change-mode`) appends to the sidecar; every consumer (`/validate-prd`, `/exec-summary`, gate checks, self-checks, `/publish-to-confluence`) reads from it. New `decisions/` folder added to the output tree and Drive-sync mirror.
+
+---
+
+v2.17.0 — 2026-05-29
+
+Intake Q3 (Jira ticket conventions) is now a **suggested-defaults checklist** instead of a blank prompt, and Jira conventions persist across features via a **durable conventions profile** that's confirm-reused on every run.
+
+**Changed: Q3 presents proposed conventions to confirm/edit, not a blank ask.** Stage 0.5 now surfaces a scannable checklist with a concrete suggestion next to each item — every-ticket labels, per-layer labels (`backend`/`frontend`), title format with `[BE]`/`[FE]` layer prefix (explicitly asking how BE vs. FE should be marked in the title), BE/FE split, Testable Yes/No on every ticket, Story Points left blank, and BE↔FE "Relates to" / "Blocked by" link conventions. The PM confirms all, edits any, or says "no conventions yet" (suggestions become the working defaults). Closes the failure mode where a blank open-ended question left PMs inventing conventions from scratch each run.
+
+**New: Durable conventions profile at `_jira-conventions.json`.** Jira project, board, and ticket conventions (Q2 + Q3) are saved once to `~/Desktop/Resources/PDLC Workflow Docs/_jira-conventions.json` and confirm-reused on every future run — intake shows the saved values and asks "reuse / edit / start fresh" instead of re-asking. The profile is rewritten with the latest agreed values after each run. Replaces the prior best-effort scavenge of another feature's `_pipeline-state.json`. Q2 now also captures the **board** (for teams using a shared board with Components as swim lanes), persisted to `intake.board`.
+
+---
+
 v2.16.0 — 2026-05-26
 
 User-stories breakdown layout is now **meat-first with appendix-style metadata**, and a count-parity rule prevents drift between prose count claims and actual blueprint headers.

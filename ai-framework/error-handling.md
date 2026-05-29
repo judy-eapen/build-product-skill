@@ -36,7 +36,7 @@ CONFLICT [N]:
 - Why they conflict: [one sentence]
 ```
 
-The PM resolves it explicitly. The resolution is written to the decision log (in the PRD) before the pipeline continues.
+The PM resolves it explicitly. The resolution is appended to the decision log sidecar (`decisions/[feature]-decision-log.md`, not the PRD body) before the pipeline continues.
 
 Never auto-resolve a conflict by picking one side. Never silently merge conflicting recommendations.
 
@@ -46,11 +46,11 @@ Never auto-resolve a conflict by picking one side. Never silently merge conflict
 
 Any step that produces output must run a self-check before writing.
 
-Self-check question: does this output contradict any decision already recorded in the decision log or PRD?
+Self-check question: does this output contradict any decision already recorded in the decision log (`decisions/[feature]-decision-log.md`) or the PRD?
 
 If yes:
 1. Flag it to the PM before writing.
-2. Show what the PRD/decision log says and what the new output says.
+2. Show what the PRD / decision log says and what the new output says.
 3. Ask the PM how to resolve: update the PRD, change the output, or stop and escalate.
 
 Do not silently overwrite.

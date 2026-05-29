@@ -162,10 +162,10 @@ Read these files in parallel:
 - System design (if present)
 - User-stories breakdown — sections needed: header, Build Sequence Map / Wave Summary, Appendix C (deferred items)
 - Timeline markdown — sections needed: parameter snapshot, external dependency milestones, risk callouts
-- Decision log
+- Decision log — the sidecar `decisions/[feature]-decision-log.md` (the PRD's § 10 is only a pointer to it)
 - Technical review + AI safety review (if present) — for risks section
 
-For large artifacts (PRD often >150 KB), read strategically: §1, §2, §3 (roles & permissions), §5 (architecture overview), §10 (open questions), §[risks if present], §[ask if present]. Skip §4 (deep technical), §6 (deep UX), §7 (deep phase detail), §8 (deep NFR), §9 (deep decision log inline). Those are PRD-only territory.
+For large artifacts (PRD often >150 KB), read strategically: §1, §2, §3 (roles & permissions), §5 (architecture overview), §11 (open questions), §[risks if present], §[ask if present]. Skip §4 (deep technical), §6 (deep UX), §7 (deep phase detail), §8 (deep NFR). The decision log is no longer inline in the PRD — read it from the sidecar above. Those deep PRD sections are PRD-only territory.
 
 ### Step 2 — Compose
 

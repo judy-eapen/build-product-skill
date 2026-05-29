@@ -106,5 +106,5 @@ Ask exactly one question:
 - Use plain language labels unless the diagram type is system architecture (where technical terms are appropriate).
 - Every screen or component in the diagram must trace back to a user story or PRD section.
 - Do not add flows that imply scope not in the PRD. If the diagram exposes a missing flow, flag it as an open question to the PM rather than inventing it.
-- Self-check before writing: does this diagram contradict any decision recorded in the PRD decision log? If yes, surface to the PM before writing.
+- Self-check before writing: does this diagram contradict any decision recorded in the decision log (`decisions/[feature]-decision-log.md`)? If yes, surface to the PM before writing.
 - If using Figma FigJam, always load `/figma-generate-diagram` before calling `generate_diagram`.

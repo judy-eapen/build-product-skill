@@ -170,20 +170,19 @@ Severity: **CRITICAL** for cycles or phase-order violations. **WARNING** for wav
 
 ### Check 8: Layout — meat-first / appendix structure
 
-Per the breakdown spec (`ai-framework/06-user-stories.md` Step 5), the document is **meat-first**: front matter → at a glance → how to read → epic outlines → wave overview → per-story blueprints. Maintenance content (ID Stability Policy, refactor history, full per-story dependency table, format conventions, vendor-sprint detail) lives in appendices at the end.
+Per the breakdown spec (`ai-framework/06-user-stories.md` Step 5), the document is **meat-first**: front matter → at a glance → how to read → epic outlines → wave overview → per-story blueprints. Maintenance content (ID Stability Policy, full per-story dependency table, format conventions, vendor-sprint detail) lives in appendices at the end.
 
-Scan the document top-to-bottom and find the line number of the **first** `### US-` blueprint header (call it `meat_start`). For every `## ` (level-2) header above `meat_start`, flag any of the following:
+**8a — Maintenance content above the meat.** Scan the document top-to-bottom and find the line number of the **first** `### US-` blueprint header (call it `meat_start`). For every `## ` (level-2) header above `meat_start`, flag any of the following:
 
 - `## ID Stability Policy` (or any header containing "ID Stability")
-- `## Refactor summary` (or any header containing "Refactor summary" / "Refactor lineage" / "Refactor authority")
 - `## Build Sequence Map` if it contains the full per-story dependency table (a single-row-per-story table with `Depends on`, `Size`, `Type` columns). The small wave-overview table is fine in the meat; the big per-story table belongs in Appendix D.
 - `## Format Conventions` / `## Story archetype reference`
 - `## Pass 1 status` / `## Pass 2 status` / similar `## Pass N` markers
 - Vendor sprint detail blocks at section level (e.g., `### REA delivery alignment` outside the wave-overview)
 
-For each finding: report the line number, the header text, and the recommended appendix destination (A through F).
+For each finding: report the line number, the header text, and the recommended appendix destination (A through F). Severity: **WARNING** per section. If cumulative front-matter is >100 lines above `meat_start`, escalate the bundle to a single **CRITICAL** with the recommendation to refactor to appendix-style.
 
-Severity: **WARNING** for each section in the wrong place. If the cumulative front-matter is >100 lines above `meat_start`, escalate the bundle to a single **CRITICAL** finding with the recommendation to refactor to appendix-style.
+**8b — Inline change history (banned anywhere in the doc).** Per `ai-framework/style-preferences.md` § Artifact Conventions, change/refactor history does **not** belong in the breakdown at all — only the one-line Appendix B pointer to the centralized changelog. Scan the **whole document** (not just above `meat_start`) for any header containing `Change log`, `Changelog`, `Revision history`, `Refactor history`, `Refactor summary`, `Refactor lineage`, or `Refactor authority`, and for any `**v0.X (date):**`-style version-history bullet block. Flag each as **WARNING** with the recommendation: remove the section, move its content to `changelog/[feature]-changelog.md` → "User Stories Breakdown" section, and leave only the Appendix B pointer line. Exception: a single-line Appendix B pointer (`**Change history:** see ...changelog...`) is correct and must not be flagged.
 
 ### Check 9: Count parity (prose claims vs actual blueprint count)
 

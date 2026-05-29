@@ -23,7 +23,7 @@ Read `ai-framework/rules.md` and `ai-framework/error-handling.md` before executi
 ```
 
 **Intentionally excluded from Confluence (v2.8.0):**
-- **Step 4a: Product Review** and **Step 4b: Technical Review** — internal review artifacts. Kept local in `product-review/` and `technical-review/`, referenced in the PRD's decision log when relevant.
+- **Step 4a: Product Review** and **Step 4b: Technical Review** — internal review artifacts. Kept local in `product-review/` and `technical-review/`, referenced in the decision log sidecar (`decisions/[feature]-decision-log.md`) when relevant.
 - **Full User Stories Breakdown** (`user-stories/[feature]-user-stories.md`) — too large for Confluence and duplicates what's already in Jira. Replaced by a lightweight Step 10 page with Jira Epic links and story titles only (no Gherkin AC).
 
 Steps 5, 9, 11 do not get pages — they are gate-application / export steps that update the PRD in place or push to Jira. The PRD page (Step 3) reflects all post-gate updates.
@@ -346,10 +346,8 @@ These artifacts exist on disk but are intentionally not mirrored here:
 
 - **Step 4a: Product Review** — internal review artifact. Local: `product-review/[feature]-product-review.md`
 - **Step 4b: Technical Review** — internal review artifact. Local: `technical-review/[feature]-technical-review.md`
+- **Decision log** — process-tracking sidecar, kept out of the reader-facing pages. Local: `decisions/[feature]-decision-log.md` (mirrored to Drive). Not mirrored to Confluence.
 - **Full User Stories Breakdown** (with Gherkin AC) — too large for Confluence; the full doc lives at `user-stories/[feature]-user-stories.md` and is also attached to each Jira Epic. The lightweight Step 10 page above provides Jira Epic navigation.
-
-## Decision log
-[From PRD Section 10 — locked decisions only, most recent first.]
 
 ## Open questions
 [From PRD Section 11.]
@@ -423,7 +421,7 @@ The PRD page keeps the existing PRD-page structure but adds the breadcrumb at th
 [PRD Section 9]
 
 ## Decision Log
-[PRD Section 10]
+**Decision Log:** maintained separately in `decisions/[feature]-decision-log.md` (kept local + Drive; not mirrored to Confluence). Render this as a single pointer line — do **not** paste the log entries into the PRD page.
 
 ## Open Questions
 [PRD Section 11]
@@ -431,7 +429,7 @@ The PRD page keeps the existing PRD-page structure but adds the breadcrumb at th
 
 ### Step 4a / 4b: Reviews — not published
 
-**Skip.** Product Review and Technical Review are internal artifacts kept local in `product-review/` and `technical-review/`. They do not get Confluence pages. The PRD's decision log surfaces any review findings that ended up locked into the spec — that's the stakeholder-facing record.
+**Skip.** Product Review and Technical Review are internal artifacts kept local in `product-review/` and `technical-review/`. They do not get Confluence pages. Review findings that ended up locked into the spec live in the decision log sidecar (`decisions/[feature]-decision-log.md`), which is also kept local — the PRD body itself reflects any spec changes those findings drove.
 
 ### Step 6: System Design
 
@@ -650,7 +648,7 @@ If running as part of Step 11 parallel block, include the hub URL in the orchest
 When called by `/change-mode` after diff propagation:
 
 - For every artifact that `/change-mode` updated, the file mtime advances automatically. The next `/publish-to-confluence` run picks up the change and republishes only those pages.
-- The parent hub is **always** updated by change-mode runs, since the pipeline status (current step, decision log) typically advances.
+- The parent hub is **always** updated by change-mode runs, since the pipeline status (current step, open questions) typically advances.
 - No explicit per-artifact instruction needed — mtime comparison does the right thing.
 
 ---

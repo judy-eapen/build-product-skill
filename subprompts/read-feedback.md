@@ -161,7 +161,7 @@ Record these — they are evidence that a decision is validated.
 ✓ @tech-lead confirmed the API contract in Section 5 looks correct.
 ✓ @sarah confirmed the target user definition in Section 1 is accurate.
 
-These decisions are now reviewer-validated. Add to PRD decision log? (yes / skip)
+These decisions are now reviewer-validated. Add to the decision log (`decisions/[feature]-decision-log.md`)? (yes / skip)
 ━━━
 ```
 
@@ -177,13 +177,13 @@ For each approved edit:
 
 1. Read the current PRD file at the path in `_pipeline-state.json`.
 2. Apply the edit in place.
-3. Add a decision log entry:
+3. Append a decision log entry to the sidecar `decisions/[feature]-decision-log.md` (NOT the PRD body):
    ```
    [Date] — [Section] updated based on reviewer feedback from [reviewer name(s)].
    Change: [one-line summary of what changed]
    ```
-4. For Category C agreements the PM approved adding to the decision log: add an entry
-   marked `[Reviewer-validated — [name(s)], [date]]`.
+4. For Category C agreements the PM approved adding to the decision log: append an entry
+   to `decisions/[feature]-decision-log.md` marked `[Reviewer-validated — [name(s)], [date]]`.
 
 For each open question the PM answered inline:
 - Add the answer to the relevant PRD section or to Section 11 (Open Questions) with

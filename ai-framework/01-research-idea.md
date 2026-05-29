@@ -35,7 +35,7 @@ Before opening the discovery floor, check whether prior work is relevant to what
    These learnings will seed the research and PRD. Tell me if any are not applicable to what you are building.
    ```
 
-4. Note which prior decisions are "already locked" for this feature area (e.g., "we always use cursor pagination for this entity"). These will be pre-populated in the PRD Decision Log later — do not re-debate them during discovery unless the PM explicitly raises a change.
+4. Note which prior decisions are "already locked" for this feature area (e.g., "we always use cursor pagination for this entity"). These will be pre-populated in the decision log sidecar (`decisions/[feature]-decision-log.md`) later — do not re-debate them during discovery unless the PM explicitly raises a change.
 
 5. **Optional: query Jira for related existing work.** If the PM has provided a Jira project at intake (see CLAUDE.md Intake Parameters), ask:
 

@@ -40,6 +40,7 @@ A mirrored folder structure in Drive:
 ├── design/
 ├── user-stories/
 ├── jira-export/
+├── decisions/
 ├── changelog/
 ├── _pipeline-state.md
 └── _FEATURE_SUMMARY.md   ← single-page stakeholder summary with quick links

@@ -19,8 +19,8 @@ After the design phase for a phase is **finalized** (design catalog complete, sc
    - If design decisions added or changed behavior (e.g. "Consistency = votes / (habits × 7)", "Identity create is 3 steps"), add or adjust the relevant acceptance criteria so validation and execution use the same spec.
 
 4. **Decision log**
-   - Add a row to the PRD Decision Log recording that the phase design was finalized and the design catalog is the reference:
-   - e.g. `Phase [N] design finalized; design catalog [path]; PRD updated to match.`
+   - Append an entry to the decision log sidecar `decisions/[feature]-decision-log.md` (NOT the PRD body — the PRD's § 10 is a pointer only) recording that the phase design was finalized and the design catalog is the reference:
+   - e.g. `Phase [N] design finalized; design catalog [path]; PRD updated to match. [date]`
 
 5. **Frontend task list (optional)**
    - If the design catalog introduced screens or flows not explicitly listed in the PRD frontend tasks, add a short bullet so the phase scope is clear for execution.

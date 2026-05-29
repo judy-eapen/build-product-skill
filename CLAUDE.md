@@ -11,14 +11,16 @@ At the start of every `/build-product` run the skill asks each PM the following 
 | # | Question | Notes |
 |---|----------|-------|
 | 1 | **Feature name** | Used to derive the output folder name. Spaces become hyphens, all lowercase. |
-| 2 | **Jira project name** | The team's standard Jira project where tickets will be created. The skill does not assume a project. |
-| 3 | **Jira ticket conventions** | **Open-ended probe with examples.** The skill asks: "What conventions does your team apply to every Jira ticket? Examples to think about: (a) labels you always apply (e.g., pod tags, area tags, team names); (b) title format (e.g., verb-first, `[BE]` / `[FE]` prefix, "Feature - Sub-feature" for Epics); (c) how BE and FE work is split (separate tickets vs. combined); (d) default values for custom fields (e.g., Testable: Yes/No on every ticket); (e) fields you intentionally leave blank (e.g., Story Points); (f) link conventions (e.g., always link BE↔FE pairs as 'Relates to'; use 'Blocked by' with a note). Share whatever's standard for your team in your own words — bullets, prose, or "we don't have specific conventions yet" are all fine." Answer is captured free-text to `_pipeline-state.json` → `intake.jira_ticket_conventions` and applied at Step 10 (User Stories Breakdown) and Step 11a (Jira Export). |
+| 2 | **Jira project + board** | The team's standard Jira project (and board, if they use a shared board with Components for swim lanes) where tickets will be created. The skill does not assume a project. |
+| 3 | **Jira ticket conventions** | **Suggested-defaults checklist, NOT a blank prompt.** The skill presents proposed conventions the PM confirms, edits, or removes: (a) every-ticket labels (*suggestion:* a pod/area tag); (b) per-layer labels (*suggestion:* `backend` on BE, `frontend` on FE); (c) title format (*suggestion:* verb-first with `[BE]`/`[FE]` layer prefix, `"Feature - Sub-feature"` for Epics — explicitly asks how the PM wants BE vs. FE marked in the title); (d) BE/FE split (*suggestion:* separate tickets); (e) Testable field (*suggestion:* Yes/No on every ticket); (f) fields left blank (*suggestion:* Story Points); (g) link conventions (*suggestion:* BE↔FE as "Relates to", "Blocked by" with a note). PM confirms all / edits any / says "no conventions yet" (suggestions become defaults). Final agreed set captured verbatim to `_pipeline-state.json` → `intake.jira_ticket_conventions`, applied at Step 10 (User Stories Breakdown) and Step 11a (Jira Export). |
 | 4 | **Tech stack** | Either name your stack, say "I don't know", or describe the product type and the skill will propose defaults appropriate to that type. |
 | 5 | **Product type** | Web app, mobile app, backend service, internal tool, AI feature, or other. Used to decide which PRD sections apply and which defaults to propose. |
 | 6 | **Permission model?** | Yes / No / Not yet decided. Drives whether the Roles & Permissions section of the PRD is required. |
 | 7 | **Backend or API surface?** | Yes / No / Not yet decided. Drives whether the API Contracts section of the PRD is required. |
 
 The skill will not proceed until these are answered.
+
+**Durable conventions profile.** The Jira project, board, and ticket conventions (Q2 + Q3) are saved once to `~/Desktop/Resources/PDLC Workflow Docs/_jira-conventions.json` and **confirm-reused** on every future run — on intake the skill shows the saved values and asks "reuse these? (yes / edit / start fresh)" instead of re-asking from scratch. The profile is rewritten with the latest agreed values after each run. See `subprompts/build-product.md` → Stage 0.5 for the flow.
 
 ---
 

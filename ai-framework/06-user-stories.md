@@ -245,7 +245,7 @@ A story's wave assignment is the **max** of:
 - The wave computed from its dependencies (above), AND
 - (Phase × 1.5)-rounded-up if the PRD's Phased Plan strictly orders the phases. (E.g., if Phase 2 cannot start until Phase 1 fully ships, the earliest Phase 2 wave is `(last Phase 1 wave) + 1`.)
 
-If the PRD's decision log explicitly allows phase parallelism, ignore the phase constraint and let dependencies alone drive wave assignment.
+If the decision log (`decisions/[feature]-decision-log.md`) explicitly allows phase parallelism, ignore the phase constraint and let dependencies alone drive wave assignment.
 
 ### FE/BE pair handling
 
@@ -504,7 +504,7 @@ Structure — **meat-first, operational metadata in appendices**. Stakeholders (
 **Appendices (end of document — maintenance and audit only):**
 
 - **Appendix A — ID Stability Policy.** Verbatim from the workspace-level policy in `~/CLAUDE.md` plus any feature-specific notes. Required when the doc has been through any `/change-mode` insert/append, because it documents why letter-suffix IDs exist.
-- **Appendix B — Refactor history / changelog.** Every prior version's structural changes (v0.9 → v1.0 → v1.1 → ...). One subsection per version: Structural changes, Format changes, Sequencing changes, Dependency contingency, Cuts. This is what gets appended on every `/change-mode` run, not the top of the document.
+- **Appendix B — Change-history pointer (one line only).** Do **not** embed refactor history / changelog content in this document — not at the top, not in an appendix. Per `ai-framework/style-preferences.md` § Artifact Conventions, all version history lives in the centralized `changelog/[feature]-changelog.md` under its `## User Stories Breakdown` section. Appendix B is a single pointer line: `**Change history:** see [../changelog/[feature]-changelog.md](../changelog/[feature]-changelog.md) → "User Stories Breakdown" section.` On every `/change-mode` run, the per-version structural changes (Structural / Format / Sequencing / Dependency / Cuts) are written to that section of the changelog, never appended here.
 - **Appendix C — Format conventions.** Story blueprint template, adversarial story format if Gherkin is retained for any epic, archetype reference.
 - **Appendix D — Per-story sequence + dependency table.** The full multi-column table (US-ID / Title / Epic / Wave / Type / Skill / Depends on / Size) for every story. Useful for sequencing review; not what a sponsor or designer opens the doc to read.
 - **Appendix E — Vendor / external dependency alignment** (if applicable). Per-vendor sprint mapping, contingency flags, mock-vs-live cutover plan.
@@ -512,7 +512,7 @@ Structure — **meat-first, operational metadata in appendices**. Stakeholders (
 
 **Source of truth for counts.** The story count is computed once, at write time, from the number of `### US-` blueprint headers in the body. Every other place that mentions a count ("At a glance", "Total v1 stories", per-epic counts in epic outlines, footer claims) reads from this single computed value. **Never hand-narrate counts in prose.** When `/change-mode` adds or cuts stories, it recomputes from blueprint headers and updates every claim site in the same pass. Per-epic counts are derived from the count of `### US-` headers under each `## Epic [N]:` section, not narrated.
 
-**What does NOT go at the top.** Specifically: ID Stability Policy, Refactor summary (changes vs. prior version), full per-story sequence table, Format conventions / story archetype reference, REA-style vendor sprint detail, Pass 1 / Pass 2 status markers. All of these are maintenance content and live in appendices. The Nestfully-AI v1.2 doc, which accreted 460 lines of front-matter before the first per-story blueprint, is the anti-pattern this rule exists to prevent.
+**What does NOT go at the top.** Specifically: ID Stability Policy, full per-story sequence table, Format conventions / story archetype reference, REA-style vendor sprint detail, Pass 1 / Pass 2 status markers. All of these are maintenance content and live in appendices. **Refactor history / changelog content does not go in this document at all** — not at the top, not in an appendix — only the one-line Appendix B pointer to the centralized changelog. The Nestfully-AI v1.2 doc, which accreted 460 lines of front-matter before the first per-story blueprint, is the anti-pattern this rule exists to prevent.
 
 ### Update `_pipeline-state.json`
 
@@ -582,4 +582,4 @@ Until Gate 3 is approved, do not proceed to Jira Export.
 - **DRAFT mode is opt-in.** Default is full mode (designs required). DRAFT mode requires explicit PM choice at Step 0.5.
 - **Verbatim language from Voice of Customer (Step 1 of pipeline) should appear** in user-story narratives and AC where possible. Don't paraphrase user-facing language unless necessary.
 - **Update `_pipeline-state.json`** at the end of this step. Persist `user_stories.epics[]`, `user_stories.draft_stories[]`, and `user_stories.waves[]` (one entry per wave with theme, story_ids, and any critical-convergence / launch-gate annotations). These fields are required by downstream steps (Jira export, `/change-mode`, `/validate-user-stories`, `/timeline`).
-- **Self-check (Error Type 3 in error-handling.md):** does this breakdown contradict any decision recorded in the PRD's decision log? If yes, flag to the PM before writing.
+- **Self-check (Error Type 3 in error-handling.md):** does this breakdown contradict any decision recorded in the decision log (`decisions/[feature]-decision-log.md`)? If yes, flag to the PM before writing.

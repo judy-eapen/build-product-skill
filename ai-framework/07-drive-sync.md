@@ -52,6 +52,7 @@ In the target Drive folder, create (or update if existing):
         ├── design/
         ├── user-stories/
         ├── jira-export/                   ← includes manifest + export file
+        ├── decisions/                     ← decision-log sidecar (kept out of the PRD body)
         ├── changelog/                     ← populated by /change-mode runs
         └── _pipeline-state.md             ← uploaded at the end of the sync
 ```

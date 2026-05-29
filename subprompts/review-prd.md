@@ -25,7 +25,7 @@ Evaluate the PRD document against these dimensions.
 
 ### 1. Structure & completeness
 
-- Are all expected sections present? (Problem & goals, Users & context, Market & value proposition, Success metrics, Scope, Roles & permissions, Data model, API contracts, User stories, Non-functional requirements, Open questions, Decision log.)
+- Are all expected sections present? (Problem & goals, Users & context, Market & value proposition, Success metrics, Scope, Roles & permissions, Data model, API contracts, User stories, Non-functional requirements, Open questions, Decision log — the last as a one-line pointer to the `decisions/[feature]-decision-log.md` sidecar, not an inline log.)
 - Is the order logical? Can a reader follow: problem, users, why us, goals, scope, stories, requirements, risks?
 - Are any sections empty, placeholder-only, or "TBD" without a plan to resolve?
 

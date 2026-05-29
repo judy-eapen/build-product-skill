@@ -543,14 +543,14 @@ Ask exactly one question:
 
 - **Source of truth is the user-stories breakdown** (or the PRD if breakdown is unavailable). Do not invent epics or stories the breakdown does not have.
 - **Granularity is Epic + Phase.** Do not render one bar per story — that produces a Gantt no one will read.
-- **Phases run sequentially** unless the PRD's decision log explicitly says otherwise.
+- **Phases run sequentially** unless the decision log (`decisions/[feature]-decision-log.md`) explicitly says otherwise.
 - **Within an epic, FE and BE run in parallel** (epic duration = max of FE-days and BE-days, divided by capacity).
 - **Within a phase, epics run sequentially** unless the breakdown's Build Sequence Map shows independent epics.
 - **Math must be honest.** Never fit the timeline to a target by shrinking durations behind the scenes. If the gap is negative, surface it and let the PM decide between scope cut, team increase, or slip.
 - **Hybrid estimation.** The skill proposes; the PM tunes; the skill recomputes. Do not lock in the math before the PM has seen the proposal.
 - **Hover details on every bar.** The HTML output must expose start, end, FE-days, BE-days, and buffered total on hover.
 - **No external CDN.** The HTML must open offline. No `<script src="...">` to a remote host.
-- **Self-check (Error Type 3 in error-handling.md):** does this timeline contradict any decision recorded in the PRD's decision log (e.g., a committed phase order)? If yes, flag to the PM before writing.
+- **Self-check (Error Type 3 in error-handling.md):** does this timeline contradict any decision recorded in the decision log (`decisions/[feature]-decision-log.md`) (e.g., a committed phase order)? If yes, flag to the PM before writing.
 - **Update `_pipeline-state.json`** at the end of this step regardless of whether Figma succeeded.
 
 ---

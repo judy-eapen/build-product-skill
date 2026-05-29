@@ -133,7 +133,9 @@ Before writing each artifact, print:
 Writing: ~/Desktop/Resources/PDLC Workflow Docs/[feature-name]/[subfolder]/[filename]
 ```
 
-**Do not add inline version-history blocks to artifacts.** When you bump an artifact's version, update only the version number in the title line and (if missing) add a changelog pointer line. Do not append a new `**v0.X (date):** ...` bullet inside the file. The append-only record for this change-mode run is the changelog entry written in Step 6 — that is the single source of truth for version history. See `ai-framework/style-preferences.md` § Artifact Conventions.
+**Do not add inline version-history blocks to artifacts.** When you bump an artifact's version, update only the version number in the title line and (if missing) add a changelog pointer line. Do not append a new `**v0.X (date):** ...` bullet, a `## Change log` / `## Refactor history` section, or any "what changed" block inside the file — by any heading. The append-only record for this change-mode run is the changelog entry written in Step 6 — that is the single source of truth for version history. See `ai-framework/style-preferences.md` § Artifact Conventions.
+
+**Decision-log updates go to the sidecar, not the PRD.** If this change locks a new decision (or reverses one), append it to `decisions/[feature-name]-decision-log.md` — never into the PRD body. The PRD's § 10 stays a one-line pointer.
 
 ### Conflict handling
 
@@ -177,14 +179,17 @@ Write a changelog entry to:
 ~/Desktop/Resources/PDLC Workflow Docs/[feature-name]/changelog/[feature-name]-changelog.md
 ```
 
-This file is append-only. Never overwrite. If the file does not exist, create it with a header line and append the first entry.
+This is the single feature-level change-history file, **organized into one `## ` section per artifact** (e.g. `## PRD`, `## System Design`, `## User Stories Breakdown`, `## Design Catalog`, `## Timeline`, `## Decision Log`). It is append-only — never overwrite or reorder existing entries.
 
-Each entry must include exactly:
+If the file does not exist, create it with a title line (`# [Feature] — Change History`), a one-line note that it is grouped by artifact and append-only, and an `## ` section header for each artifact this run touched.
+
+For this change-mode run, append a dated entry **under each affected artifact's section** (create the section if it is the artifact's first change). Each per-artifact entry must include:
 - Date and time.
 - Trigger type and source.
-- One-sentence description of what changed.
-- List of every artifact updated with a one-line summary of what changed in each.
+- One-sentence description of what changed in that artifact.
 - Name of the PM who approved (ask if not known).
+
+A single run therefore writes one dated line under each artifact it changed — so each artifact's full history reads top-to-bottom within its own section, and no change history ever lands inside the artifact files themselves.
 
 ### Change summary
 

@@ -45,16 +45,17 @@ Do not proceed until mode is confirmed.
 
 Before any pipeline step, walk through the 7 intake questions defined in `CLAUDE.md` → "Intake Parameters". Ask them in order. Persist every answer to `_pipeline-state.json` under an `intake` object — this is the source of truth that downstream steps (PRD generation, user stories, Jira export) will read.
 
-**Question 3 is open-ended and especially important** — it captures every per-ticket convention the team applies. Do not just ask for labels. Probe with examples so the PM thinks about all of:
+**Question 3 is the most important — do NOT ask it as a blank, open-ended question.** Present a set of **suggested conventions the PM accepts, edits, or removes**, so they're confirming defaults rather than inventing them from scratch. Lay it out as a scannable checklist with a concrete suggestion next to each item:
 
-- **Labels** they always apply (pod tags, area tags, team names)
-- **Title format** (verb-first? prefix for BE/FE? Epic naming convention?)
-- **BE/FE split** (separate tickets per layer, or combined?)
-- **Default values for custom fields** (e.g., "Testable" = Yes/No on every ticket)
-- **Fields they intentionally leave blank** (e.g., Story Points)
-- **Link conventions** (e.g., BE↔FE pairs as "Relates to"; "Blocked by" with a note)
+- **Labels applied to every ticket** — *suggestion:* a pod/area tag (e.g., `AC pod`). Add area/team tags as needed.
+- **Per-layer labels** — *suggestion:* BE tickets also get `backend`, FE tickets also get `frontend`.
+- **Title format** — *suggestion:* verb-first, prefixed by layer — `[BE]` for backend, `[FE]` for frontend (Epics use `"Feature - Sub-feature"`). Ask explicitly: **how do you want backend vs. frontend marked in the title, so each ticket's layer is obvious at a glance?**
+- **BE/FE split** — *suggestion:* backend and frontend are separate tickets. Confirm separate vs. combined.
+- **Testable field** — *suggestion:* set to **Yes/No on every ticket** (never left blank).
+- **Fields left blank** — *suggestion:* do not fill Story Points.
+- **Link conventions** — *suggestion:* link BE↔FE pairs as "Relates to"; use "Blocked by" with a note referencing the blocking ticket ID.
 
-Present the examples as a list in your question, so the PM can scan them and add anything else specific to their team. Accept the answer as free-text — bullets, prose, or "we don't have specific conventions yet" are all valid. Do not try to parse the answer into rigid fields; store it as a single string and let downstream steps interpret it at the right moment.
+Show these as the proposed defaults and ask the PM to confirm all, edit any, or say "we don't have conventions yet" (in which case the suggestions become the working defaults). Capture the final agreed set as free-text to `intake.jira_ticket_conventions` — store it verbatim, do not force it into rigid fields; downstream steps (Step 10, Step 11a) interpret it. Also persist it to the durable conventions profile (see below) so the PM never starts from a blank slate again.
 
 Persist the full intake to `_pipeline-state.json`:
 
@@ -63,6 +64,7 @@ Persist the full intake to `_pipeline-state.json`:
   "intake": {
     "feature_name": "...",
     "jira_project": "...",
+    "board": "...",
     "jira_ticket_conventions": "<verbatim free-text from PM>",
     "tech_stack": "...",
     "product_type": "...",
@@ -72,7 +74,39 @@ Persist the full intake to `_pipeline-state.json`:
 }
 ```
 
-If the PM has run this skill before in the same workspace, look for a prior `_pipeline-state.json` (any feature folder) and offer: "I see you ran this for [other-feature] last time. Reuse the same Jira project, label conventions, and tech stack? (yes / show me the values first / start fresh)". Do not assume — confirm reuse explicitly.
+### Durable conventions profile (Jira project + ticket conventions persist across features)
+
+Jira answers (Q2 + Q3) rarely change between features — the same team writes tickets the same way every time. Persist them once to a workspace-level profile and **confirm-reuse** on every future run instead of re-asking from scratch.
+
+**Profile location:** `~/Desktop/Resources/PDLC Workflow Docs/_jira-conventions.json`
+
+```json
+{
+  "jira_project": "...",
+  "board": "...",
+  "jira_ticket_conventions": "<verbatim agreed free-text from Q3>",
+  "last_updated": "YYYY-MM-DD",
+  "last_feature": "..."
+}
+```
+
+**On intake — before asking Q2/Q3:** Read `_jira-conventions.json` if it exists. If found, show the saved values and ask one confirm question:
+
+```
+I have your saved Jira conventions from [last_feature] (updated [last_updated]):
+  • Project / board: [jira_project] / [board]
+  • Ticket conventions: [jira_ticket_conventions — summarized to a few lines]
+
+Reuse these for this feature? (yes / edit / start fresh)
+```
+
+- **yes** → copy the profile values straight into `intake`; skip the Q2/Q3 detail prompts.
+- **edit** → show the suggested-defaults checklist (above) pre-filled with the saved values so the PM tweaks only what changed.
+- **start fresh** → run Q2/Q3 as if no profile existed.
+
+If no profile exists, run Q2/Q3 with the suggested-defaults checklist as described above.
+
+**After intake is captured (or edited):** write the agreed Jira project, board, and conventions back to `_jira-conventions.json` with today's date and this feature's name. This keeps the profile current so the next run reflects the latest agreed conventions. The per-feature `_pipeline-state.json` → `intake` still holds the full snapshot for this feature; the profile is the cross-feature default.
 
 Do not proceed to Step 1 until all 7 answers are captured.
 
@@ -216,13 +250,13 @@ Update `_pipeline-state.json`.
 Read both review files. Apply all findings to the PRD:
 
 - Agreements: apply immediately.
-- Single-source findings: apply with a decision log note.
+- Single-source findings: apply with a decision log note (appended to the sidecar `decisions/[feature-name]-decision-log.md`).
 - Conflicts: present at Gate 1 as judgment calls.
 
 From product review: update user stories, add empty/error/loading states, fix UX gaps, add missing AC.
 From technical review: fix data model problems, update API contracts, address security concerns.
 
-Update the PRD in place. Add entries to the decision log.
+Update the PRD in place. Append decision entries to the sidecar `decisions/[feature-name]-decision-log.md` (NOT into the PRD body — the PRD's § 10 is a pointer only, per `ai-framework/style-preferences.md` § Artifact Conventions).
 
 Self-check (Error Type 3 from `error-handling.md`): does this output contradict any prior PRD decision? If yes, flag to PM before writing.
 
@@ -342,7 +376,7 @@ Do you have a finalized design catalog for this feature?
 **If the PM answers Yes (or design catalog files exist):**
 Read and follow: `ai-framework/03b-update-prd-from-designs.md`
 
-Sync the PRD with the finalized design catalog: design catalog reference, copy/flow changes, AC updates, decision log entries. Overwrite the PRD in place.
+Sync the PRD with the finalized design catalog: design catalog reference, copy/flow changes, AC updates. Overwrite the PRD in place. Decision entries go to the sidecar `decisions/[feature-name]-decision-log.md`, not the PRD body.
 
 Self-check (Error Type 3): does this output contradict any prior PRD decision? If yes, flag to PM before writing.
 

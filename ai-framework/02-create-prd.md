@@ -28,7 +28,7 @@ What failed or underperformed after shipping a related feature. Use these to str
 
 **Then:**
 
-1. Pre-populate the PRD **Decision Log (Section 10)** with any Category A entries. Mark each as `[Inherited from [feature name], [date] — confirm still applies]`. The PM reviews and can remove or override inherited decisions.
+1. Pre-populate the **decision log** with any Category A entries. The decision log is a sidecar file at `decisions/[feature]-decision-log.md` — **not** a PRD section (see § 10 below). Mark each entry as `[Inherited from [feature name], [date] — confirm still applies]`. The PM reviews and can remove or override inherited decisions.
 
 2. Pre-populate the PRD **Open Questions (Section 11)** with any Category B entries. Mark each as `[Carried from [feature name] — unresolved]`.
 
@@ -197,10 +197,19 @@ Document test-worthy cases so QA and implementation can cover them. Include:
 Structure by feature or user flow where helpful. Each case should be testable (clear preconditions, action, expected result).
 
 ## 10. Decision Log
-For every locked decision:
+**Do not write decision entries here.** The decision log is a sidecar document, not a PRD section (per `ai-framework/style-preferences.md` § Artifact Conventions). In the PRD, this section is a single pointer line:
+
+```
+**Decision Log:** see [../decisions/[feature]-decision-log.md](../decisions/[feature]-decision-log.md)
+```
+
+Write the actual decision log to `decisions/[feature]-decision-log.md` as its own stakeholder-readable document. Create the file if it does not exist, with a title line (`# [Feature] — Decision Log`) and a short intro. For every locked decision, append an entry with:
 - Topic
 - Chosen option
 - Rationale
+- Date (and source — e.g., inherited, review finding, design sync, reviewer-validated)
+
+The decision log is append-only across the feature's life; every step that locks a decision (reviews, design sync, read-feedback, change-mode) appends here rather than into the PRD.
 
 ## 11. Open Questions
 List unresolved items clearly.

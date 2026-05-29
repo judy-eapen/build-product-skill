@@ -37,7 +37,7 @@ Resolve the PRD path to one of:
 Read the PRD. Also read **supporting context** (used by several checks below):
 - `research/[feature]-research.md` (for VOC traceability)
 - `codebase-review/[feature]-codebase-review.md` (for technical-grounding checks)
-- `prd/decision-log.md` if it exists separately, otherwise the PRD's Section 10 decision log
+- `decisions/[feature]-decision-log.md` (the decision log sidecar — the PRD's § 10 is only a pointer to it; fall back to a legacy inline Section 10 if an older PRD still has one)
 - `_pipeline-state.json` (for `intake.*` and `gates.*` context)
 
 If the PRD file is missing, stop. State: "No PRD found for [feature]. Run `/create-prd` first."
@@ -55,7 +55,7 @@ Scan the PRD for cross-section contradictions. Look specifically for:
 - **Section 4 (Data Model) vs Section 5 (API Contracts)** — does the data model contain the fields the API claims to return? Does the API expose data the model doesn't track?
 - **Section 7 (Phased Plan) vs Section 2 (Scope)** — are all in-scope items represented in at least one phase? Are any phases delivering out-of-scope items?
 - **Section 7 phase dependencies** — does Phase 2 reference a capability Phase 1 doesn't ship? Does any phase reference an external system that another phase introduces later?
-- **Decision Log (Section 10) vs other sections** — does any locked decision contradict the body of the PRD? E.g., "Decision: we will not support guest checkout" but Section 3 (Roles & Permissions) lists guest users.
+- **Decision Log (sidecar `decisions/[feature]-decision-log.md`) vs the PRD body** — does any locked decision contradict the PRD? E.g., "Decision: we will not support guest checkout" but Section 3 (Roles & Permissions) lists guest users.
 - **Roles & Permissions (Section 3) vs every other section** — are roles referenced in API contracts, data model, and user stories actually defined in Section 3? Are there roles in Section 3 that no other section uses?
 - **Section 8 (Observability/NFR) vs Section 5 (API)** — are latency / error-rate targets in NFR aligned with the API endpoints they apply to? Or are they generic ("API should be fast") with no per-endpoint specificity?
 
@@ -240,7 +240,7 @@ If yes: for each finding (CRITICAL first), show:
 
 Apply approved fixes:
 - **Phrasing / NFR / completeness fixes**: edit the PRD file directly with the proposed text.
-- **Decision-log entries needed**: add the entry to the decision log (or PRD Section 10).
+- **Decision-log entries needed**: append the entry to the decision log sidecar `decisions/[feature]-decision-log.md` (never the PRD body).
 - **Anything that contradicts a downstream artifact** (user stories, designs, tickets): do NOT auto-apply — propose running `/change-mode` instead, since the change has blast radius beyond the PRD.
 
 After applying fixes, append a one-line note to the bottom of the report:
