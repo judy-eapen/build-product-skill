@@ -30,10 +30,10 @@ Full setup instructions are in [GETTING-STARTED.md](./GETTING-STARTED.md).
 | 11-section PRD | Your computer |
 | Product Review + Technical Review (parallel AI critiques) | Your computer |
 | System Design doc (if architecture is non-trivial) | Your computer |
-| Visual diagram (Figma FigJam if connected, Mermaid otherwise) | Figma + your computer |
+| Visual diagram in Figma FigJam (temporary Mermaid fallback only if the Figma MCP isn't connected) | Figma + your computer |
 | Screen design prompts for v0 or Figma Make | Your computer |
 | Optional: Real Figma frames generated from the prompts via Figma MCP, wired to your team's design system (one page per category, mid-fi but on-brand) | Figma |
-| User Stories Breakdown with Gherkin AC, FE/BE pairs, sizing | Your computer |
+| User Stories Breakdown with acceptance criteria (Gherkin or plain English — your choice), FE/BE pairs, sizing | Your computer |
 | Gantt timeline (Figma FigJam + interactive HTML) at Epic + Phase level | Figma + your computer |
 | Jira Epic + Stories with labels, links, and custom fields | Your team's Jira |
 | Optional: Confluence feature hub with a numbered child page per artifact — Research, Codebase Review, PRD, System Design, Visual Diagram, Design Catalog per phase, Timeline, plus a lightweight User Stories page that links to each Jira Epic. Product/Technical Reviews and the full Gherkin breakdown stay local. | Your team's Confluence |
@@ -55,10 +55,10 @@ You approve at three gates (PRD, Designs, User Stories) before anything moves to
 | 4 | **Dual Review** — Two parallel agents: Product Reviewer + Technical Reviewer | PARALLEL | `product-review/` + `technical-review/` |
 | 5 | **Apply Fixes → Gate 1** — Quality checks, conflict cards, your approval | **GATE** | `prd/` (updated) |
 | 6 | **System Design** — Architecture, data model, build order (optional) | AUTO | `technical-review/` |
-| 7 | **Visual Diagram** — Figma FigJam via Figma MCP (falls back to Mermaid) | AUTO | `diagrams/` |
+| 7 | **Visual Diagram** — Figma FigJam via Figma MCP (the deliverable); temporary, clearly-labeled Mermaid fallback only if the MCP isn't connected | AUTO | `diagrams/` |
 | 8 | **Design Prompts** — Structured v0 or Figma Make prompts per screen, per state | AUTO | `design/` |
 | 9 | **Update PRD from Designs → Gate 2** — Surgical sync, your approval | **GATE** | `prd/` (updated) |
-| 10 | **User Stories Breakdown → Gate 3** — Exhaustive Gherkin AC, FE/BE pairs, multi-epic grouping, **wave sequencing** (topological sort on dependencies — cycles are CRITICAL findings), optional DRAFT mode for stories without finalized designs | **GATE** | `user-stories/` |
+| 10 | **User Stories Breakdown → Gate 3** — Exhaustive acceptance criteria with a **format fit-check** (Gherkin vs. plain-English criteria — the skill shows you one real story both ways and you pick), FE/BE pairs, multi-epic grouping, **wave sequencing** (topological sort on dependencies — cycles are CRITICAL findings), optional DRAFT mode for stories without finalized designs | **GATE** | `user-stories/` |
 | 10.5 | **Timeline (Gantt)** — Figma FigJam + interactive HTML at Epic + Phase level; hybrid estimation (skill proposes, PM tunes); HTML is editable in-browser (drag bars, auto-cascade); **💾 Save to skill** writes plan JSON directly to disk in Chrome/Edge; `/timeline apply` auto-discovers the latest plan | AUTO | `timeline/` |
 | 11 | **Export** — Jira tickets always; Google Drive + Confluence (hub + child page per artifact) optional, parallel | PARALLEL | Jira + Drive + Confluence |
 | 12 | **Export Transcript** — Reads the live session JSONL and writes the full PM↔model conversation to two markdown files (clean + forensic) | AUTO | `transcript/` |
@@ -136,7 +136,7 @@ Any integration the skill cannot reach is skipped cleanly. It never blocks the r
 | `/review-prd` | Product Reviewer pass on an existing PRD |
 | `/cto-review` | Technical Reviewer pass on an existing PRD |
 | `/system-design` | System design doc from a PRD |
-| `/visual-diagram` | Figma FigJam diagram from a PRD (Mermaid fallback) |
+| `/visual-diagram` | Figma FigJam diagram from a PRD (Figma is the deliverable; temporary Mermaid fallback only if the MCP isn't connected, flagged to regenerate as Figma) |
 | `/user-stories` | User Stories Breakdown from an approved PRD. Multi-epic grouping (skill proposes, PM tunes). Wave sequencing via topological sort on dependencies. DRAFT mode for missing designs — refresh later via `/change-mode` → "Designs arrived" |
 | `/timeline` | Gantt timeline (Figma FigJam + editable HTML) at Epic + Phase level. Drag-to-shift / drag-edge-to-resize with auto-cascade in the browser. 💾 Save to skill writes plan JSON directly to disk (Chrome/Edge). `/timeline apply` (no args) auto-discovers the latest plan and round-trips it into the skill state. |
 | `/prd-to-jira` | Create Jira tickets from a breakdown or PRD |
@@ -227,6 +227,12 @@ As of v2.1.0, Jira conventions (labels, title format, BE/FE split, custom field 
 ---
 
 ## Version
+
+**v2.21.0** — **No more front-matter plumbing junk at the top of docs.** Kills the `Status: v1.6 — readability reformat… / Predecessor: / Refactor authority: / Refactor lineage: / Last updated:` block that accreted at the top of the user-stories doc over repeated `/change-mode` runs. The front matter is now a strict ≤ 8-line allowlist (what this is, what it was generated from, current counts/mode, a one-line changelog pointer); the version/refactor narrative is banned everywhere — it lives in the centralized changelog. v2.18.0 banned change history under `## ` headings; this closes the front-matter-disguise loophole, adds a `/change-mode` "don't grow the front matter" guard, and a `/validate-user-stories` Check 8c to catch it. See [CHANGELOG.md](./CHANGELOG.md) for full version history.
+
+**v2.20.0** — **Figma is the single surface for diagrams.** The old rule that kept both a Figma link *and* an always-on Mermaid block in every diagram doc is reversed: Figma/FigJam is now the deliverable, and Mermaid is only a temporary, clearly-labeled fallback when the Figma MCP isn't connected (flagged in state to regenerate as Figma on a re-run). Reason — Mermaid doesn't render reliably across the tools the team opens, and the product team works in Figma. Timeline (FigJam + HTML), designs (v0 / Figma Make), and `/system-design`'s inline ASCII sketches were already Figma/non-Mermaid and are unchanged. See [CHANGELOG.md](./CHANGELOG.md) for full version history.
+
+**v2.19.0** — **Acceptance criteria stop assuming Gherkin.** A new Step 2.7 fit-checks the AC format for each feature — Gherkin suits behavioral/multi-path stories, plain-English criteria read clearer for simple/config/spike work — and shows the PM one real story written **both ways, side by side**, before they pick (Gherkin / plain English / mixed). The choice flows through authoring, validation, Gate 3, and Jira export. The Jira export now also explicitly fills all three story fields — Description ← the plain-English description, Acceptance Criteria ← the AC in its chosen format (verbatim, never converted), User Story ← the "As a… I want… so that…" narrative. See [CHANGELOG.md](./CHANGELOG.md) for full version history.
 
 **v2.18.0** — **Process-tracking content separated from reader docs.** Change/refactor history is banned inline anywhere in an artifact (by any heading — `## Change log`, `## Refactor history`, etc.) and consolidated into one feature-level `changelog/[feature]-changelog.md` with a section per artifact. The **decision log moves out of the PRD** into a `decisions/[feature]-decision-log.md` sidecar — the PRD's § 10 is now a one-line pointer, with every producer/consumer step rewired to the sidecar. Closes two leaks (User Stories Appendix B refactor history; `/pull-from-figma` inline change log) and adds `/validate-user-stories` Check 8b to catch inline change history anywhere in a breakdown. See [CHANGELOG.md](./CHANGELOG.md) for full version history.
 

@@ -227,12 +227,16 @@ quality_checks:
     severity: WARNING
 
   every_story_has_two_scenarios:
-    description: "Every non-DRAFT story has at least 2 Gherkin scenarios. DRAFT stories aim for >=1 but are exempt (v2.4.0+)."
+    description: "Every non-DRAFT story has at least 2 AC scenarios/criteria in the format chosen at Step 2.7 (Gherkin scenarios or plain-English criteria). DRAFT stories aim for >=1 but are exempt (v2.4.0+)."
     severity: WARNING
 
   every_story_has_edge_case:
-    description: "Every non-DRAFT story has at least one edge-case or error-state scenario. DRAFT stories exempt (v2.4.0+)."
+    description: "Every non-DRAFT story has at least one edge-case or error-state scenario/criterion. DRAFT stories exempt (v2.4.0+)."
     severity: INFO
+
+  ac_format_matches_decision:
+    description: "Every story's AC is written in the format recorded at Step 2.7 (user_stories.ac_format, honoring ac_format_overrides). No story silently reverts to a different format than the PM approved."
+    severity: WARNING
 
   fe_be_pairs_complete:
     description: "Every linked FE/BE pair has both sides present."

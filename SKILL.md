@@ -483,8 +483,8 @@ Run all of the following:
 - Every story is assigned to exactly one Epic from the Step 1.5 grouping.
 - Every story has a Wave assignment from Step 2.5 (v2.10.0+).
 - The dependency graph is acyclic — cycles are CRITICAL and block Gate 3 advancement (v2.10.0+).
-- Every **non-DRAFT** story has at least 2 Gherkin scenarios. (DRAFT stories aim for ≥1; counted but not required.)
-- Every **non-DRAFT** story has at least one edge-case or error-state scenario. (DRAFT exempt.)
+- Every **non-DRAFT** story has at least 2 AC scenarios/criteria in the Step 2.7 chosen format (Gherkin or plain English). (DRAFT stories aim for ≥1; counted but not required.)
+- Every **non-DRAFT** story has at least one edge-case or error-state scenario/criterion. (DRAFT exempt.)
 - Every linked FE/BE pair has both sides present.
 - No story sized larger than L without a proposed split (applies to DRAFT stories too — `L+*` gets the same treatment).
 - HIGH risks from the codebase review appear in at least one story's testing notes.
@@ -594,7 +594,7 @@ Inputs: the approved user-stories breakdown from Step 10 (primary), the PRD (fal
 
 Creates **one Jira Epic per entry in `user_stories.epics[]`** (multi-epic mode introduced in v2.4.0; single-Epic fallback for pre-v2.4.0 breakdowns). Each Epic's description is scoped to its own stories — pulled from PRD content (never local file paths). Attaches the PRD and User Stories Breakdown files to every Epic.
 
-Creates one Jira Story per story in the breakdown. Sets all custom fields (User Story ADF, Acceptance Criteria ADF with verbatim Gherkin, Testable, FE/BE labels, sequence labels `seq-01...`, size labels `size-S/M/L`, team labels). Parent: the Epic key for that story (looked up by `epic_id`). Relates-to: linked FE/BE pair counterpart.
+Creates one Jira Story per story in the breakdown. Sets all custom fields (Description ← thorough plain-English Description, User Story ADF ← As-a/I-want/so-that narrative, Acceptance Criteria ADF ← AC verbatim in the breakdown's chosen format (Gherkin or plain English), Testable, FE/BE labels, sequence labels `seq-01...`, size labels `size-S/M/L`, team labels). Parent: the Epic key for that story (looked up by `epic_id`). Relates-to: linked FE/BE pair counterpart.
 
 **DRAFT stories** (those listed in `user_stories.draft_stories[]`) additionally get a `draft` label and a "⚠ DRAFT — needs design refresh" note in the Description. The `/change-mode` → "Designs arrived" trigger refreshes these tickets in place when designs arrive (removes the label and updates the AC/sizing/description).
 
@@ -789,7 +789,7 @@ Write this file at the end of every step, overwriting the previous version:
     "product_review": { "path": "string | null", "size_bytes": 0 },
     "technical_review": { "path": "string | null", "size_bytes": 0 },
     "system_design": { "path": "string | null", "size_bytes": 0 },
-    "visual_diagram": { "path": "string | null", "size_bytes": 0 },
+    "visual_diagram": { "path": "string | null", "size_bytes": 0, "needs_figma_regen": false },
     "design_catalogs": [
       { "phase": 1, "path": "string", "size_bytes": 0 }
     ],
@@ -866,7 +866,7 @@ Write this file at the end of every step, overwriting the previous version:
     "confluence_hub": "string | null — parent hub URL, set at Step 11c (v2.3.0+)",
     "confluence_page": "string | null — DEPRECATED: legacy single-PRD URL. v2.3.0+ also writes here pointing at the Step 3: PRD child page for backward-compat with anything still reading this field",
     "confluence_breakdown_page": "string | null — user stories breakdown page, created at Gate 3 share",
-    "figma_diagram_url": "string | null — FigJam diagram URL, null if Mermaid fallback was used",
+    "figma_diagram_url": "string | null — FigJam diagram URL, null if the temporary Mermaid fallback was used (see visual_diagram.needs_figma_regen — diagram is still owed in Figma)",
     "figma_timeline_url": "string | null — FigJam timeline URL, null if Figma MCP unavailable at Step 10.5"
   },
   "confluence_hub": {

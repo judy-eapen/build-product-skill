@@ -8,11 +8,11 @@ When this prompt runs as Step 11 of the Work pipeline, the **primary input is th
 ~/Desktop/Resources/PDLC Workflow Docs/[feature-name]/user-stories/[feature-name]-user-stories.md
 ```
 
-This file has already been approved at Gate 3. It contains every story with FE/BE labels, exhaustive Gherkin acceptance criteria, sequencing, sizing, testing notes, and linked-pair relationships. Read this file first.
+This file has already been approved at Gate 3. It contains every story with FE/BE labels, exhaustive acceptance criteria (Gherkin or plain English, per the breakdown's Step 2.7 format decision), sequencing, sizing, testing notes, and linked-pair relationships. Read this file first.
 
 **Fallback:** if the breakdown file does not exist (e.g., running this prompt standalone outside the pipeline), read the PRD directly at `~/Desktop/Resources/PDLC Workflow Docs/[feature-name]/prd/[feature-name]-prd.md` and infer FE/BE labels from the Phased Plan.
 
-When the breakdown exists, do not re-infer FE/BE, do not re-write Gherkin, do not re-derive sequencing. The breakdown is the source of truth.
+When the breakdown exists, do not re-infer FE/BE, do not re-write or reformat the acceptance criteria (copy them verbatim in whatever format the breakdown uses), do not re-derive sequencing. The breakdown is the source of truth.
 
 ---
 
@@ -249,12 +249,12 @@ When multiple Epics are created in one pipeline run, attach to each (the PRD is 
 
    - **Do not** create tickets in Jira.
    - **Create a document** at `~/Desktop/Resources/PDLC Workflow Docs/[feature-name]/jira-export/[feature-name]-jira-export.md`.
-   - The document must include for each PRD user story: **Summary**, **User Story** (As a… I want… So that…), **Acceptance criteria** (Gherkin), **Description** (short context), **Labels** (frontend/backend), and a note that the user can create these in Jira manually or re-run the command when the MCP is connected.
+   - The document must include for each story: **Summary**, **User Story** (As a… I want… So that…), **Acceptance criteria** (in the breakdown's chosen format — Gherkin or plain English), **Description** (the thorough plain-English Description), **Labels** (frontend/backend), and a note that the user can create these in Jira manually or re-run the command when the MCP is connected.
    - Tell the user: "Atlassian MCP is not connected. I created the fallback file with the story content. You can create the tickets in Jira from that file, or run this again when the MCP is available."
 
    **Fallback document format** (`~/Desktop/Resources/PDLC Workflow Docs/[feature-name]/jira-export/[feature-name]-jira-export.md`):
    - Title: `# Jira stories: <PRD title>`
-   - One section per story with: **Summary**, **User Story** (As a… I want… So that…), **Acceptance criteria** (Gherkin), **Description** (short), **Labels** (frontend/backend).
+   - One section per story with: **Summary**, **User Story** (As a… I want… So that…), **Acceptance criteria** (in the breakdown's chosen format), **Description** (thorough plain-English), **Labels** (frontend/backend).
    - Short intro line: "Create these in your team's Jira project (provided at intake) as Stories. Set Epic/parent in Jira when available."
 
 2. **If the MCP connects**  
@@ -267,14 +267,20 @@ When multiple Epics are created in one pipeline run, attach to each (the PRD is 
 
 ## Fields to fill for each Story
 
-Map PRD content to these Jira fields. **Keep content in the right place:** User Story and Acceptance criteria go in their dedicated fields, not only in Description.
+Map breakdown content to these Jira fields. **Every story populates three distinct fields — keep content in the right place, do not collapse them into Description:**
+
+- **Description field** ← the plain-English **Description** (what the ticket is for).
+- **Acceptance Criteria field** ← the **acceptance criteria** (in the breakdown's chosen format — Gherkin or plain English).
+- **User Story field** ← the **"As a [role], I want [goal], so that [benefit]"** narrative.
+
+All three are required on every Story. If any of the three custom field IDs is unknown, look it up via `getJiraIssueTypeMetaWithFields` (or ask the PM at intake) before creating tickets — do not silently fold a field into Description as a fallback.
 
 | Jira field | Source / rule |
 |------------|----------------|
-| **Summary** | Story title or one-line summary from the PRD (required). |
-| **User Story** | The narrative: "As a [role], I want [goal] so that [benefit]." From PRD user stories section. **Must be set in your Jira instance's User Story custom field**, not only in Description. The custom field ID is instance-specific — ask the PM to provide their Jira instance's User Story custom field ID at intake, or look it up via `getJiraIssueTypeMetaWithFields` before creating tickets. |
-| **Acceptance criteria** | In **Gherkin format**: `Scenario:`, `Given`, `When`, `Then`, `And` as needed. **Must be set in your Jira instance's Acceptance Criteria custom field**, not only in Description. The custom field ID is instance-specific — ask at intake or look up. |
-| **Description** | The **thorough plain-English Description** from the user-stories breakdown's per-story `**Description**` block (3–6 sentences explaining what the ticket is trying to do, written for a stakeholder who hasn't read the PRD). Use it verbatim. Do **not** substitute a terse "PRD Section X" pointer — those references are stale and unhelpful. Do not duplicate the full User Story or all Gherkin here; those go in their dedicated fields. |
+| **Summary** | Story title or one-line summary from the breakdown (required). |
+| **User Story** | The narrative: "As a [role], I want [goal] so that [benefit]." From the breakdown's per-story **User Story** block. **Must be set in your Jira instance's User Story custom field**, not only in Description. The custom field ID is instance-specific — ask the PM to provide their Jira instance's User Story custom field ID at intake, or look it up via `getJiraIssueTypeMetaWithFields` before creating tickets. |
+| **Acceptance criteria** | **In the format the breakdown uses for this story** — Gherkin (`Scenario:` / `Given` / `When` / `Then` / `And`) **or** plain-English criteria (`This ticket is done when:` + testable bullets), per the Step 2.7 decision in `_pipeline-state.json` → `user_stories.ac_format` (honoring `ac_format_overrides`). **Copy it verbatim from the breakdown — never convert plain-English AC back into Gherkin or vice versa.** Must be set in your Jira instance's Acceptance Criteria custom field, not only in Description. The custom field ID is instance-specific — ask at intake or look up. |
+| **Description** | The **thorough plain-English Description** from the breakdown's per-story `**Description**` block (3–6 sentences explaining what the ticket is trying to do, written for a stakeholder who hasn't read the PRD). Use it verbatim. Do **not** substitute a terse "PRD Section X" pointer — those references are stale and unhelpful. Do not duplicate the full User Story or all the AC here; those go in their dedicated fields. |
 | **Parent** | Epic key if known (user provides it or we create an Epic). If Epic creation fails due to required parent, ask the user for Epic key or link. |
 | **Team** | The team or pod label provided at intake. If none was provided, leave blank and note it in the result. |
 | **Labels** | **frontend** and/or **backend**. Infer from the story: UI, screens, components, copy → **frontend**; API, data, integration, calculations → **backend**. Use both if the story spans both. If unclear, default to one and note it. |
@@ -283,29 +289,30 @@ Map PRD content to these Jira fields. **Keep content in the right place:** User 
 
 ---
 
-## Acceptance criteria → Gherkin
+## Acceptance criteria → the Acceptance Criteria field
 
-Convert each acceptance criterion from the PRD into Gherkin:
+**When a Gate-3 breakdown exists (the normal path):** copy the acceptance criteria **verbatim** from the breakdown, in whatever format the breakdown uses for that story (Gherkin or plain English per Step 2.7). Do not reformat, re-derive, or convert between formats — the breakdown is the approved source of truth.
 
-- **Scenario:** short label for the behavior.
-- **Given:** starting state or context.
-- **When:** user or system action.
-- **Then:** observable outcome (testable).
-- **And:** extend any of the above.
+**Only when there is no breakdown** (raw PRD → Jira, no `/user-stories` run) do you author the AC here. In that case, first decide the format the way Step 2.7 of the user-stories prompt does — Gherkin for behavioral/multi-path stories, plain-English criteria for simple/declarative ones — then write testable, specific criteria.
 
-Example:
-
-- PRD: "User can reset password via email link."
-- Gherkin:
-  ```
-  Scenario: User resets password via email link
+*Gherkin form:*
+```
+Scenario: User resets password via email link
   Given I am on the login page
   When I request a password reset and click the link in the email
   Then I am taken to a page to set a new password
   And I receive a confirmation after saving
-  ```
+```
 
-Keep scenarios testable and specific.
+*Plain-English form:*
+```
+This ticket is done when:
+- A user can request a password reset from the login page and receive an email with a reset link.
+- Clicking the link opens a page to set a new password; an invalid or expired link shows an error and offers to resend.
+- After saving, the user sees a confirmation and can log in with the new password.
+```
+
+Either way, keep every criterion testable and specific.
 
 ---
 
@@ -316,7 +323,7 @@ Keep scenarios testable and specific.
 
 2. **Check Atlassian MCP**  
    Call `getAccessibleAtlassianResources` (or equivalent). If it fails or the tool is unavailable:
-   - Create `~/Desktop/Resources/PDLC Workflow Docs/[feature-name]/jira-export/[feature-name]-jira-export.md` with one section per PRD user story (Summary, User Story, Acceptance criteria in Gherkin, Description, Labels).
+   - Create `~/Desktop/Resources/PDLC Workflow Docs/[feature-name]/jira-export/[feature-name]-jira-export.md` with one section per story (Summary, User Story, Acceptance criteria in the breakdown's chosen format, Description, Labels).
    - Tell the user the MCP is not connected and where the document was created. Stop.
 
 3. **Epics — multi-Epic flow**
@@ -331,7 +338,7 @@ Keep scenarios testable and specific.
 4. **For each user story in the breakdown** (from the user-stories breakdown, `[feature-name]-user-stories.md`):
    - **Summary:** One line (story title following intake title convention if specified).
    - **User Story:** "As a… I want… So that…" from the breakdown (for the **User Story** custom field — see custom field note in step 5).
-   - **Acceptance criteria:** Gherkin scenarios verbatim from the breakdown (for the **Acceptance criteria** custom field — see custom field note in step 5).
+   - **Acceptance criteria:** the AC verbatim from the breakdown — Gherkin scenarios or plain-English criteria, whichever the breakdown uses for this story (for the **Acceptance criteria** custom field — see custom field note in step 5).
    - **Description:** Short context only: what the ticket is, PRD section, dependencies, and **"⚠ DRAFT — needs design refresh"** if this story is in `user_stories.draft_stories[]`.
    - **Parent:** Epic key from step 3, looked up by `epic_id` for this story.
    - **Team:** Team/pod label provided at intake (leave blank if none).
@@ -345,15 +352,18 @@ Keep scenarios testable and specific.
    **Custom field IDs are Jira-instance-specific.** Before creating tickets, look up the IDs for your instance using `getJiraIssueTypeMetaWithFields` (or ask the PM to provide them at intake). The IDs shown below are placeholders — replace them with the IDs for the User Story field, Acceptance Criteria field, and Testable? field in the intake-supplied Jira project.
 
    - **summary:** Story summary.
-   - **description:** Short description only (what the ticket is, PRD ref, dependencies). Plain text.
+   - **description:** the thorough plain-English **Description** from the breakdown's per-story Description block, verbatim (3–6 sentences explaining what the ticket is for). Do not duplicate the User Story or the AC here — those go in their own custom fields.
    - **parent:** Epic issue key when applicable.
    - **additional_fields:** Include all of the following when creating each Story:
      - **labels:** e.g. `["frontend", "backend", "<team-label-from-intake>"]`.
      - **customfield_[Testable?]** (Testable?): use the option IDs for Yes / No in your Jira instance.
      - **customfield_[User Story]** (User Story): ADF document. Single paragraph containing the "As a… I want… So that…" text:
        `{"version":1,"type":"doc","content":[{"type":"paragraph","content":[{"type":"text","text":"As a [role], I want [goal] so that [benefit]."}]}]}`
-     - **customfield_[Acceptance criteria]** (Acceptance criteria): ADF document. One `paragraph` block per line of Gherkin (each Scenario, Given, When, Then, And as its own paragraph). Example for two scenarios:
-       `{"version":1,"type":"doc","content":[{"type":"paragraph","content":[{"type":"text","text":"Scenario: User resets password"}]},{"type":"paragraph","content":[{"type":"text","text":"  Given I am on the login page"}]},{"type":"paragraph","content":[{"type":"text","text":"  When I request a password reset"}]},{"type":"paragraph","content":[{"type":"text","text":"  Then I am taken to set a new password"}]},{"type":"paragraph","content":[{"type":"text","text":"Scenario: Save failure"}]},{"type":"paragraph","content":[{"type":"text","text":"  Given I submitted invalid data"}]},{"type":"paragraph","content":[{"type":"text","text":"  Then I see an error and can retry"}]}]}`
+     - **customfield_[Acceptance criteria]** (Acceptance criteria): ADF document, content matching the breakdown's format for this story.
+       - *Gherkin:* one `paragraph` block per Gherkin line (each Scenario / Given / When / Then / And as its own paragraph). Example for two scenarios:
+         `{"version":1,"type":"doc","content":[{"type":"paragraph","content":[{"type":"text","text":"Scenario: User resets password"}]},{"type":"paragraph","content":[{"type":"text","text":"  Given I am on the login page"}]},{"type":"paragraph","content":[{"type":"text","text":"  When I request a password reset"}]},{"type":"paragraph","content":[{"type":"text","text":"  Then I am taken to set a new password"}]},{"type":"paragraph","content":[{"type":"text","text":"Scenario: Save failure"}]},{"type":"paragraph","content":[{"type":"text","text":"  Given I submitted invalid data"}]},{"type":"paragraph","content":[{"type":"text","text":"  Then I see an error and can retry"}]}]}`
+       - *Plain English:* a lead-in paragraph (`This ticket is done when:`) followed by a `bulletList` with one `listItem` per criterion. Example:
+         `{"version":1,"type":"doc","content":[{"type":"paragraph","content":[{"type":"text","text":"This ticket is done when:"}]},{"type":"bulletList","content":[{"type":"listItem","content":[{"type":"paragraph","content":[{"type":"text","text":"A user can request a password reset from the login page and receives an email with a reset link."}]}]},{"type":"listItem","content":[{"type":"paragraph","content":[{"type":"text","text":"An invalid or expired link shows an error and offers to resend."}]}]}]}]}`
    - If **createJiraIssue** returns an error for the User Story or Acceptance criteria custom field (e.g. "Operation value must be an Atlassian Document"), omit those from `additional_fields` on create and call **editJiraIssue** for that issue with the same ADF payloads in `fields` to set them after create.
 
 6. **Linked work items**  
@@ -372,10 +382,10 @@ Keep scenarios testable and specific.
 - **Always use the Jira project the PM provided at intake** and issue type **Story** unless the user says otherwise.
 - **If Atlassian MCP is unavailable**, create `~/Desktop/Resources/PDLC Workflow Docs/[feature-name]/jira-export/[feature-name]-jira-export.md` with full story content; do not leave the user with nothing. This aligns with the Error Type 4 rule in `ai-framework/error-handling.md`.
 - **User Story and Acceptance criteria** go in their dedicated Jira fields in **ADF format**. Set them on create via `additional_fields` using the instance-specific custom field IDs (looked up at intake or via `getJiraIssueTypeMetaWithFields`); if create rejects them, use **editJiraIssue** after create with the same ADF in `fields`.
-- **Description** is a short "what this ticket is" (PRD ref, dependencies); avoid duplicate User Story/AC or literal escape characters.
+- **Description** carries the thorough plain-English Description from the breakdown verbatim (what the ticket is for); avoid duplicating the User Story/AC or literal escape characters.
 - **If an Epic or parent cannot be created or found**, ask the user for an Epic key or Jira link; do not guess.
 - **Labels:** set **frontend** and/or **backend** per story (infer from scope).
-- **Gherkin only for Acceptance criteria**; no plain bullets in that field.
+- **Acceptance criteria use the breakdown's chosen format** (Gherkin or plain-English criteria, per Step 2.7) — copy verbatim; never convert between formats.
 - **One Story per PRD user story**; don’t merge multiple PRD stories into one Jira Story.
 - If the PRD has no user stories section, extract logical stories from scope/requirements and create them, then note in the description: "Derived from PRD scope; consider updating PRD with these stories."
 

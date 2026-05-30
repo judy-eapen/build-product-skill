@@ -21,7 +21,7 @@ No prior pipeline run is required. If you only have a description (no PRD), the 
 `~/Desktop/Resources/PDLC Workflow Docs/[feature-name]/diagrams/[feature-name]-feature-diagram.md`
 
 Includes:
-- The diagram (Mermaid or structured text — your choice).
+- The diagram **in Figma / FigJam** (created via the Figma MCP) — the output file carries the `[Open in Figma](URL)` link. If the Figma MCP is unavailable, a clearly-labeled **temporary Mermaid fallback** is produced instead, flagged for regeneration once Figma is connected.
 - A traceability table mapping each node back to its source PRD user story (when a PRD is provided).
 
 ## Diagram types

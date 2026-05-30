@@ -62,10 +62,12 @@ Severity: **WARNING** for orphans in either direction. **CRITICAL** if a key PRD
 
 ### Check 2: AC duplication / contradiction across stories
 
-Extract every Gherkin `Scenario:` block from every story. For each scenario, normalize:
+**AC format note (applies to Checks 2, 4, and 5).** This breakdown's AC may be Gherkin or plain English, per the Step 2.7 decision recorded in `_pipeline-state.json` → `user_stories.ac_format` (with `ac_format_overrides` for mixed). Throughout these checks, a **"scenario/criterion"** means a Gherkin `Scenario:` block **or** a plain-English criterion bullet under `This ticket is done when:`. Parse whichever the story uses; the checks are identical in intent.
+
+Extract every AC unit (Gherkin `Scenario:` block, or plain-English criterion bullet) from every story. For each, normalize:
 - Lowercase
 - Strip whitespace
-- Keep the `Given` / `When` / `Then` structure intact
+- For Gherkin, keep the `Given` / `When` / `Then` structure intact; for plain English, keep the condition→outcome statement intact
 
 Then look for:
 
@@ -98,9 +100,9 @@ Severity: **CRITICAL** for endpoint-contract / permission mismatches. **WARNING*
 
 ### Check 4: AC specificity
 
-For every story, scan the AC scenarios for vague language. Flag scenarios that:
+For every story, scan the AC scenarios/criteria for vague language (in Gherkin, the `Then` clause; in plain English, the outcome half of each criterion). Flag any that:
 
-- Use "it works" / "it succeeds" / "it functions correctly" as the `Then` clause without specifying observable behavior.
+- Use "it works" / "it succeeds" / "it functions correctly" without specifying observable behavior.
 - Use "the user sees the correct result" without defining "correct".
 - Use "fast response" / "quick load" without a numeric threshold.
 - Use "appropriate error message" without specifying the message or behavior.
@@ -117,7 +119,7 @@ DRAFT stories are **exempt** from this check — they're known to have placehold
 ### Check 5: Sizing sanity
 
 For each story, compute:
-- **Scenario count**: number of `Scenario:` blocks in the AC.
+- **Scenario/criterion count**: number of Gherkin `Scenario:` blocks, or plain-English criterion bullets, in the AC.
 - **Distinct surface count**: how many distinct screens (for FE) or endpoints (for BE) does the AC reference?
 - **Cross-boundary indicators**: does the AC reference multiple external systems, multiple data tables, or complex state transitions?
 
@@ -183,6 +185,12 @@ Per the breakdown spec (`ai-framework/06-user-stories.md` Step 5), the document 
 For each finding: report the line number, the header text, and the recommended appendix destination (A through F). Severity: **WARNING** per section. If cumulative front-matter is >100 lines above `meat_start`, escalate the bundle to a single **CRITICAL** with the recommendation to refactor to appendix-style.
 
 **8b — Inline change history (banned anywhere in the doc).** Per `ai-framework/style-preferences.md` § Artifact Conventions, change/refactor history does **not** belong in the breakdown at all — only the one-line Appendix B pointer to the centralized changelog. Scan the **whole document** (not just above `meat_start`) for any header containing `Change log`, `Changelog`, `Revision history`, `Refactor history`, `Refactor summary`, `Refactor lineage`, or `Refactor authority`, and for any `**v0.X (date):**`-style version-history bullet block. Flag each as **WARNING** with the recommendation: remove the section, move its content to `changelog/[feature]-changelog.md` → "User Stories Breakdown" section, and leave only the Appendix B pointer line. Exception: a single-line Appendix B pointer (`**Change history:** see ...changelog...`) is correct and must not be flagged.
+
+**8c — Front-matter junk fields (version/refactor narrative disguised as front matter).** Scan the front matter (everything above the first `## ` or `### US-` header) for these banned bold-label lines and flag each as **WARNING**:
+- A `**Status:**` line that carries a version number and/or a "what changed" narrative (e.g. "Status: Final. v1.6 (2026-05-29) — readability reformat…"). A bare `Status: Draft` / `Status: Final` is fine; the attached version/refactor story is not.
+- `**Last updated:**`, `**Predecessor:**`, `**Refactor authority:**`, `**Refactor lineage:**`, `**Version history:**`, or any other bold-label line narrating versions / prior versions / what changed.
+
+For each: quote the offending line, and recommend removing it (its content belongs in `changelog/[feature]-changelog.md`, not the doc). If the cumulative front matter exceeds the Step-5 allowlist (≤ 8 lines), escalate the bundle to a single **WARNING** recommending the front matter be cut back to the allowlist. Do **not** flag per-story `Status: ⚠ DRAFT — needs design` markers or gate-reopen `STATUS: DRAFT` banners — those are live-state, not version history.
 
 ### Check 9: Count parity (prose claims vs actual blueprint count)
 

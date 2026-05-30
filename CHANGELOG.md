@@ -4,6 +4,49 @@ All notable changes are documented here. Follows [Semantic Versioning](https://s
 
 ---
 
+## v2.21.0 — 2026-05-29
+
+### Changed
+
+- **Front matter is now a strict allowlist; version/refactor plumbing is banned from the top of docs** (`ai-framework/06-user-stories.md` Step 5). The user-stories front matter is capped at ≤ 8 enumerated lines (Source PRD + version, Generated, Phases, Mode, Stories + DRAFT, Waves, change-history pointer, optional compact Jira pointer). Explicitly forbidden — the junk that accretes over `/change-mode` runs: a `Status:` line carrying a version/change narrative, `Predecessor:`, `Refactor authority:`, `Refactor lineage:`, `Version history:`, `Last updated:`. (Bare `Status: Draft/Final`, per-story `Status: ⚠ DRAFT` markers, and gate-reopen `STATUS: DRAFT` banners stay — they're live-state.)
+- **Cross-artifact ban extended to the front-matter disguise** (`ai-framework/style-preferences.md` § Artifact Conventions). v2.18.0 banned change history under `## ` headings; this names the bold-label front-matter fields (Status-with-narrative, Predecessor, Refactor authority/lineage, Version history, Last updated) as the same junk in disguise, in every artifact.
+- **`/change-mode` must not grow the front matter** (`ai-framework/05-change-propagation.md`). It updates allowlisted values in place and never appends a new narrative line — the single most common way the junk accreted.
+- **Workspace `~/CLAUDE.md` User-Stories Layout reminder updated** to carry the front-matter allowlist + ban, and its stale "Refactor history → Appendix B" line corrected (Appendix B has been a one-line pointer since v2.18.0).
+
+### Added
+
+- **`/validate-user-stories` Check 8c** — flags front-matter junk fields (Status-with-version-narrative, Predecessor, Refactor authority/lineage, Version history, Last updated) and over-long front matter, recommending a cut back to the allowlist. Does not flag legitimate live-state `Status: DRAFT` markers.
+
+---
+
+## v2.20.0 — 2026-05-29
+
+### Changed
+
+- **Figma/FigJam is now the single deliverable surface for diagrams; the "two visible surfaces" rule is reversed** (`~/CLAUDE.md` Diagram Rendering policy). Diagram docs no longer carry an always-on Mermaid code block alongside the Figma link. Figma (`[Open in Figma](URL)`) is canonical; Mermaid is a temporary fallback only. Reason: Mermaid doesn't render reliably across the tools the team actually opens (Confluence without a plugin, many markdown viewers), and the product team works in Figma.
+- **`/visual-diagram` reframes the no-Figma path as a temporary fallback** (`ai-framework/03c-visual-diagram.md`). If the Figma MCP is unavailable, the step tells the PM and offers to let them connect Figma first; if they proceed, it produces a Mermaid block banner-labeled `⚠ Temporary fallback — connect the Figma MCP and re-run to replace with a Figma diagram`, sets `export_urls.figma_diagram_url = null`, and sets `visual_diagram.needs_figma_regen = true` so a later run regenerates it in Figma. When Figma succeeds, the doc shows only the Figma link — never a Mermaid block alongside it.
+- **Aligned command/state docs** (`SKILL.md`, skill `CLAUDE.md`, `subprompts/visual-diagram.md`, README, docs/index.html) to the deliverable-vs-temporary-fallback framing. New state field `visual_diagram.needs_figma_regen`.
+
+### Unchanged (already Figma / not Mermaid)
+
+- Timeline (FigJam + interactive HTML Gantt), designs (v0 / Figma Make / `/push-to-figma`), and `/system-design`'s inline ASCII architecture sketches (they render everywhere and were never Mermaid). Existing feature diagram docs are left as-is — re-run `/visual-diagram` per feature to regenerate any in Figma.
+
+---
+
+## v2.19.0 — 2026-05-29
+
+### Added
+
+- **Step 2.7 — acceptance-criteria format fit-check** (`ai-framework/06-user-stories.md`). Before writing AC, the skill judges whether Gherkin is the clearest format for this feature (it fits behavioral/multi-path stories; it adds ceremony to simple config/content/migration/spike work), states its recommendation, and **shows the PM one real story written both ways — Gherkin and plain-English criteria — side by side** so they can compare readability. The PM picks Gherkin / plain English / mixed; the choice is stored in `_pipeline-state.json` → `user_stories.ac_format` (+ `ac_format_overrides`) and reused on re-runs without re-asking.
+- **Gate-3 check `ac_format_matches_decision`** (`pipeline-configs.yaml`) — flags any story whose AC silently reverts to a different format than the PM approved.
+
+### Changed
+
+- **AC handling is format-aware end to end.** Full + DRAFT story blueprints now carry both a Gherkin template and a plain-English (`This ticket is done when:` + testable bullets) template; the "Gherkin coverage rules" became format-neutral "acceptance-criteria coverage rules" (same four categories, same UX-state coverage, only the syntax differs). Step 4 self-checks, the orchestrator Gate 3 checks (`subprompts/build-product.md`, `SKILL.md`), and `/validate-user-stories` Checks 2/4/5 all treat a "scenario/criterion" as a Gherkin block **or** a plain-English bullet.
+- **Jira export populates three distinct fields and preserves the chosen AC format** (`subprompts/prd-to-jira.md`). Explicit rule: **Description field** ← thorough plain-English Description (verbatim — fixes the prior "short description only" contradiction), **Acceptance Criteria field** ← AC verbatim in the breakdown's format (never converted between Gherkin and plain English), **User Story field** ← the "As a… I want… so that…" narrative. The AC ADF example now includes both a Gherkin (paragraph-per-line) and a plain-English (`bulletList`) encoding.
+
+---
+
 ## v2.18.0 — 2026-05-29
 
 ### Changed

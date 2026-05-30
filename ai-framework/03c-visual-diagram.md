@@ -4,9 +4,9 @@ Runs after Gate 1 and before the design step (when called from the orchestrator)
 
 Read `ai-framework/rules.md` and `ai-framework/error-handling.md` before executing.
 
-**Primary format: Figma FigJam diagram** (created via Figma MCP `generate_diagram`). The diagram lives in Figma, can be shared with any team member, and embeds cleanly in Confluence.
+**Figma / FigJam is the deliverable** (created via Figma MCP `generate_diagram`). The diagram lives in Figma — the tool the product team works in — can be shared with any team member, and embeds cleanly in Confluence. Figma is the single visible surface for the diagram; the diagram doc carries the Figma link, not a Mermaid block.
 
-**Fallback format: Mermaid syntax** — only if the Figma MCP is unavailable. Note: Mermaid does not render visually in Confluence without a third-party plugin; stakeholders viewing the Confluence page will see raw code, not a diagram. If using Mermaid, inform the PM of this limitation.
+**Mermaid is a temporary fallback only — when the Figma MCP is unavailable.** It never ships alongside a successful Figma diagram. When the MCP isn't connected, produce a Mermaid block so the pipeline doesn't stall, but mark it clearly as temporary and prompt the PM to connect Figma so it can be replaced (see the fallback path in Step 2). Mermaid does not render in Confluence (or many markdown viewers) without a plugin — which is exactly why it is fallback-only.
 
 ---
 
@@ -62,11 +62,18 @@ After the diagram is created:
 
 If `generate_diagram` fails or the Figma MCP is not available, fall back to the Mermaid path below.
 
-### Fallback path — Mermaid syntax
+### Fallback path — temporary Mermaid (only when Figma MCP is unavailable)
 
-⚠ **Mermaid limitation:** Mermaid syntax renders visually in tools like Cursor (with the Mermaid extension), VS Code, and some markdown viewers, but **does not render in Confluence** without a third-party plugin. Stakeholders opening the Confluence page will see raw Mermaid code. Inform the PM of this limitation before proceeding.
+First tell the PM, plainly:
 
-Generate the diagram in Mermaid syntax. Every node must trace to a specific PRD user story or section.
+> "The Figma MCP isn't connected, so I can't create the diagram in Figma right now. I'll produce a temporary Mermaid version so the pipeline keeps moving — connect the Figma MCP and re-run `/visual-diagram` and I'll replace it with a real Figma diagram. Continue with the temporary version? (yes / I'll connect Figma first)"
+
+If the PM connects Figma, return to the primary path. Otherwise generate the diagram in Mermaid syntax (every node must trace to a specific PRD user story or section), and:
+- Set `export_urls.figma_diagram_url` to `null` in `_pipeline-state.json` so a later run (and `/publish-to-confluence`) knows the Figma diagram is still owed.
+- Set `_pipeline-state.json` → `visual_diagram.needs_figma_regen = true`.
+- Label the Mermaid block in the output file as a temporary fallback (see Step 3). Do not wrap it in HTML comments — keep it a visible fenced block so it renders where Mermaid is supported.
+
+⚠ **Mermaid limitation:** Mermaid renders in Cursor / VS Code / some markdown viewers, but **not in Confluence** without a third-party plugin. This is the temporary cost of not having Figma connected — flag it so it gets replaced.
 
 ---
 
@@ -82,9 +89,9 @@ Then write the diagram to that path. If the parent folders do not exist, create 
 
 The output file must include:
 - Diagram type chosen.
-- Format used (Figma FigJam or Mermaid).
-- If Figma: the Figma diagram URL.
-- If Mermaid: the Mermaid code block, plus the Confluence limitation note.
+- Format used (Figma FigJam, or temporary Mermaid fallback).
+- **If Figma (the normal case):** the `[Open in Figma](URL)` link as the diagram's single visible surface. Do not also paste a Mermaid block.
+- **If temporary Mermaid fallback:** a bold banner at the top of the diagram section — `⚠ Temporary fallback — the Figma MCP was unavailable. Connect it and re-run /visual-diagram to replace this with a Figma diagram.` — followed by the visible Mermaid fenced block (not HTML-commented) and the Confluence limitation note.
 - A traceability table mapping every node, screen, or component to its source PRD user story or section.
 
 ---

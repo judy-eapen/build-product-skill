@@ -1,8 +1,8 @@
 # User Stories Breakdown
 
-Runs after Gate 2 (design approval) and before Gate 3 (breakdown approval) when called from the orchestrator, OR can be called standalone via `/user-stories` when a PM has an approved PRD and wants the Gherkin breakdown without running the full pipeline.
+Runs after Gate 2 (design approval) and before Gate 3 (breakdown approval) when called from the orchestrator, OR can be called standalone via `/user-stories` when a PM has an approved PRD and wants the breakdown without running the full pipeline.
 
-Produces a standalone, human-readable user-stories document with exhaustive Gherkin AC, FE/BE pairing, testing notes, **multi-epic grouping**, and an optional **DRAFT mode** for stories whose design details aren't finalized yet. This document becomes the source of truth for Jira ticket creation (Step 11 or standalone `/prd-to-jira`).
+Produces a standalone, human-readable user-stories document with exhaustive acceptance criteria, FE/BE pairing, testing notes, **multi-epic grouping**, and an optional **DRAFT mode** for stories whose design details aren't finalized yet. **AC format is not assumed** — Step 2.7 decides per feature (or per story) whether Gherkin or plain-English criteria reads clearest, and shows the PM a side-by-side sample before committing. This document becomes the source of truth for Jira ticket creation (Step 11 or standalone `/prd-to-jira`).
 
 Read `ai-framework/rules.md` and `ai-framework/error-handling.md` before executing.
 
@@ -292,6 +292,72 @@ After computing waves, go back to the Sequence Map table from Step 2 and fill in
 
 ---
 
+## Step 2.7 — Acceptance-criteria format fit-check (Gherkin vs. plain English)
+
+**Do not assume Gherkin.** Before writing any acceptance criteria, decide whether `Scenario / Given / When / Then` is actually the clearest format for *this* feature's stories, or whether plain-English criteria would be easier for anyone reading the ticket to understand. This honors the workspace rule "Acceptance Criteria — Gherkin or plain bullet points, whichever is clearest."
+
+### When Gherkin helps vs. when it gets in the way
+
+- **Gherkin fits** behavioral, stateful, multi-path stories: FE flows with distinct states and triggers, BE endpoints with clear request → response → error paths, anything with several conditional branches QA must walk. The Given/When/Then structure earns its ceremony there.
+- **Gherkin gets in the way** for: simple config or content/copy changes, data migrations or backfills, research / spike / investigation tickets, plumbing with a single obvious assertion, or any story where the behavior is one straight line. Forcing Given/When/Then onto these adds ceremony without clarity — a plain-English checklist reads better and tells the reader faster "what is this ticket supposed to do."
+
+Assess the stories from the Sequence Map and classify the feature:
+- **Gherkin** — most/all stories are behavioral and benefit from it.
+- **Plain English** — most/all stories are simple/declarative; Gherkin would be noise.
+- **Mixed** — some epics or stories want Gherkin, others want plain English (record which).
+
+### Show the PM a side-by-side sample and let them choose
+
+Pick **one representative story from this feature** (use its real Description and behavior — not a generic example) and write its acceptance criteria **both ways**, then present this block to the PM:
+
+```
+━━━ Acceptance-criteria format ━━━
+
+For [feature], my read is: [Gherkin / Plain English / Mixed] — because [one-sentence reason
+tied to the nature of these stories].
+
+Here is one real story (US-[X.Y] — [title]) written both ways so you can compare readability:
+
+── Option A: Gherkin ──
+Scenario: [happy path]
+  Given [...]
+  When [...]
+  Then [...]
+Scenario: [negative/error]
+  Given [...]
+  Then [...]
+
+── Option B: Plain English ──
+This ticket is done when:
+- [Plain, testable criterion — happy path, stated so anyone can check it]
+- [Negative/validation criterion]
+- [Edge criterion]
+- [Error-handling criterion]
+
+Both are testable. Gherkin is more structured for QA automation; plain English is faster
+for any stakeholder to read and confirm "yes, that's what this ticket should do."
+
+Which format should I use for this breakdown?
+(a) Gherkin everywhere   (b) Plain English everywhere   (c) Mixed — I'll tell you which
+[recommended: <your classification>]
+━━━
+```
+
+Accept the PM's answer. If they pick **Mixed**, ask which epics/stories use which (or propose a split and let them confirm). Record the decision in `_pipeline-state.json`:
+
+```json
+"user_stories": {
+  "ac_format": "gherkin | plain | mixed",
+  "ac_format_overrides": { "Epic 2": "plain", "US-3.4": "gherkin" }
+}
+```
+
+`ac_format` is the default for every story; `ac_format_overrides` (optional) names the exceptions when Mixed. Step 3 writes each story's AC in its resolved format. The choice carries through to validation, Gate 3, and Jira export (the AC custom field gets whatever format was chosen — never silently converted back to Gherkin).
+
+If this step is re-run via `/change-mode` or a Gate 3 reopen and `ac_format` already exists in state, reuse it without re-asking unless the PM raises it.
+
+---
+
 ## Step 3 — Per-story sections
 
 ### Apply intake-captured title conventions
@@ -325,9 +391,9 @@ For each US-ID in the Sequence Map that is **not DRAFT**, write a section with t
 
 As a [role], I want [goal] so that [benefit].
 
-**Acceptance Criteria (Gherkin)**
+**Acceptance Criteria** — write in the **format chosen at Step 2.7** for this story (`ac_format`, or its `ac_format_overrides` entry). Cover all applicable categories (happy / negative / edge / error) per the rules below, in whichever format. Write the number of criteria/scenarios this story actually needs — simple stories may have 2–3, complex stories may have 10+. Do not pad to match the template; do not cap at the template count.
 
-Write the number of scenarios this story actually needs — simple stories may have 2–3, complex stories may have 10+. Do not pad to match the template; do not cap at the template count. Cover all four categories (happy / negative / edge / error) per the rules below.
+*If the chosen format is **Gherkin**:*
 
 \`\`\`
 Scenario: [Happy-path — the most common successful flow]
@@ -348,6 +414,18 @@ Scenario: [Error case — e.g., upstream timeout, partial failure, retry, fallba
   ...
 \`\`\`
 
+*If the chosen format is **Plain English**:*
+
+\`\`\`
+This ticket is done when:
+- [Happy path — the most common successful flow, stated as a testable check anyone can confirm]
+- [Negative case — invalid input / missing required field / validation failure / unauthorized]
+- [Edge case — empty state / max-min boundary / concurrent action / offline / locale-timezone]
+- [Error case — upstream timeout / partial failure / retry / fallback]
+\`\`\`
+
+Each plain-English criterion must be **testable and specific** — state the condition and the observable outcome (e.g., "When the search returns no results, the page shows the empty-state message and a 'clear filters' action"), not a vague intention ("search works well"). Plain English changes only the syntax, not the rigor: the same four categories and the same UX-state coverage rules below still apply.
+
 **Testing Notes (high level)**
 - **Test-coverage areas:** [list, e.g. UI rendering, data flow, error handling, accessibility, performance]
 - **Cross-boundary verification:** how to verify this works end-to-end with the [linked pair / dependency]. Example: "Hit the BE endpoint US-1.2 directly with a saved-search payload; confirm the FE in US-1.1 renders it correctly."
@@ -355,7 +433,7 @@ Scenario: [Error case — e.g., upstream timeout, partial failure, retry, fallba
 - **Data conditions to test:** [list, e.g. empty, single item, max payload size, special characters, unicode]
 - **Performance threshold:** [pull from PRD NFR section if applicable]
 - **HIGH risks from codebase review affecting this story:** [list any, with mitigation note]
-- **UX state coverage (FE stories only):** empty / loading / error / populated — confirm at least one scenario covers each
+- **UX state coverage (FE stories only):** empty / loading / error / populated — confirm at least one scenario/criterion covers each
 ```
 
 ### DRAFT-mode story format
@@ -381,7 +459,9 @@ For each US-ID in the Sequence Map that **is DRAFT**, write a section with this 
 
 As a [role], I want [goal] so that [benefit].
 
-**Acceptance Criteria (Gherkin) — best effort from PRD**
+**Acceptance Criteria — best effort from PRD** (in the Step 2.7 chosen format for this story)
+
+*Gherkin:*
 
 \`\`\`
 Scenario: [Happy-path scenario name — behavioral only, no design-specific copy/labels]
@@ -393,6 +473,14 @@ Scenario: [Negative or error case where the PRD has enough detail to write it]
   Given [...]
   When [...]
   Then [...]
+\`\`\`
+
+*Plain English:*
+
+\`\`\`
+This ticket is done when:
+- [Happy path — behavioral only, no design-specific copy/labels]
+- [Negative or error case where the PRD has enough detail to write it]
 \`\`\`
 
 **Known design gaps (refresh required):**
@@ -411,35 +499,39 @@ Scenario: [Negative or error case where the PRD has enough detail to write it]
 - **UX state coverage:** ⚠ Pending design refresh.
 ```
 
-### Gherkin coverage rules
+### Acceptance-criteria coverage rules (apply to both formats)
 
-**Scenario count scales with story complexity. There is no fixed number.** A simple story (e.g., "log analytics event when user clicks Save") may need 2–3 scenarios. A complex story (e.g., "submit a 12-field form with cross-field validation, three error paths, and a draft autosave") may need 10 or more. Do not pad scenarios to match the template, and do not cap at the template's example count. The template above shows one happy-path scenario plus category cues — fill in the actual scenarios this specific story requires.
+These rules govern **what the AC must cover**, regardless of whether the story is written in Gherkin or plain English (per Step 2.7). "Scenario" below means a Gherkin `Scenario:` block *or* a plain-English criterion bullet — the coverage bar is identical.
 
-Each non-DRAFT story must cover these AC categories — write each category exhaustively for this specific story (some categories may need multiple scenarios, others may need just one, depending on the story):
+**Count scales with story complexity. There is no fixed number.** A simple story (e.g., "log analytics event when user clicks Save") may need 2–3 criteria. A complex story (e.g., "submit a 12-field form with cross-field validation, three error paths, and a draft autosave") may need 10 or more. Do not pad to match the template, and do not cap at the template's example count.
 
-- **Happy path** — at least 1 scenario. The most common successful flow. Add more if the story has multiple legitimate happy paths (e.g., a feature with two user roles each having a different happy path).
-- **Negative cases** — invalid input, missing required fields, validation failures, unauthorized access (where applicable). At least 1 scenario, more if the story has multiple distinct validation rules each worth specifying.
-- **Edge cases** — empty state / first use, max boundary, min boundary, concurrent actions, offline or degraded service, timezone or locale if applicable. At least 1 scenario, more if multiple boundaries apply.
-- **Error cases** — upstream timeouts, partial failures, retries, fallbacks. At least 1 scenario (especially for BE stories), more if the story integrates with multiple upstream systems each with distinct failure modes.
+Each non-DRAFT story must cover these AC categories — write each category exhaustively for this specific story (some categories may need multiple criteria, others just one):
+
+- **Happy path** — at least 1. The most common successful flow. Add more if the story has multiple legitimate happy paths (e.g., two user roles each with a different happy path).
+- **Negative cases** — invalid input, missing required fields, validation failures, unauthorized access (where applicable). At least 1, more if the story has multiple distinct validation rules.
+- **Edge cases** — empty state / first use, max boundary, min boundary, concurrent actions, offline or degraded service, timezone or locale if applicable. At least 1, more if multiple boundaries apply.
+- **Error cases** — upstream timeouts, partial failures, retries, fallbacks. At least 1 (especially for BE stories), more if the story integrates with multiple upstream systems each with distinct failure modes.
 
 **Skip a category only if it genuinely doesn't apply** (e.g., a read-only stats display has no "negative input" case). If you skip a category, the story is exempt from that one. Do not skip just to keep the count low.
 
-DRAFT stories aim for happy path + at least one behavioral negative/error scenario when the PRD supports it. Edge cases tied to UX states (empty / loading) are deferred to design refresh.
+DRAFT stories aim for happy path + at least one behavioral negative/error criterion when the PRD supports it. Edge cases tied to UX states (empty / loading) are deferred to design refresh.
 
-Use proper Gherkin syntax: each scenario starts with `Scenario:`, followed by `Given` / `When` / `Then` / `And` lines. Indent two spaces.
+**Syntax by format:**
+- *Gherkin:* each scenario starts with `Scenario:`, followed by `Given` / `When` / `Then` / `And` lines, indented two spaces.
+- *Plain English:* a `This ticket is done when:` lead-in followed by one testable bullet per criterion — each stating the condition and the observable outcome.
 
-For BE stories: scenarios describe API behavior (request → response), not UI.
-For FE stories: scenarios describe user-visible behavior (action → screen state).
+For BE stories: criteria describe API behavior (request → response), not UI.
+For FE stories: criteria describe user-visible behavior (action → screen state).
 
 ### UX state coverage for FE stories
 
-For every **non-DRAFT** FE story, confirm at least one scenario covers each of:
+For every **non-DRAFT** FE story, confirm at least one scenario or criterion covers each of:
 - **Empty state** — what the user sees when there's no data yet.
 - **Loading state** — what the user sees while waiting.
 - **Error state** — what the user sees when something goes wrong.
 - **Populated state** — what the user sees in the normal "data present" case.
 
-If any state is missing, add a scenario for it.
+If any state is missing, add a scenario/criterion for it (in the story's chosen format).
 
 For DRAFT FE stories, UX state coverage is **not required** — these are tracked as known gaps in `user_stories.draft_stories[]` and refreshed via `/change-mode` later.
 
@@ -456,8 +548,9 @@ Before presenting the breakdown to the PM, run the quality checks:
 3b. **Every Epic has a Description** (3–6 sentences, plain English) captured in `_pipeline-state.json` → `user_stories.epics[].description`.
 4. **Every story has a Wave assignment** from Step 2.5 (W1, W2, ...). No story should be missing a wave (would indicate a cycle or an algorithm bug).
 5. **No cycles in the dependency graph.** Step 2.5 detects cycles; surface them here as CRITICAL findings with the US-IDs involved.
-6. **Every non-DRAFT story has at least 2 Gherkin scenarios.** Single-scenario non-DRAFT stories are insufficient. (DRAFT stories aim for ≥1 scenario — count is reported but not required.)
-7. **Every non-DRAFT story has at least one edge-case OR error-state scenario.** Not just happy path. (DRAFT stories exempt.)
+6. **Every non-DRAFT story has at least 2 AC scenarios/criteria** (in the story's chosen format — Gherkin scenarios or plain-English criteria). Single-criterion non-DRAFT stories are insufficient. (DRAFT stories aim for ≥1 — count is reported but not required.)
+7. **Every non-DRAFT story has at least one edge-case OR error-state scenario/criterion.** Not just happy path. (DRAFT stories exempt.)
+7a. **AC format matches the Step 2.7 decision.** Every story's AC is written in the format recorded in `_pipeline-state.json` → `user_stories.ac_format` (honoring any `ac_format_overrides`). No story silently mixes formats against the decision.
 8. **Every linked FE/BE pair has both sides present.** If you list US-1.1 (FE) → linked to US-1.2 (BE), US-1.2 must exist as its own story.
 9. **No story is sized L+ without a proposed split.** If you marked L+, the per-story section must include a "Proposed split into US-X.Y + US-X.Z" note. (Applies to DRAFT stories too — sized as L+* gets the same treatment.)
 10. **HIGH risks from the codebase review appear in at least one story's testing notes.** Traceability check. Read the codebase review file and confirm.
@@ -494,7 +587,22 @@ Structure — **meat-first, operational metadata in appendices**. Stakeholders (
 
 **Top of the document (the meat):**
 
-1. **Front matter** (one short block: Source PRD path, Generated date, Phases covered, Mode: full / DRAFT / MIXED, story count = computed from blueprint headers, DRAFT story count, total wave count). Keep to ~10 lines.
+1. **Front matter — a strict allowlist, ≤ 8 lines.** Only these fields may appear, each one line. Nothing else goes in the front matter:
+   - **Source PRD:** `prd/[feature]-prd.md` (vX.Y)
+   - **Generated:** [date]
+   - **Phases covered:** [list]
+   - **Mode:** full / DRAFT / MIXED
+   - **Stories:** [count, computed from blueprint headers] ([N] DRAFT)
+   - **Waves:** [total wave count]
+   - **Change history:** see [../changelog/[feature]-changelog.md](...) → "User Stories Breakdown" (the single pointer, same as Appendix B)
+   - *(optional)* **Jira:** [N] tickets in project [KEY] — see [manifest](../jira-export/[feature]-jira-manifest.md) — a **compact one-liner**, not an issue-range narrative
+
+   **Forbidden in the front matter (this is the junk that accretes over `/change-mode` runs — never write any of it):**
+   - A **`Status:` line carrying a version + change narrative** (e.g. "Status: Final. v1.6 (date) — readability reformat. Every story restructured…"). A bare `Status: Draft` / `Status: Final` word is allowed; an attached version/refactor story is not.
+   - **`Last updated:`**, **`Predecessor:`**, **`Refactor authority:`**, **`Refactor lineage:`**, **`Version history:`**, or any other bold-label line that narrates versions, prior versions, or what changed.
+   - Multi-version prose of any kind. The version number lives in the title line; the full history lives in the centralized changelog (the one-line pointer above is the only nod to it).
+
+   These forbidden fields are change-history by another name — the same rule as `## Change log` sections in `ai-framework/style-preferences.md` § Artifact Conventions, just in front-matter disguise. (The per-story `Status: ⚠ DRAFT — needs design` marker inside a blueprint, and gate-reopen `STATUS: DRAFT` banners, are different and stay — they describe live state, not version history.)
 2. **At a glance** table (Total stories, Epics, Waves, Format, Notable dependencies). Counts derive from the single source-of-truth count (see "Source of truth for counts" rule below).
 3. **How to read this document** — three-row table mapping audience (Executive sponsor / Engineer / Designer) to where to start.
 4. **Epic outlines** — one block per Epic with a 2–3 sentence "What this delivers" outcome paragraph written for non-engineers. Pulled from `user_stories.epics[].description` in `_pipeline-state.json`.

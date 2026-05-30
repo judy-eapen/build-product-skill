@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>/build-product — Work Pipeline v2.18.0</title>
-  <!-- Version: 2.18.0 | Updated: 2026-05-29 | Update this line and the badge/changelog below on every release -->
+  <title>/build-product — Work Pipeline v2.21.0</title>
+  <!-- Version: 2.21.0 | Updated: 2026-05-29 | Update this line and the badge/changelog below on every release -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
@@ -494,7 +494,7 @@
   <header>
     <div class="header-top">
       <span class="cmd-title">/build-product</span>
-      <span class="version-badge">v2.18.0</span>
+      <span class="version-badge">v2.21.0</span>
     </div>
     <p class="header-sub">A Claude Code skill that takes a PM from feature idea → Jira Epic with all linked tickets. Research · Codebase review · PRD · Dual AI review · Design prompts · User stories · Jira export.</p>
     <div class="header-links">
@@ -642,7 +642,7 @@
             <span class="step-name">Visual Diagram</span>
             <span class="badge auto">Auto</span>
           </div>
-          <p class="step-desc">Creates a visual diagram of the feature: user journey map, system architecture, or wireflow. <strong>Primary:</strong> Figma FigJam via Figma MCP — generates a shareable Figma file, stores URL in state. <strong>Fallback:</strong> Mermaid syntax (with a warning that it won't render in Confluence without a plugin).</p>
+          <p class="step-desc">Creates a visual diagram of the feature: user journey map, system architecture, or wireflow. <strong>Deliverable:</strong> Figma FigJam via Figma MCP — generates a shareable Figma file, stores URL in state. <strong>Temporary fallback only if the Figma MCP isn't connected:</strong> a clearly-labeled Mermaid block, flagged in state to regenerate as Figma on a re-run (never a co-equal surface, never shipped alongside a Figma diagram).</p>
           <div class="step-meta">
             <div class="step-meta-item">📁 <code>diagrams/[feature]-feature-diagram.md</code></div>
             <div class="step-meta-item">🔗 Figma URL → <code>_pipeline-state.json → export_urls.figma_diagram_url</code></div>
@@ -775,7 +775,7 @@
           <div class="cmd-item"><span class="cmd-name">/review-prd</span><span class="cmd-desc">Product Reviewer pass on a PRD</span></div>
           <div class="cmd-item"><span class="cmd-name">/cto-review</span><span class="cmd-desc">Technical Reviewer pass on a PRD</span></div>
           <div class="cmd-item"><span class="cmd-name">/system-design</span><span class="cmd-desc">System design doc from a PRD</span></div>
-          <div class="cmd-item"><span class="cmd-name">/visual-diagram</span><span class="cmd-desc">Figma FigJam diagram (Mermaid fallback)</span></div>
+          <div class="cmd-item"><span class="cmd-name">/visual-diagram</span><span class="cmd-desc">Figma FigJam diagram (deliverable); temporary Mermaid fallback only if the MCP isn't connected</span></div>
           <div class="cmd-item"><span class="cmd-name">/user-stories</span><span class="cmd-desc">User Stories Breakdown from an approved PRD</span></div>
           <div class="cmd-item"><span class="cmd-name">/timeline</span><span class="cmd-desc">Gantt (Figma + editable HTML at Epic+Phase). Drag/cascade in browser; 💾 Save to skill (Chrome/Edge) or ⬇ Export plan; then <code>/timeline apply</code> (auto-discovers latest)</span></div>
           <div class="cmd-item"><span class="cmd-name">/prd-to-jira</span><span class="cmd-desc">Create Jira tickets from a breakdown or PRD</span></div>
@@ -879,6 +879,54 @@
   <section>
     <p class="section-title">Recent Changes</p>
     <div class="changelog-list">
+
+      <div class="changelog-item">
+        <div class="changelog-header">
+          <span class="changelog-version">v2.21.0</span>
+          <span class="changelog-date">2026-05-29</span>
+          <span class="changelog-minor-badge">MINOR</span>
+        </div>
+        <div class="changelog-body">
+          <ul>
+            <li><strong>No more front-matter plumbing junk.</strong> Kills the <code>Status: v1.6 — readability reformat… / Predecessor: / Refactor authority: / Refactor lineage: / Last updated:</code> block that accreted at the top of the user-stories doc over repeated <code>/change-mode</code> runs. v2.18.0 banned change history under <code>## </code> headings; this closes the front-matter-disguise loophole.</li>
+            <li><strong>Front matter is a strict ≤ 8-line allowlist.</strong> Only: Source PRD + version, Generated date, Phases, Mode, Stories count + DRAFT, Waves, the one-line change-history pointer, and an optional compact Jira pointer. The version/refactor narrative is banned everywhere — it lives in the centralized changelog. Bare <code>Status: Draft/Final</code> and per-story <code>Status: ⚠ DRAFT</code> markers stay (live-state, not history).</li>
+            <li><strong><code>/change-mode</code> guard + new validator check.</strong> Change-mode updates allowlisted front-matter values in place and never appends a new narrative line. <code>/validate-user-stories</code> Check 8c flags front-matter junk fields and over-long front matter, recommending a cut back to the allowlist.</li>
+          </ul>
+          <a class="changelog-link" href="https://github.com/judy-eapen/build-product-skill/blob/main/CHANGELOG.md" target="_blank">Full changelog →</a>
+        </div>
+      </div>
+
+      <div class="changelog-item">
+        <div class="changelog-header">
+          <span class="changelog-version">v2.20.0</span>
+          <span class="changelog-date">2026-05-29</span>
+          <span class="changelog-minor-badge">MINOR</span>
+        </div>
+        <div class="changelog-body">
+          <ul>
+            <li><strong>Figma/FigJam is the single deliverable surface for diagrams.</strong> The old "two visible surfaces" rule (a Figma link <em>and</em> an always-on Mermaid block in every diagram doc) is reversed. Figma is canonical; Mermaid is fallback-only. Reason: Mermaid doesn't render reliably across the tools the team opens (Confluence without a plugin, many markdown viewers), and the product team works in Figma.</li>
+            <li><strong><code>/visual-diagram</code> treats the no-Figma path as a temporary fallback.</strong> If the Figma MCP isn't connected, the step says so and offers to let you connect first; if you proceed it produces a Mermaid block banner-labeled <code>⚠ Temporary fallback</code>, sets <code>figma_diagram_url = null</code> and <code>visual_diagram.needs_figma_regen = true</code> so a re-run regenerates it in Figma. When Figma succeeds, the doc shows only the Figma link.</li>
+            <li><strong>Unchanged (already Figma / not Mermaid):</strong> Timeline (FigJam + interactive HTML Gantt), designs (v0 / Figma Make / push-to-figma), and <code>/system-design</code>'s inline ASCII sketches. Existing feature diagram docs are left as-is — re-run <code>/visual-diagram</code> to regenerate any in Figma.</li>
+          </ul>
+          <a class="changelog-link" href="https://github.com/judy-eapen/build-product-skill/blob/main/CHANGELOG.md" target="_blank">Full changelog →</a>
+        </div>
+      </div>
+
+      <div class="changelog-item">
+        <div class="changelog-header">
+          <span class="changelog-version">v2.19.0</span>
+          <span class="changelog-date">2026-05-29</span>
+          <span class="changelog-minor-badge">MINOR</span>
+        </div>
+        <div class="changelog-body">
+          <ul>
+            <li><strong>Acceptance criteria stop assuming Gherkin — new Step 2.7 fit-check.</strong> Before writing AC, the skill judges whether Gherkin is clearest for this feature (fits behavioral/multi-path stories; adds ceremony to simple config/content/migration/spike work), states its read, and shows the PM <strong>one real story written both ways — Gherkin vs. plain-English criteria — side by side</strong>. The PM picks Gherkin / plain English / mixed; the choice (<code>user_stories.ac_format</code>) flows through authoring, validation, Gate 3, and Jira export, and is reused on re-runs.</li>
+            <li><strong>AC is format-aware everywhere.</strong> Story blueprints carry both templates; coverage rules, UX-state coverage, Step 4 self-checks, Gate 3 checks, and <code>/validate-user-stories</code> treat a "scenario/criterion" as a Gherkin block or a plain-English bullet. New Gate-3 check flags silent format reversion.</li>
+            <li><strong>Jira export fills all three story fields + preserves format.</strong> Description ← the thorough plain-English description (verbatim); Acceptance Criteria ← the AC in its chosen format (never converted between Gherkin and plain English); User Story ← the "As a… I want… so that…" narrative. AC ADF mapping now has both a Gherkin and a plain-English (<code>bulletList</code>) encoding.</li>
+          </ul>
+          <a class="changelog-link" href="https://github.com/judy-eapen/build-product-skill/blob/main/CHANGELOG.md" target="_blank">Full changelog →</a>
+        </div>
+      </div>
 
       <div class="changelog-item">
         <div class="changelog-header">

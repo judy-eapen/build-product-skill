@@ -1,7 +1,7 @@
 # User Stories Breakdown
 
 Generate a standalone user-stories breakdown document from an existing PRD. Use when:
-- You have an approved PRD and want the exhaustive Gherkin AC + FE/BE pairing without running the full pipeline.
+- You have an approved PRD and want the exhaustive acceptance criteria + FE/BE pairing without running the full pipeline. (Step 2.7 decides whether the AC reads clearest as Gherkin or plain English, and shows you a side-by-side sample before committing.)
 - You want a sprint-planning-ready doc you can read aloud to the team.
 - You want to validate the user-story coverage before deciding to create Jira tickets.
 
@@ -30,7 +30,7 @@ No prior pipeline run is required. The skill works with just a PRD, but each opt
 Document contents:
 - **Epic grouping** — every Epic with title, theme, and a thorough 3–6 sentence **plain-English Description** stakeholders can read without the PRD. Used verbatim as the Jira Epic Summary block at export.
 - **Build Sequence Map** — every story with type (FE / BE / both), phase, depends-on, related-to, size.
-- **Per-story sections** — thorough **plain-English Description** (3–6 sentences, distinct from the formal User Story) + As-a / I-want / So-that narrative + exhaustive Gherkin AC (happy + negative + edge + error scenarios) + testing notes (coverage areas, cross-boundary verification, data conditions, HIGH risks).
+- **Per-story sections** — thorough **plain-English Description** (3–6 sentences, distinct from the formal User Story) + As-a / I-want / So-that narrative + exhaustive acceptance criteria in the Step 2.7 chosen format (Gherkin or plain English; happy + negative + edge + error coverage) + testing notes (coverage areas, cross-boundary verification, data conditions, HIGH risks).
 - **Build-order summary paragraph** — sprint-planning-ready text.
 - **Limitations header** (if any optional inputs were missing) — explicit note about what couldn't be done.
 
@@ -41,8 +41,8 @@ Ten checks before declaring the breakdown ready:
 2. Every story has a unique US-ID.
 3. Every story has a thorough plain-English Description (3–6 sentences).
 4. Every Epic has a plain-English Description (3–6 sentences).
-5. Every story has at least 2 Gherkin scenarios.
-6. Every story has at least one edge-case or error-state scenario.
+5. Every story has at least 2 AC scenarios/criteria (in the Step 2.7 chosen format — Gherkin or plain English).
+6. Every story has at least one edge-case or error-state scenario/criterion.
 7. Every linked FE/BE pair has both sides present.
 8. No story sized larger than L without a proposed split.
 9. HIGH risks from codebase review appear in at least one story's testing notes (skipped if no codebase review).

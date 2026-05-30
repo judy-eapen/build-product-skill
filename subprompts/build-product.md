@@ -438,8 +438,9 @@ Output: `~/Desktop/Resources/PDLC Workflow Docs/[feature-name]/user-stories/[fea
 
 - Every PRD user story appears in the breakdown (no drops).
 - Every story has a unique US-ID.
-- Every story has at least 2 Gherkin scenarios.
-- Every story has at least one edge-case or error-state scenario.
+- Every story has at least 2 AC scenarios/criteria (in the Step 2.7 chosen format — Gherkin or plain English).
+- Every story has at least one edge-case or error-state scenario/criterion.
+- Every story's AC is written in the format chosen at Step 2.7 (no silent format reversion).
 - Every linked FE/BE pair has both sides present.
 - No story sized larger than L without a proposed split.
 - HIGH risks from the codebase review appear in at least one story's testing notes.

@@ -3,7 +3,7 @@
 Re-open the **User Stories Breakdown approval gate** for an existing feature.
 
 Use this when:
-- After approving Gate 3, the breakdown turns out to have missing stories, incorrect FE/BE pairing, or thin Gherkin AC.
+- After approving Gate 3, the breakdown turns out to have missing stories, incorrect FE/BE pairing, or thin acceptance criteria (Gherkin or plain English).
 - Tickets have been created in Jira but the underlying breakdown was wrong, so the tickets are wrong.
 - The PM wants to revise sizing, sequencing, or testing notes before the engineering team starts work.
 

@@ -111,7 +111,7 @@ This trigger has a focused propagation that operates only on DRAFT stories. Skip
    - Read the matching screens/components from the new design catalog (e.g., the design for US-1.1 from `design/[feature]-phase-1-designs.md`).
    - Compose a refreshed version of the story:
      - Change `Status: ⚠ DRAFT — needs design` → remove (story is now complete).
-     - Rewrite the Gherkin AC to include the full set of scenarios (happy path, negative, edge — including UX state coverage for FE: empty / loading / error / populated).
+     - Rewrite the AC (in the breakdown's chosen format — Gherkin or plain English per `user_stories.ac_format`) to include the full set of scenarios/criteria (happy path, negative, edge — including UX state coverage for FE: empty / loading / error / populated).
      - Update the sizing — remove the `*` suffix (e.g., `M*` → `M`) and adjust if the design reveals more or less complexity than estimated.
      - Update Testing Notes — fill in the UX state coverage row, refresh edge-case list, add design-specific data conditions.
      - Remove the "Known design gaps" section from the story.
@@ -134,6 +134,8 @@ Writing: ~/Desktop/Resources/PDLC Workflow Docs/[feature-name]/[subfolder]/[file
 ```
 
 **Do not add inline version-history blocks to artifacts.** When you bump an artifact's version, update only the version number in the title line and (if missing) add a changelog pointer line. Do not append a new `**v0.X (date):** ...` bullet, a `## Change log` / `## Refactor history` section, or any "what changed" block inside the file — by any heading. The append-only record for this change-mode run is the changelog entry written in Step 6 — that is the single source of truth for version history. See `ai-framework/style-preferences.md` § Artifact Conventions.
+
+**Do not grow the front matter.** Front matter is a fixed allowlist (see `ai-framework/06-user-stories.md` Step 5 for the user-stories doc; the same principle applies to every artifact). On each run, update the computed values **in place** — counts, mode, source-PRD version, generated date. **Never** append `**Status:** v… — what changed`, `**Predecessor:**`, `**Refactor authority:**`, `**Refactor lineage:**`, `**Last updated:**`, or any new narrative line to the top of the doc. This is the single most common way junk accretes: each change-mode run tacks one more version sentence onto a `Status:` block until the reader scrolls past a wall of plumbing. The version narrative goes to the Step 6 changelog entry, nowhere else.
 
 **Decision-log updates go to the sidecar, not the PRD.** If this change locks a new decision (or reverses one), append it to `decisions/[feature-name]-decision-log.md` — never into the PRD body. The PRD's § 10 stays a one-line pointer.
 
