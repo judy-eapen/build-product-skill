@@ -4,6 +4,32 @@ All notable changes are documented here. Follows [Semantic Versioning](https://s
 
 ---
 
+## v2.23.0 — 2026-06-04
+
+### Added
+
+- **`/infosec-doc` standalone command** — fills out Bright's InfoSec Questionnaire (the Ops/DevOps security-review `.xlsx`) for a feature from its pipeline artifacts.
+  - **Derives answers across all 7 tabs** (Product/Service Overview, Service & Support, Hosting & Architecture, Data Protection & Access, Platform & Engineering Standards, Security & Maintenance, AI Usage) from the PRD, system design, technical review, codebase review, diagrams, and `_pipeline-state.json` (`export_urls`, `intake`).
+  - **Batch-interviews the PM** for the operational facts no artifact carries — product severity (gates the DR requirement), escalation/emergency contacts, DR region, vendor support/SLA, approved-AI-list + data-sharing opt-out status, legal sign-off — pre-filling each with a best-guess proposal to accept-or-edit.
+  - **Cardinal rule: never fabricate a security answer.** Every cell is sourced from an artifact, confirmed by the PM, or written as the literal `⚠ NEEDS INPUT`. Bright-standard defaults (TLS 1.2+, AES-256/KMS) are filled but listed under "Derived defaults — confirm before sending."
+  - **Writes the real workbook** to `[feature]/infosec/[feature]-infosec-questionnaire.xlsx` via `openpyxl`, copying the read-only golden template each run so formatting, styles, and the severity dropdown's data-validation are preserved and stale answers never linger. Idempotent. Records the path in `_pipeline-state.json` → `export_urls.infosec_doc` when state exists.
+  - **Not auto-invoked by `/build-product`** — the PM runs it once a feature has enough artifacts (PRD minimum; system design + technical review strongly recommended) and Ops asks for the security doc.
+
+---
+
+## v2.22.0 — 2026-05-31
+
+### Added
+
+- **`/create-slidedeck` standalone command** — turns a feature's pipeline artifacts (PRD, exec summary, system design, user stories, timeline, design catalog, diagrams) into a presentation-ready slide deck. Pipeline-aware (reads `_pipeline-state.json` + feature artifacts) but works standalone on pasted/pointed-at content when no feature is detected.
+  - **Always runs a full interview** (deck type, audience, goal, slide count, depth-per-slide, tone/branding, source artifacts, speaker notes, render surfaces), then confirms a one-line-per-slide outline before writing full slides — the single mandatory pause.
+  - **Three presets** seed defaults: `exec` (leadership greenlight, 5–10 slides), `kickoff` (team alignment, 10–15), `demo` (stakeholder overview, 8–12); `custom` for anything else.
+  - **One spec, many surfaces.** Always writes a **slide-spec markdown** (one block per slide) as the source of truth. Always emits a self-contained **deck-prompt** for Claude (claude.ai → interactive slide-deck Artifact) / Figma Make / Gemini / Canva — tool-agnostic, MCP-free. Optionally renders **Figma Slides** via the Figma MCP (Figma-first; skipped honestly with no fabricated link when the MCP is down) and/or a self-contained **HTML + PDF** deck via the `/exec-summary` pandoc + Chrome-headless toolchain.
+  - Standalone only — not auto-invoked by `/build-product`. Idempotent per deck-type; multiple deck-types coexist. Output → `[feature]/slides/`. No inline version history; the spec front matter carries only the PRD version it was generated against.
+  - Files: `subprompts/create-slidedeck.md`, command stub `~/.claude/commands/create-slidedeck.md`, registered in the skill `CLAUDE.md` command index.
+
+---
+
 ## v2.21.0 — 2026-05-29
 
 ### Changed

@@ -1,3 +1,23 @@
+v2.23.0 — 2026-06-04
+
+`/infosec-doc` command added — fills out Bright's InfoSec questionnaire (the Ops/DevOps security-review spreadsheet) for a feature from its pipeline artifacts.
+
+**New: `/infosec-doc` standalone command.** Populates Bright's 7-tab InfoSec Questionnaire `.xlsx` for a feature by deriving answers from the PRD, system design, technical review, codebase review, diagrams, and `_pipeline-state.json`, then batch-interviewing the PM for the operational facts the artifacts can't supply (severity, escalation contacts, DR region, vendor SLA, legal sign-off, approved-AI-list status). Writes the populated workbook to `[feature]/infosec/[feature]-infosec-questionnaire.xlsx` via `openpyxl`, preserving the template's formatting and the severity dropdown's data-validation. **Cardinal rule: never fabricate a security answer** — every cell is either sourced from an artifact, confirmed by the PM, or written as `⚠ NEEDS INPUT`; Bright-standard defaults (TLS, AES) are filled but flagged for confirmation. Standalone — not auto-invoked by `/build-product`. Idempotent: re-copies the golden template and overwrites on re-run.
+
+---
+
+v2.22.0 — 2026-05-31
+
+`/create-slidedeck` command added — turns a feature's pipeline artifacts into a presentation-ready slide deck.
+
+**New: `/create-slidedeck` standalone command.** Synthesizes a feature's PRD, exec summary, system design, user stories, timeline, design catalog, and diagrams into a slide deck. Pipeline-aware (reads `_pipeline-state.json` + the feature's artifacts) but works standalone on a pasted/pointed-at markdown when no feature is detected. **Always runs a full interview** (deck type, audience, goal, slide count, depth-per-slide, tone/branding, source artifacts, speaker notes, render surfaces) and confirms a one-line-per-slide outline before writing any full slides — the one mandatory pause. Three presets seed sensible defaults: `exec` (leadership greenlight, 5–10 slides), `kickoff` (team alignment, 10–15), `demo` (stakeholder overview, 8–12); `custom` for anything else (including ad-hoc status decks).
+
+**Design: one spec, many surfaces.** The command always writes a **slide-spec markdown** (one block per slide) as the durable source of truth — everything renders from it, mirroring how `/visual-diagram` keeps Figma definitive and `/exec-summary` keeps a markdown master. It always emits a self-contained **deck-prompt** the PM pastes into Claude (claude.ai → interactive slide-deck Artifact), Figma Make, Gemini, or Canva — the "hand the prompt to Claude design" path, tool-agnostic and MCP-free. Optionally it renders **Figma Slides** via the Figma MCP (honoring the Figma-first rule; skipped honestly with no fake link when the MCP is unavailable) and/or a self-contained **HTML + PDF** deck via the same pandoc + Chrome-headless toolchain as `/exec-summary`.
+
+Standalone only — not auto-invoked by `/build-product`. Idempotent per deck-type; multiple deck-types coexist for one feature. Output → `[feature]/slides/`. No inline version history (per the artifact conventions); the spec front matter carries only the PRD version it was generated against.
+
+---
+
 v2.21.0 — 2026-05-29
 
 Kills the front-matter plumbing junk — the `Status: v1.6 — readability reformat…` / `Predecessor:` / `Refactor authority:` / `Refactor lineage:` / `Last updated:` block that accretes at the top of docs over repeated `/change-mode` runs. v2.18.0 banned change history under `## ` headings; this closes the front-matter-disguise loophole.

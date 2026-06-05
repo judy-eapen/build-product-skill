@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>/build-product — Work Pipeline v2.21.0</title>
-  <!-- Version: 2.21.0 | Updated: 2026-05-29 | Update this line and the badge/changelog below on every release -->
+  <title>/build-product — Work Pipeline v2.23.0</title>
+  <!-- Version: 2.23.0 | Updated: 2026-06-04 | Update this line and the badge/changelog below on every release -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
@@ -494,7 +494,7 @@
   <header>
     <div class="header-top">
       <span class="cmd-title">/build-product</span>
-      <span class="version-badge">v2.21.0</span>
+      <span class="version-badge">v2.23.0</span>
     </div>
     <p class="header-sub">A Claude Code skill that takes a PM from feature idea → Jira Epic with all linked tickets. Research · Codebase review · PRD · Dual AI review · Design prompts · User stories · Jira export.</p>
     <div class="header-links">
@@ -779,6 +779,8 @@
           <div class="cmd-item"><span class="cmd-name">/user-stories</span><span class="cmd-desc">User Stories Breakdown from an approved PRD</span></div>
           <div class="cmd-item"><span class="cmd-name">/timeline</span><span class="cmd-desc">Gantt (Figma + editable HTML at Epic+Phase). Drag/cascade in browser; 💾 Save to skill (Chrome/Edge) or ⬇ Export plan; then <code>/timeline apply</code> (auto-discovers latest)</span></div>
           <div class="cmd-item"><span class="cmd-name">/prd-to-jira</span><span class="cmd-desc">Create Jira tickets from a breakdown or PRD</span></div>
+          <div class="cmd-item"><span class="cmd-name">/create-slidedeck</span><span class="cmd-desc">Turn a feature's artifacts into a slide deck. <strong>Always full-interviews</strong> (type, audience, goal, slide count, depth, tone, sources, notes, surfaces) and confirms a one-line-per-slide outline first. Presets <code>exec</code> / <code>kickoff</code> / <code>demo</code> (+<code>custom</code>). Writes a <strong>slide-spec markdown</strong> (source of truth), always emits a <strong>paste-into-Claude / Figma-Make deck-prompt</strong>, optionally renders <strong>Figma Slides</strong> (Figma MCP) and/or self-contained <strong>HTML + PDF</strong>. Idempotent per deck-type; output → <code>slides/</code>.</span></div>
+          <div class="cmd-item"><span class="cmd-name">/infosec-doc</span><span class="cmd-desc">Fill out Bright's <strong>InfoSec Questionnaire</strong> (the Ops/DevOps security-review <code>.xlsx</code>) for a feature. Derives answers across all 7 tabs from the PRD, system design, technical review, codebase review, diagrams + <code>_pipeline-state.json</code>, then <strong>batch-interviews</strong> the PM for what no artifact carries (severity — gates DR; escalation/emergency contacts; DR region; vendor SLA; approved-AI-list + opt-out; legal sign-off). <strong>Never fabricates a security answer</strong> — each cell is sourced, PM-confirmed, or <code>⚠ NEEDS INPUT</code>; standard defaults (TLS/AES) are flagged. Writes the real workbook via <code>openpyxl</code> (formatting + severity dropdown preserved) → <code>infosec/[feature]-infosec-questionnaire.xlsx</code>. Standalone; idempotent.</span></div>
           <div class="cmd-item"><span class="cmd-name">/drive-sync</span><span class="cmd-desc">Sync artifacts to Google Drive</span></div>
           <div class="cmd-item"><span class="cmd-name">/publish-to-confluence</span><span class="cmd-desc">Publish whole feature workspace: hub + child page per artifact; re-publishes only changed pages. <strong>v2.14.0+</strong> — Step 3.5 auto-pushes Mermaid diagrams + timelines to Figma when the Figma MCP is connected and no URL is in state, then embeds iframes. <strong>v2.15.0+</strong> — pre-flight drift + comment check on every <code>update</code> page: fetches Confluence version + inline + footer comments before overwriting; surfaces 🚨 DRIFT (someone edited outside the skill) and ⚠ N inline at risk; per-page actions <strong>proceed</strong> / <strong>skip</strong> / <strong>pull-comments</strong> (non-destructive sidecar dump) / <strong>show-drift</strong> / <strong>show-comments</strong>. Drift never auto-resolves.</span></div>
           <div class="cmd-item"><span class="cmd-name">/export-transcript</span><span class="cmd-desc">Write the full PM↔model conversation for a feature's pipeline run to clean + full markdown files</span></div>
@@ -879,6 +881,38 @@
   <section>
     <p class="section-title">Recent Changes</p>
     <div class="changelog-list">
+
+      <div class="changelog-item">
+        <div class="changelog-header">
+          <span class="changelog-version">v2.23.0</span>
+          <span class="changelog-date">2026-06-04</span>
+          <span class="changelog-minor-badge">MINOR</span>
+        </div>
+        <div class="changelog-body">
+          <ul>
+            <li><strong>New <code>/infosec-doc</code> command.</strong> Fills out Bright's InfoSec Questionnaire (the Ops/DevOps security-review <code>.xlsx</code>) for a feature, deriving answers across all 7 tabs from the PRD, system design, technical review, codebase review, diagrams, and <code>_pipeline-state.json</code>.</li>
+            <li><strong>Batch-interviews the PM</strong> for the operational facts no artifact carries — severity (gates the DR requirement), escalation/emergency contacts, DR region, vendor SLA, approved-AI-list + data-sharing opt-out, legal sign-off — pre-filling a best-guess proposal to accept-or-edit.</li>
+            <li><strong>Never fabricates a security answer.</strong> Every cell is sourced from an artifact, PM-confirmed, or written <code>⚠ NEEDS INPUT</code>; Bright-standard defaults (TLS 1.2+, AES-256/KMS) are filled but flagged for confirmation.</li>
+            <li><strong>Writes the real workbook</strong> via <code>openpyxl</code> — copies the read-only golden template each run, preserving formatting, styles, and the severity dropdown's data-validation → <code>infosec/[feature]-infosec-questionnaire.xlsx</code>. Standalone (not auto-invoked); idempotent.</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="changelog-item">
+        <div class="changelog-header">
+          <span class="changelog-version">v2.22.0</span>
+          <span class="changelog-date">2026-05-31</span>
+          <span class="changelog-minor-badge">MINOR</span>
+        </div>
+        <div class="changelog-body">
+          <ul>
+            <li><strong>New <code>/create-slidedeck</code> command.</strong> Turns a feature's pipeline artifacts (PRD, exec summary, system design, user stories, timeline, design catalog, diagrams) into a presentation-ready slide deck. Pipeline-aware; works standalone on pasted content.</li>
+            <li><strong>Always full-interviews, then confirms an outline.</strong> Asks deck type, audience, goal, slide count, depth, tone/branding, sources, speaker notes, and render surfaces every run, then confirms a one-line-per-slide outline before writing — the single mandatory pause. Presets <code>exec</code> / <code>kickoff</code> / <code>demo</code> (+<code>custom</code>).</li>
+            <li><strong>One spec, many surfaces.</strong> Always writes a slide-spec markdown (source of truth) + a paste-into-Claude / Figma-Make / Gemini / Canva deck-prompt; optionally renders Figma Slides (Figma MCP, no fake link when unavailable) and/or self-contained HTML + PDF via the <code>/exec-summary</code> toolchain. Idempotent per deck-type; output → <code>slides/</code>.</li>
+          </ul>
+          <a class="changelog-link" href="https://github.com/judy-eapen/build-product-skill/blob/main/CHANGELOG.md" target="_blank">Full changelog →</a>
+        </div>
+      </div>
 
       <div class="changelog-item">
         <div class="changelog-header">
