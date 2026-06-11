@@ -26,18 +26,18 @@ Apply the standard feature-name derivation rule (spaces → hyphens, lowercase) 
 
 ## Step 1 — Locate the current session's transcript file
 
-Claude Code persists every session as a JSONL file under:
+Claude Code persists every session as a JSONL file under `~/.claude/projects/`. The subfolder name is derived from the user's home directory path (slashes replaced with hyphens — e.g., `/Users/alice` → `-Users-alice`, `/home/bob` → `-home-bob`). To discover the correct folder at runtime:
 
-```
-~/.claude/projects/-Users-judydarvin/
+```bash
+ls ~/.claude/projects/
 ```
 
-Each file is named `[session-uuid].jsonl` (one file per session).
+Each subfolder contains `[session-uuid].jsonl` files (one per session).
 
 To find the current session's transcript:
 
 ```bash
-ls -t ~/.claude/projects/-Users-judydarvin/*.jsonl | head -1
+ls -t ~/.claude/projects/*/*.jsonl | head -1
 ```
 
 This returns the most-recently-modified `.jsonl` — which is always the current live session, because the file is appended to on every message.
@@ -117,7 +117,7 @@ Format:
 **Pipeline started:** [pipeline_started_at]
 **Pipeline completed:** [pipeline_completed_at or "still running"]
 **Transcript window:** [start] → [end]
-**Source:** `~/.claude/projects/-Users-judydarvin/[session-uuid].jsonl`
+**Source:** `~/.claude/projects/[your-profile]/[session-uuid].jsonl`
 **Exported:** [now]
 
 ## Pipeline timing

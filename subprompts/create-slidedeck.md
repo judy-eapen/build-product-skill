@@ -107,7 +107,7 @@ Per the PM's standing preference, **always run the full interview** — do not s
 3. **Primary goal** — the single decision or takeaway you want when the last slide lands. One sentence.
 4. **Slide count** — preset proposes a range; PM picks an exact target. Hard cap influences density.
 5. **Depth per slide** — `headline-only` (big statement, ≤1 supporting line) / `bullets` (3–5 bullets) / `dense` (bullets + a table or figure). Affects how much each artifact section is compressed.
-6. **Tone & branding** — neutral / BrightMLS-branded (colors, logo) / minimal. If branded, ask for any brand colors or a logo path; otherwise use a clean default theme.
+6. **Tone & branding** — neutral / company-branded (colors, logo) / minimal. If branded, ask for any brand colors or a logo path; otherwise use a clean default theme.
 7. **Source artifacts** — multi-select; the preset pre-checks its primary sources. PM adds/removes (e.g., add the timeline to an exec deck, drop system design from a demo).
 8. **Speaker notes** — yes/no. If yes, every slide gets a `Notes:` block (what to say, not what's on the slide).
 9. **Render surface(s)** — multi-select: **Claude deck-prompt** (always on, can't be unchecked) / **Figma Slides** (requires Figma MCP) / **HTML + PDF**. If Figma Slides is picked but the MCP is unavailable, say so and proceed with the others.

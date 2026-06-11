@@ -11,7 +11,7 @@ Use when:
 
 Read `ai-framework/rules.md` and `ai-framework/error-handling.md` before executing.
 
-**Cost note:** This is an LLM-driven semantic analysis. On a PRD around 100KB (typical for a Work-pipeline feature), expect 30–60 seconds of runtime and a moderate token consumption. Larger PRDs (the nestfully-ai PRD is ~150KB) take ~1–2 minutes. Run on-demand, not auto-run at every gate.
+**Cost note:** This is an LLM-driven semantic analysis. On a PRD around 100KB (typical for a Work-pipeline feature), expect 30–60 seconds of runtime and a moderate token consumption. Larger PRDs (~150KB+) take ~1–2 minutes. Run on-demand, not auto-run at every gate.
 
 ---
 

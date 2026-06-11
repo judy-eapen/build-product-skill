@@ -1,6 +1,6 @@
 # InfoSec Questionnaire
 
-Fill out Bright's **InfoSec Questionnaire** (the Ops/DevOps security-review spreadsheet) for a feature, drawing every answer it can from the feature's existing pipeline artifacts, interviewing the PM for the operational facts the artifacts can't supply, and writing the populated `.xlsx` into the feature's `infosec/` folder.
+Fill out your organization's **InfoSec Questionnaire** (the Ops/DevOps security-review spreadsheet) for a feature, drawing every answer it can from the feature's existing pipeline artifacts, interviewing the PM for the operational facts the artifacts can't supply, and writing the populated `.xlsx` into the feature's `infosec/` folder.
 
 Use when:
 
@@ -16,173 +16,183 @@ Use when:
 This document goes to a security review. A wrong-but-confident answer is worse than a blank one.
 
 - Fill a cell **only** when the answer is either (a) directly stated or unambiguously implied by a pipeline artifact, or (b) confirmed by the PM in the interview step.
-- For a value that is a defensible Bright-standard default but **not** confirmed by an artifact (e.g. "TLS 1.2+ in transit"), fill it **and** list it in the in-thread report under "Derived defaults — confirm before sending" so the PM can verify.
+- For a value that is a defensible industry-standard default but **not** confirmed by an artifact (e.g. "TLS 1.2+ in transit"), fill it **and** list it in the in-thread report under "Derived defaults — confirm before sending" so the PM can verify.
 - Anything you cannot source and the PM does not answer → write the literal string **`⚠ NEEDS INPUT`** in the cell. Never guess vendor names, contacts, SLAs, encryption details, severity, or legal-review status.
 
 ---
 
 ## Inputs (Step 0 — resolve feature, artifacts, and template)
 
-1. **Feature.** Auto-derive from the working folder / conversation. If ambiguous, ask which feature (the folder name under `~/Desktop/Resources/PDLC Workflow Docs/`).
+1. **Feature.** Auto-derive from the working folder / conversation. If ambiguous, ask which feature (the folder name under the feature workspace root).
 2. **Required artifact:** the PRD at `~/Desktop/Resources/PDLC Workflow Docs/[feature]/prd/[feature]-prd.md`. If there is no PRD, refuse and direct the PM to `/create-prd` first.
 3. **Recommended artifacts** (read if present, skip gracefully if not — each missing one just means more cells fall to the interview):
-   - `technical-review/[feature]-system-design.md` — hosting, data structures, APIs, auth, integrations, tech stack. **Richest source for tabs 3–7.**
+   - `technical-review/[feature]-system-design.md` — hosting, data structures, APIs, auth, integrations, tech stack. **Richest source for infrastructure and security tabs.**
    - `technical-review/[feature]-technical-review.md` — CTO-review risks, NFRs, security concerns.
-   - `codebase-review/[feature]-codebase-review.md` — existing standards alignment, service accounts, integrations, SonarCloud/Snyk usage.
-   - `diagrams/[feature]-feature-diagram.md` and `_pipeline-state.json` → `export_urls` — the technical diagram link (Figma) for the "Technical Documentation" cell, plus owner / Confluence / Jira links.
+   - `codebase-review/[feature]-codebase-review.md` — existing standards alignment, service accounts, integrations.
+   - `diagrams/[feature]-feature-diagram.md` and `_pipeline-state.json` → `export_urls` — the technical diagram link for documentation cells, plus owner / Confluence / Jira links.
    - `timeline/` and `_pipeline-state.json` → `intake` — planning / implementation dates, PM and team.
-4. **Golden template.** The master is read-only at:
-   `~/Desktop/Resources/AI-Automation/documents /InfoSec Questionnaire Ops Team 2026 -Template.xlsx`
-   (note the trailing space in the `documents ` folder name). Never write to it. Copy it per feature. If it is not found, ask the PM for the current template path (Ops may have reissued it) before proceeding.
+4. **Template.** Ask the PM:
 
-Read every available artifact fully before drafting answers. Use `openpyxl` to introspect the template at runtime (do not trust the cell map below blindly — see Step 3).
+   > "Please provide the path to your organization's InfoSec questionnaire template (`.xlsx` file). This is typically a read-only master maintained by your Ops/DevOps/Security team.
+   > If you're not sure where it is, check your shared drive, your Ops team's documentation, or ask your DevOps contact."
 
----
+   If it is not found at the path provided, ask again before proceeding. The template is read-only — **never write to the master.** Copy it per feature (Step 3).
 
-## Step 1 — Derive answers from the artifacts
-
-The questionnaire has **7 tabs**, all laid out as `Question (col A) | Hint (col B) | Answer (col C)`. Work tab by tab. For each cell, the table below gives the **primary source** and **how to derive it**. Mark provenance for the report: `[artifact]` = pulled from a doc, `[default]` = Bright-standard default needing confirmation, `[interview]` = must ask, `[ops]` = Ops fills it, leave blank.
-
-### Tab 1 — Product/Service Overview
-| Cell | Question | Source & derivation |
-|------|----------|---------------------|
-| C14 | Product/Service Name | Feature name / PRD title. `[artifact]` |
-| C15 | Vendor name | "Bright" for an internally-built feature. If the PRD/system design names a third-party SaaS or vendor, use it. `[artifact]` |
-| C16 | Description of product/service | One-sentence purpose from PRD §1 / problem statement. `[artifact]` |
-| C17 | Primary Bright Stakeholder | ELT sponsor from `_pipeline-state.json` → `intake` / PRD masthead. Often `[interview]`. |
-| C18 | Primary Bright Tech Lead | From PRD / system design / state. Often `[interview]`. |
-| C19 | Team Responsible | From `intake` / PRD (e.g. "AC pod"). `[artifact]` |
-| C20 | Planning Start Date | From `intake` / timeline. `[artifact]` else `[interview]`. |
-| C21 | Implementation Start Date | From timeline. `[artifact]` else `[interview]`. |
-| C22 | Bright-only or SaaS? | Internal tool → "Bright only"; externally-distributed product → "SaaS". From PRD product type. `[artifact]` |
-
-### Tab 2 — Service & Support Details
-| Cell | Question | Source & derivation |
-|------|----------|---------------------|
-| C6 | Product Severity? | **Dropdown** (Critical/High/Medium/Low). Derive a *proposal* from PRD criticality/NFRs but **confirm in interview** — this drives DR requirements. `[interview]` |
-| C8 | Escalation – Normal | Runbook / technical review if present, else `[interview]`. |
-| C9 | Escalation – Critical | Same. `[interview]` |
-| C10 | Bright Emergency Contact | `[interview]` |
-| C11 | Vendor Support | "N/A — Bright-built/-supported" for internal builds; vendor hours if third-party. `[interview]` |
-| C12 | Disaster Recovery env. | From system design hosting section if covered, else `[interview]`. |
-| C13 | DR in separate geographic locations? | From system design (regions) else `[interview]`. **DR is mandatory for Critical/High severity — flag if severity is Critical/High and this is blank.** |
-
-### Tab 3 — Hosting & Architecture
-| Cell | Question | Source & derivation |
-|------|----------|---------------------|
-| C5 | Product residence? | "Bright" / "AWS" / 3rd-party — from system design hosting/tech stack. `[artifact]` |
-| C6 | Internal/External Product? | Internal tool → "Internal"; consumer/agent-facing → "External"; both → "Both". From PRD. `[artifact]` |
-| C7 | Technical Documentation | Cite the Figma diagram URL (`export_urls.figma_diagram_url`) **and** the system-design doc path. `[artifact]` |
-| C8 | Architectural Team Review? | "Yes – [date]" only if an artifact says so; otherwise "Pending" / `[interview]`. |
-| C9 | Product environments? | "PRD / TST / DEV" or as stated in system design. `[artifact]` else `[default]`. |
-| C10 | Environmental deviation? | From system design; "None" only if confirmed, else `[interview]`. |
-
-### Tab 4 — Data Protection & Access
-| Cell | Question | Source & derivation |
-|------|----------|---------------------|
-| C4 | PII shared externally? | From PRD/system-design data model. State which fields if yes. `[artifact]` |
-| C5 | Sensitive data? | PII/credentials/secrets in the data structures — list and say where stored/secured. `[artifact]` |
-| C6 | Impact – Data compromise? | Reason from data sensitivity (CIA impact). `[artifact]` |
-| C7 | Bright data off-site hosted? | "No" if Bright/AWS-hosted; "Yes – details" if vendor. `[artifact]` |
-| C8 | Bright data outside US? | "No" if us-east/us-west only. `[artifact]` else `[interview]`. |
-| C9 | Product service accounts? | From system design integrations / codebase review (e.g. "read-only Matrix DB account"). `[artifact]` else `[interview]`. |
-| C10 | Encryption – rest? | "AES-256 with AWS-managed keys" is the Bright default — `[default]`, confirm. If system design specifies, `[artifact]`. |
-| C11 | Encryption – transit? | "TLS 1.2+" Bright default — `[default]`, confirm. `[artifact]` if stated. |
-| C12 | Vendor default credentials changed? | `[interview]` (or "N/A — Bright-built"). |
-| C13 | Environmentally unique credentials? | `[default]` "Yes" for Bright builds, confirm. |
-| C14 | Vendor access required? | `[interview]` (or "No" for Bright-built). |
-| C15 | Messaging functionality? | From PRD — if the feature sends email/Slack/SMS/push (e.g. notifications), say which. `[artifact]` |
-
-### Tab 5 — Platform & Engineering Standards
-For a Bright-built feature most of these are "Yes — aligned"; only assert it when codebase review / technical review supports it, else `[default]` (confirm) or `[interview]`.
-| Cell | Question | Source & derivation |
-|------|----------|---------------------|
-| C5 | Alignment – tagging? | `[default]` "Yes" / from codebase review. |
-| C6 | Alignment – logging & responsibility (SumoLogic)? | From system design observability section, else `[default]`/`[interview]`. |
-| C7 | Alignment – hostnames? | `[default]`/codebase review. |
-| C8 | Alignment – coding (any deviation)? | From codebase review. `[artifact]` else `[default]`. |
-| C9 | Alignment – Terraform? | `[default]`/`[interview]`. |
-| C10 | PR Approvals Enforced? | From codebase review (branch protection) else `[interview]`. |
-| C11 | Alignment – CI/CD? | `[default]`/codebase review. |
-| C12 | Integration monitoring? | From system design; list API/customer-facing endpoints to monitor. `[artifact]` else `[interview]`. |
-| C13 | Who gets notified of alerts? | `[interview]`. |
-| C14 | Any deviations from Bright standards? | From technical/codebase review; "None known" only if confirmed. `[artifact]` else `[interview]`. |
-| C15 | Integration – SonarCloud? | From codebase review else `[interview]`. |
-| C16 | Integration – Snyk? | From codebase review else `[interview]`. |
-| C17 | Product Runbook? (link) | Link if one exists in the workspace, else `[interview]`. |
-
-### Tab 6 — Security & Maintenance
-| Cell | Question | Source & derivation |
-|------|----------|---------------------|
-| C4 | Product authentication? | From system design auth section (e.g. "Okta SSO"). `[artifact]` else `[interview]`. |
-| C5 | Team responsible for ongoing security response? | Owning pod from `intake` (e.g. "AC pod") — confirm. `[default]`/`[interview]`. |
-| C6 | Product authorization? | From system design (e.g. "Bright Permissions / role-based"). `[artifact]` else `[interview]`. |
-| C7 | Infrastructure update management? | Patching owner/process — `[interview]` unless stated. |
-
-### Tab 7 — AI Usage
-| Cell | Question | Source & derivation |
-|------|----------|---------------------|
-| C6 | Will this service utilize AI? | "Yes"/"No" from PRD product type. `[artifact]` |
-| C7 | What AI service(s)? | From system design (e.g. "Claude via AWS Bedrock", "OpenAI"). `[artifact]` else `[interview]`. |
-| C8 | All AI services on Bright's approved list? | `[interview]` ("reach out to Ops for the latest list"). |
-| C9 | Opted out of data sharing for all AI services? | `[interview]`. |
-| C10 | AI service SLA? | `[interview]` / vendor SLA. |
-
-If C6 is "No", set C7–C10 to "N/A".
+Read every available artifact fully before drafting answers. Use `openpyxl` to introspect the template at runtime — do not assume a fixed structure (see Step 1).
 
 ---
 
-## Step 2 — Interview for the gaps
+## Step 1 — Introspect the template
 
-After deriving everything you can, collect **every** `[interview]` cell and every `[default]` you want confirmed, and ask the PM in **one batched `AskUserQuestion` round** (group logically: Service & Support, Data/Access, Standards, AI). Pre-fill each with your best proposal so the PM can accept-or-edit rather than type from scratch.
+Before deriving any answers, load the template to discover its structure:
 
-- Severity (C6, tab 2) is always asked — it gates the DR requirement.
+```python
+import openpyxl
+wb = openpyxl.load_workbook(template_path, read_only=True)
+print("Sheets:", wb.sheetnames)
+for name in wb.sheetnames:
+    ws = wb[name]
+    print(f"\n=== {name} ===")
+    for row in ws.iter_rows(min_row=1, max_row=40, values_only=True):
+        if any(cell is not None for cell in row):
+            print(row)
+```
+
+From the output, identify:
+- **Sheet names** — the tabs to fill.
+- **Column layout** — which column contains questions, which contains hints/descriptions, and which is the answer column. (Often col A = question, col B = hint, col C = answer — but derive from the actual headers, not assumptions.)
+- **Answer cell references** — the specific cells where answers belong, per tab.
+- **Dropdown/validation fields** — cells with data-validation constraints (e.g., a severity dropdown). Note the valid values; write only values the dropdown accepts.
+- **Merged cells** — for any merged range in the answer column, always write to the top-left cell of the merge.
+- **Read-only fields** — cells labeled for Ops/reviewer use only (e.g., "reviewed by", "accepted date"). Leave these blank.
+
+Report the discovered structure to the PM:
+```
+Template: [path]
+Sheets:   [tab1, tab2, ...]
+Answer column: [C or as discovered]
+Dropdown cells: [list with valid values]
+Read-only cells: [list]
+```
+
+If the template structure is unclear or non-standard, ask the PM to clarify before proceeding.
+
+---
+
+## Step 2 — Derive answers from the artifacts
+
+Work through each sheet and each question row in the template. For each question, read the question text in the question column, then classify and derive the answer.
+
+**Provenance tags (used in the Step 5 report):**
+- `[artifact]` — directly answerable from PRD, system design, technical review, codebase review, diagrams, or state
+- `[default]` — industry-standard default that should be filled but flagged for PM confirmation
+- `[interview]` — operational fact that only the PM or team can supply
+- `[ops]` — leave blank; Ops/reviewer fills it
+- `[n/a]` — not applicable for this feature type
+
+**Common question-to-artifact mappings** (adapt to the actual question text in your template):
+
+| Question theme | Source | Notes |
+|---|---|---|
+| Product/service name | PRD title or feature name | `[artifact]` |
+| Description / purpose | PRD §1 problem statement | `[artifact]` |
+| Vendor / built-by | PRD: internally built vs. third-party SaaS | `[artifact]` |
+| Primary stakeholder / sponsor | `_pipeline-state.json` → `intake` / PRD masthead | `[artifact]` / `[interview]` |
+| Primary tech lead | PRD / system design / state | `[artifact]` / `[interview]` |
+| Team responsible | `intake` / PRD | `[artifact]` |
+| Planning / implementation dates | `intake` / timeline | `[artifact]` / `[interview]` |
+| Internal vs. external product | PRD product type | `[artifact]` |
+| Technical documentation link | Figma diagram URL (`export_urls.figma_diagram_url`) + system-design path | `[artifact]` |
+| Architecture / tech review status | Technical review if present, else `[interview]` | |
+| Product environments | System design hosting section | `[artifact]` / `[default]` |
+| PII / sensitive data | PRD / system-design data model | `[artifact]` |
+| Data hosted externally? | System design hosting/integrations | `[artifact]` |
+| Data outside home region? | System design hosting region | `[artifact]` / `[interview]` |
+| Service accounts | System design integrations / codebase review | `[artifact]` / `[interview]` |
+| Encryption at rest | System design (if specified), else `[default]` (AES-256) | Confirm with PM |
+| Encryption in transit | System design (if specified), else `[default]` (TLS 1.2+) | Confirm with PM |
+| Vendor/default credentials changed? | `[interview]` | |
+| Per-environment unique credentials? | `[interview]` / codebase review | |
+| Messaging / notifications? | PRD features | `[artifact]` |
+| Logging / observability | System design observability section | `[artifact]` / `[interview]` |
+| Infrastructure tagging? | Codebase review / `[interview]` | |
+| Hostname conventions? | Codebase review / `[interview]` | |
+| CI/CD alignment? | Codebase review | `[artifact]` / `[interview]` |
+| Code standards deviation? | Codebase review | `[artifact]` / `[interview]` |
+| PR approvals enforced? | Codebase review (branch protection) | `[artifact]` / `[interview]` |
+| Static analysis (SonarCloud, Snyk, etc.)? | Codebase review | `[artifact]` / `[interview]` |
+| Product runbook link | Workspace if present, else `[interview]` | |
+| Authentication method | System design auth section | `[artifact]` / `[interview]` |
+| Authorization / permissions model | System design auth section | `[artifact]` / `[interview]` |
+| Security response team | Owning team from `intake` | `[interview]` |
+| Infrastructure patching owner | `[interview]` | |
+| Will this use AI? | PRD product type / system design | `[artifact]` |
+| AI service name(s) | System design | `[artifact]` / `[interview]` |
+| AI services on org's approved list? | `[interview]` — ask for the org's current approved list | |
+| AI data-sharing opted out? | `[interview]` | |
+| AI service SLA | `[interview]` / vendor documentation | |
+| Product severity / criticality | **Always `[interview]`** — drives DR requirements; propose from PRD NFRs but confirm | |
+| Escalation contacts (normal / critical) | `[interview]` | |
+| Emergency contact | `[interview]` | |
+| Disaster recovery environment | System design (if covered), else `[interview]` | |
+| DR in separate geographic region? | System design (regions), else `[interview]` | **Flag if severity is Critical/High and DR is blank** |
+| Vendor support hours | `[interview]` for third-party; "internally supported" for internal builds | |
+| Vendor SLA | `[interview]` / vendor documentation | |
+| Legal sign-off / MSA/NDA | `[interview]` | |
+| Reviewed / accepted by | Leave blank — `[ops]` | |
+
+For questions not in this table, use the question text and any hint text to infer the best source. When in doubt, classify as `[interview]` — it is always better to ask than to fabricate.
+
+---
+
+## Step 3 — Interview for the gaps
+
+After deriving everything you can from artifacts, collect **every** `[interview]` item and every `[default]` you want confirmed, and ask the PM in **one batched `AskUserQuestion` round** (group logically: e.g., Service & Support, Data & Access, Standards, AI). Pre-fill each with your best proposal so the PM can accept-or-edit rather than type from scratch.
+
+- **Severity / criticality is always asked** — it gates the DR requirement. Propose based on PRD criticality/NFRs.
 - The PM may answer "unknown" / "skip" for any item → that cell becomes `⚠ NEEDS INPUT`.
 - Do not loop more than necessary; one good batched round, then fill.
 
 ---
 
-## Step 3 — Write the `.xlsx`
+## Step 4 — Write the `.xlsx`
 
 1. Ensure `openpyxl` is available (`python3 -c "import openpyxl"`; `pip install openpyxl` if not).
-2. **Introspect, don't trust blindly.** Load the template; for each sheet confirm the Answer column by finding the header cell whose value is `Answer`, and confirm each question row by matching the question text in column A. The cell map above reflects the 2026 template — if the live template's structure differs, re-derive from the headers and report the discrepancy. **Write to the top-left cell of any merged range** (the severity answer is merged `C6:C7` → write `C6`).
-3. Preserve the template — load and save the workbook itself (this keeps styles, the severity dropdown's data-validation, and all formatting). Only set `.value` on answer cells; touch nothing else. Leave `E1`/`E2` (Review-and-accepted-by / Date) blank — Ops fills those.
-4. Save to **`~/Desktop/Resources/PDLC Workflow Docs/[feature]/infosec/[feature]-infosec-questionnaire.xlsx`**. Create the `infosec/` folder if needed. **Idempotent** — re-running overwrites this file (re-copy from the golden template each run so stale answers never linger).
+2. **Introspect, don't trust the question-mapping blindly.** Before writing, re-confirm each answer cell by matching the question text in the question column. The layout described in Step 1 reflects the live template — if rows shifted or a tab was renamed, re-derive from the actual headers. Write to the top-left cell of any merged range.
+3. **Preserve the template.** Copy the master to the output path each run (this re-copies from the golden original so stale answers never linger). Load the copy with `openpyxl.load_workbook(out_path)` — preserving styles, dropdown data-validation, and formatting. Set `.value` on answer cells only; touch nothing else. Leave reviewer/Ops-only fields blank.
+4. Save to `~/Desktop/Resources/PDLC Workflow Docs/[feature]/infosec/[feature]-infosec-questionnaire.xlsx`. Create the `infosec/` folder if needed. **Idempotent** — re-running overwrites this file.
 
-Reference fill script (adapt the `answers` dict from Steps 1–2):
+Reference fill script (adapt the `answers` dict from Steps 2–3):
 
 ```python
 import openpyxl, shutil, os
-TEMPLATE = "/Users/judydarvin/Desktop/Resources/AI-Automation/documents /InfoSec Questionnaire Ops Team 2026 -Template.xlsx"
-OUT_DIR  = os.path.expanduser("~/Desktop/Resources/PDLC Workflow Docs/[feature]/infosec")
-OUT      = os.path.join(OUT_DIR, "[feature]-infosec-questionnaire.xlsx")
-os.makedirs(OUT_DIR, exist_ok=True)
-shutil.copyfile(TEMPLATE, OUT)                           # start from a clean copy of the golden template
-wb = openpyxl.load_workbook(OUT)
 
-# answers: { sheet_name: { cell: value } } — only answer cells, built from Steps 1–2
+TEMPLATE = "<path provided by PM at Step 0>"
+feature  = "<feature-name>"
+out_dir  = os.path.expanduser(f"~/Desktop/Resources/PDLC Workflow Docs/{feature}/infosec")
+out_path = os.path.join(out_dir, f"{feature}-infosec-questionnaire.xlsx")
+os.makedirs(out_dir, exist_ok=True)
+shutil.copyfile(TEMPLATE, out_path)          # start from a clean copy of the golden template
+wb = openpyxl.load_workbook(out_path)
+
+# answers: { sheet_name: { cell_ref: value } } — only answer cells, built from Steps 2–3
+# Sheet names and cell refs come from Step 1 introspection, not hardcoded assumptions
 answers = {
-  "Product Service Overview": {"C14": "...", "C15": "Bright", ...},
-  "Service & Support Details": {"C6": "Medium", "C8": "...", ...},
-  "Hosting & Architecture": {...},
-  "Data Protection & Access": {...},
-  "Platform & Engineering Standard": {...},
-  "Security & Maintenance": {...},
-  "AI Usage": {...},
+    "Sheet 1 name": {"C14": "...", ...},
+    "Sheet 2 name": {"C6": "...", ...},
+    # ... one entry per sheet
 }
 for sheet, cells in answers.items():
     ws = wb[sheet]
-    for cell, val in cells.items():
-        ws[cell] = val
-wb.save(OUT)
-print("wrote", OUT)
+    for cell_ref, val in cells.items():
+        ws[cell_ref] = val
+wb.save(out_path)
+print("wrote", out_path)
 ```
-
-(Sheet names exactly: `Product Service Overview`, `Service & Support Details`, `Hosting & Architecture`, `Data Protection & Access`, `Platform & Engineering Standard`, `Security & Maintenance`, `AI Usage`.)
 
 ---
 
-## Step 4 — Report & record
+## Step 5 — Report & record
 
 Print an in-thread summary (the xlsx is the only file, so this is the review surface):
 
@@ -190,8 +200,8 @@ Print an in-thread summary (the xlsx is the only file, so this is the review sur
 - **Derived defaults — confirm before sending** — every `[default]` cell, so the PM verifies.
 - **From your interview answers** — what the PM supplied.
 - **⚠ Still NEEDS INPUT** — every unresolved cell, grouped by tab, so the PM knows exactly what to finish before sending to Ops.
-- If severity is Critical/High and DR (C12/C13) is blank or "No", call it out as a likely review blocker.
+- If severity is Critical/High and disaster recovery fields are blank or "No", call it out as a likely review blocker.
 
-Then record the artifact in `_pipeline-state.json` if the feature has one: add `export_urls.infosec_doc` (the file path) and a top-level note that the InfoSec questionnaire was generated. Don't fail if state is absent.
+Then record the artifact in `_pipeline-state.json` if the feature has one: add `export_urls.infosec_doc` (the file path) and a top-level note. Don't fail if state is absent.
 
-Finally, point the PM at the file and remind them: review the defaults, complete any `⚠ NEEDS INPUT` cells, get the required legal docs (MSA/NDA) reviewed by Legal per the template's disclaimer, then send to the Ops team — and that any later change to the technical diagram must be re-communicated to Ops for re-review.
+Finally, point the PM at the file and remind them: review the defaults, complete any `⚠ NEEDS INPUT` cells, get any required legal documents (MSA, NDA, etc.) reviewed per your organization's policy, then send to the Ops/DevOps/Security team — and that any later change to the technical diagram must be re-communicated to the reviewer for re-review.
