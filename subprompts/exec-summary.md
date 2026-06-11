@@ -83,7 +83,7 @@ Each bullet is one sentence: **what the piece is** + **who owns it** (internal t
 
 ### 4. Teams & roles — who needs to be aligned
 
-A table or stacked list. For each team/role: name, primary work scope, key dependencies. Pulled from `_pipeline-state.json` → `team_composition` if present, supplemented from system design and timeline external dependencies. Include external vendors as their own row(s) (e.g., "ReAlchemy contract manager — owns 12-tool MCP delivery, blocks Phase 2 FE integration").
+A table or stacked list. For each team/role: name, primary work scope, key dependencies. Pulled from `_pipeline-state.json` → `team_composition` if present, supplemented from system design and timeline external dependencies. Include external vendors as their own row(s) (e.g., "Vendor contract manager — owns integration delivery, blocks downstream FE work").
 
 ### 5. Critical timeline alignment
 

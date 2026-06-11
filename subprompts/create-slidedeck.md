@@ -137,7 +137,7 @@ audience: [audience]
 goal: [primary goal]
 generated_against_prd: v[X.Y]
 slides: [N]
-theme: [neutral | brightmls | minimal]
+theme: [neutral | branded | minimal]
 ---
 
 ## Slide 1 — [Title]
