@@ -1,8 +1,8 @@
 v2.23.0 — 2026-06-04
 
-`/infosec-doc` command added — fills out Bright's InfoSec questionnaire (the Ops/DevOps security-review spreadsheet) for a feature from its pipeline artifacts.
+`/infosec-doc` command added — fills out your organization's InfoSec questionnaire (the Ops/DevOps security-review spreadsheet) for a feature from its pipeline artifacts.
 
-**New: `/infosec-doc` standalone command.** Populates Bright's 7-tab InfoSec Questionnaire `.xlsx` for a feature by deriving answers from the PRD, system design, technical review, codebase review, diagrams, and `_pipeline-state.json`, then batch-interviewing the PM for the operational facts the artifacts can't supply (severity, escalation contacts, DR region, vendor SLA, legal sign-off, approved-AI-list status). Writes the populated workbook to `[feature]/infosec/[feature]-infosec-questionnaire.xlsx` via `openpyxl`, preserving the template's formatting and the severity dropdown's data-validation. **Cardinal rule: never fabricate a security answer** — every cell is either sourced from an artifact, confirmed by the PM, or written as `⚠ NEEDS INPUT`; Bright-standard defaults (TLS, AES) are filled but flagged for confirmation. Standalone — not auto-invoked by `/build-product`. Idempotent: re-copies the golden template and overwrites on re-run.
+**New: `/infosec-doc` standalone command.** Populates your organization's InfoSec Questionnaire `.xlsx` for a feature. Asks for the template path at first run, then introspects its tab and cell structure at runtime (no hardcoded assumptions). Derives answers from the PRD, system design, technical review, codebase review, diagrams, and `_pipeline-state.json`, then batch-interviews the PM for the operational facts the artifacts can't supply (severity, escalation contacts, DR region, vendor SLA, legal sign-off, approved-AI-list status). Writes the populated workbook to `[feature]/infosec/[feature]-infosec-questionnaire.xlsx` via `openpyxl`, preserving the template's formatting and data-validation. **Cardinal rule: never fabricate a security answer** — every cell is either sourced from an artifact, confirmed by the PM, or written as `⚠ NEEDS INPUT`; industry-standard defaults (TLS, AES) are filled but flagged for confirmation. Standalone — not auto-invoked by `/build-product`. Idempotent: re-copies the golden template and overwrites on re-run.
 
 ---
 
@@ -80,7 +80,7 @@ v2.16.0 — 2026-05-26
 
 User-stories breakdown layout is now **meat-first with appendix-style metadata**, and a count-parity rule prevents drift between prose count claims and actual blueprint headers.
 
-**New: Meat-first layout spec (`ai-framework/06-user-stories.md` Step 5).** Per-story blueprints (the content stakeholders actually open the doc to read) now appear near the top of the document, behind only the front matter, At-a-glance, How-to-read, Epic outlines (with "What this delivers"), and a small Wave overview table. Operational metadata — ID Stability Policy, refactor history, format conventions, full per-story dependency table, vendor sprint detail, PRD cross-reference — moves to Appendices A through F at the end. Closes the failure mode where the nestfully-ai v1.2 breakdown accreted 460 lines of front-matter through repeated `/change-mode` runs, pushing the first per-story blueprint to line 463 and making the doc unreadable for sponsors and designers.
+**New: Meat-first layout spec (`ai-framework/06-user-stories.md` Step 5).** Per-story blueprints (the content stakeholders actually open the doc to read) now appear near the top of the document, behind only the front matter, At-a-glance, How-to-read, Epic outlines (with "What this delivers"), and a small Wave overview table. Operational metadata — ID Stability Policy, refactor history, format conventions, full per-story dependency table, vendor sprint detail, PRD cross-reference — moves to Appendices A through F at the end. Closes the failure mode where a breakdown accretes hundreds of lines of front-matter through repeated `/change-mode` runs, pushing the first per-story blueprint far down the document and making it unreadable for sponsors and designers.
 
 **New: Source-of-truth count rule.** The number of unique `### US-` blueprint headers is the single computed count. Every prose claim ("Total v1 stories: N", "All N stories written", per-epic "N stories" openers) reads from that computed value. `/user-stories`, `/change-mode`, and `/validate-user-stories` all recompute and reconcile claim sites in the same pass — hand-narrated counts are not allowed.
 
@@ -90,7 +90,7 @@ User-stories breakdown layout is now **meat-first with appendix-style metadata**
 
 **New: Workspace-level CLAUDE.md reminder** under "User-Stories Document Layout" — the same pattern as the existing Diagram Rendering and ID Stability Policy reminders. The feature-level spec in `ai-framework/06-user-stories.md` Step 5 remains load-bearing; the workspace reminder keeps the rule visible across every regeneration step.
 
-Closes the readability failure mode raised on nestfully-ai v1.2: when the per-story blueprints live behind a wall of maintenance content, the doc stops serving its primary audience.
+Closes the readability failure mode where per-story blueprints are buried behind a wall of maintenance content and the doc stops serving its primary audience.
 
 ---
 
@@ -132,7 +132,7 @@ v2.12.0 — 2026-05-23
 
 **New: `/push-to-figma` standalone command.** Generates real, editable Figma frames programmatically from a feature's design prompts file via the Figma MCP. Each frame is wired to the team's design system color variables (and components where they fit) — when brand tokens change, every frame updates. Output is the standard design catalog at `design/[feature]-figma-catalog.md` with one row per frame and its direct node URL. Companion to `/design-prompts`: the typical flow is `/design-prompts` → review → `/push-to-figma`. No v0 equivalent (v0 has no programmatic-push API).
 
-Validated on the nestfully-ai feature — 29 mobile frames across 13 categories, generated against the 🐦 Nestfully Mobile library.
+Validated on a sample mobile feature — 29 mobile frames across 13 categories, generated against the team's design system library.
 
 ---
 

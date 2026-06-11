@@ -14,7 +14,7 @@ Read and follow `ai-framework/08-export-transcript.md`.
 The underlying prompt collects inputs as Step 0:
 
 - **Required:** feature name (asked if not in conversation context).
-- **Auto-detected:** the current session's transcript file (Claude Code persists every session as a JSONL under `~/.claude/projects/-Users-judydarvin/`; the prompt picks the most-recently-modified file and confirms with the PM).
+- **Auto-detected:** the current session's transcript file (Claude Code persists every session as a JSONL under `~/.claude/projects/[your-profile]/`; the profile folder name is derived from your home directory path with slashes replaced by hyphens — run `ls ~/.claude/projects/` to see yours; the prompt picks the most-recently-modified file and confirms with the PM).
 - **Optional:** time window. Defaults to "from when this feature's pipeline started" (read from `_pipeline-state.json` → `pipeline_started_at`) through "now".
 
 No prior pipeline run is strictly required, but the time-window auto-detection works best when one is available.

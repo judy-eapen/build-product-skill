@@ -11,7 +11,7 @@ Use when:
 
 Read `ai-framework/rules.md` and `ai-framework/error-handling.md` before executing.
 
-**Cost note:** This is the **most expensive** command in the skill. The user-stories file for a non-trivial feature can be 500KB+ (nestfully-ai is 614KB / 75 stories / 11,220 lines). Expect 1–3 minutes of runtime and significant token consumption. Run on-demand only.
+**Cost note:** This is the **most expensive** command in the skill. The user-stories file for a non-trivial feature can be 500KB+ (a large feature breakdown can reach 600KB+, 75+ stories, 11,000+ lines). Expect 1–3 minutes of runtime and significant token consumption. Run on-demand only.
 
 ---
 

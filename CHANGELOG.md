@@ -8,10 +8,10 @@ All notable changes are documented here. Follows [Semantic Versioning](https://s
 
 ### Added
 
-- **`/infosec-doc` standalone command** — fills out Bright's InfoSec Questionnaire (the Ops/DevOps security-review `.xlsx`) for a feature from its pipeline artifacts.
+- **`/infosec-doc` standalone command** — fills out your organization's InfoSec Questionnaire (the Ops/DevOps security-review `.xlsx`) for a feature from its pipeline artifacts.
   - **Derives answers across all 7 tabs** (Product/Service Overview, Service & Support, Hosting & Architecture, Data Protection & Access, Platform & Engineering Standards, Security & Maintenance, AI Usage) from the PRD, system design, technical review, codebase review, diagrams, and `_pipeline-state.json` (`export_urls`, `intake`).
   - **Batch-interviews the PM** for the operational facts no artifact carries — product severity (gates the DR requirement), escalation/emergency contacts, DR region, vendor support/SLA, approved-AI-list + data-sharing opt-out status, legal sign-off — pre-filling each with a best-guess proposal to accept-or-edit.
-  - **Cardinal rule: never fabricate a security answer.** Every cell is sourced from an artifact, confirmed by the PM, or written as the literal `⚠ NEEDS INPUT`. Bright-standard defaults (TLS 1.2+, AES-256/KMS) are filled but listed under "Derived defaults — confirm before sending."
+  - **Cardinal rule: never fabricate a security answer.** Every cell is sourced from an artifact, confirmed by the PM, or written as the literal `⚠ NEEDS INPUT`. Industry-standard defaults (TLS 1.2+, AES-256/KMS) are filled but listed under "Derived defaults — confirm before sending."
   - **Writes the real workbook** to `[feature]/infosec/[feature]-infosec-questionnaire.xlsx` via `openpyxl`, copying the read-only golden template each run so formatting, styles, and the severity dropdown's data-validation are preserved and stale answers never linger. Idempotent. Records the path in `_pipeline-state.json` → `export_urls.infosec_doc` when state exists.
   - **Not auto-invoked by `/build-product`** — the PM runs it once a feature has enough artifacts (PRD minimum; system design + technical review strongly recommended) and Ops asks for the security doc.
 
@@ -116,7 +116,7 @@ All notable changes are documented here. Follows [Semantic Versioning](https://s
 
 ### Why this matters
 
-The nestfully-ai v1.2 breakdown accreted 460 lines of front-matter through repeated `/change-mode` runs — refactor lineage from v0.9 through v1.2, full ID Stability Policy, full Refactor summary, complete per-story sequence table, format conventions — pushing the first per-story blueprint to line 463 of a 6042-line document. For sponsors, designers, and engineers (the document's primary audience), the doc became unreadable: they had to scroll past hundreds of lines of maintenance content to find anything actionable. Simultaneously, prose count claims drifted across versions — top-of-document "Total v1 stories: 99" alongside "all 93 v1 stories" in an adjacent paragraph alongside an actual table containing 106 IDs.
+A sample breakdown accreted 460 lines of front-matter through repeated `/change-mode` runs — refactor lineage, ID Stability Policy, Refactor summary, per-story sequence table, format conventions — pushing the first per-story blueprint to line 463 of a 6042-line document. For sponsors, designers, and engineers (the document's primary audience), the doc became unreadable: they had to scroll past hundreds of lines of maintenance content to find anything actionable. Simultaneously, prose count claims drifted across versions — top-of-document "Total v1 stories: 99" alongside "all 93 v1 stories" in an adjacent paragraph alongside an actual table containing 106 IDs.
 
 v2.16.0 fixes both at the source rather than per-document: the layout spec enforces meat-first structure at write time, the count-parity rule makes the blueprint-header count the only source of truth, the validation checks catch drift before it ships, and the workspace reminder keeps the rule visible across every regeneration step.
 
@@ -131,11 +131,11 @@ v2.16.0 fixes both at the source rather than per-document: the layout spec enfor
 
 No data migration. Existing breakdown files generated under v2.15.0 and earlier will trip the new checks on the next `/validate-user-stories` run — that's expected and surfaces accumulated drift. Per-finding fix walkthrough in Step 3 of validate-user-stories lets the PM apply corrections incrementally; `/change-mode` runs going forward respect the new layout.
 
-For an existing feature with heavy front-matter accretion (nestfully-ai is the canonical example), the recommended path is: (a) run `/validate-user-stories` to see the full drift report, (b) apply Check 9 count fixes via batch confirmation, (c) apply Check 8 layout fixes section-by-section so internal cross-references are preserved. Backups in the feature's `user-stories/` folder (the existing `.bak-before-*` naming pattern) cover rollback.
+For an existing feature with heavy front-matter accretion, the recommended path is: (a) run `/validate-user-stories` to see the full drift report, (b) apply Check 9 count fixes via batch confirmation, (c) apply Check 8 layout fixes section-by-section so internal cross-references are preserved. Backups in the feature's `user-stories/` folder (the existing `.bak-before-*` naming pattern) cover rollback.
 
 ### Validated on
 
-Designed against the nestfully-ai v1.2 breakdown (106 actual blueprints, 99 / 93 / 70+27 / 97 conflicting count claims, 460 lines of front-matter above first blueprint). Validation pending re-application via `/validate-user-stories` then optional regeneration via `/change-mode`.
+Designed against a large feature breakdown with 100+ stories, conflicting count claims across prose, and 460 lines of front-matter above the first per-story blueprint.
 
 ---
 
@@ -162,7 +162,7 @@ Designed against the nestfully-ai v1.2 breakdown (106 actual blueprints, 99 / 93
 
 ### Why this matters
 
-PMs (Judy on nestfully-ai) raised the question of what happens to inline comments when `/publish-to-confluence` republishes a page that's already had stakeholder feedback. The answer pre-v2.15.0 was bad: footer comments survived but inline comments could orphan silently, and the skill never even checked whether someone had edited the page in Confluence before overwriting it. Pre-flight v2.15.0 makes both signals visible before any overwrite, and gives the PM a non-destructive path (`pull-comments`) when comments need to be addressed in the local source first. This is a meaningful step toward bidirectional discipline without taking on full bidirectional merge (which the skill's compose-from-scratch architecture makes lossy in the Confluence-to-local direction).
+PMs raised the question of what happens to inline comments when `/publish-to-confluence` republishes a page that's already had stakeholder feedback. The answer pre-v2.15.0 was bad: footer comments survived but inline comments could orphan silently, and the skill never even checked whether someone had edited the page in Confluence before overwriting it. Pre-flight v2.15.0 makes both signals visible before any overwrite, and gives the PM a non-destructive path (`pull-comments`) when comments need to be addressed in the local source first. This is a meaningful step toward bidirectional discipline without taking on full bidirectional merge (which the skill's compose-from-scratch architecture makes lossy in the Confluence-to-local direction).
 
 ### Limitations
 
@@ -181,7 +181,7 @@ No data migration. Existing features without `last_published_version` in state a
 
 ### Validated on
 
-Designed against the `nestfully-ai` feature workspace after its v2.13.0 initial publish + v2.14.0 Figma-auto-push. Pre-flight validation: re-running on a feature where a stakeholder has added inline comments + edited the page in Confluence directly should show all three signals (`🚨 DRIFT`, `⚠ inline comments`, `✓ footer thread`) and offer the per-page resolution UX. Validation pending real stakeholder comment activity on a published feature.
+Designed against a sample feature workspace after its initial publish + Figma-auto-push. Pre-flight validation: re-running on a feature where a stakeholder has added inline comments + edited the page in Confluence directly should show all three signals (`🚨 DRIFT`, `⚠ inline comments`, `✓ footer thread`) and offer the per-page resolution UX.
 
 ---
 
@@ -206,7 +206,7 @@ Designed against the `nestfully-ai` feature workspace after its v2.13.0 initial 
 
 ### Why this matters
 
-PMs (Judy on nestfully-ai) discovered post-publish that Step 7 and Step 10½ rendered as raw Mermaid code blocks in Confluence — unreadable to non-engineer stakeholders without a third-party plugin the Confluence admin would need to install. The prior workflow required manually chaining `/visual-diagram` → `/timeline` → `/publish-to-confluence`, with the publish skill silently falling back to Mermaid notes if those upstream pushes didn't happen. Step 3.5 makes the push automatic when the Figma MCP is available and the URL is missing, so the iframe-embed branch is the default outcome. Opt-out is one word at the confirmation prompt ("skip figma push") for PMs who specifically want the Mermaid fallback (e.g., when iterating quickly and don't want to clutter Figma).
+PMs discovered post-publish that Step 7 and Step 10½ rendered as raw Mermaid code blocks in Confluence — unreadable to non-engineer stakeholders without a third-party plugin the Confluence admin would need to install. The prior workflow required manually chaining `/visual-diagram` → `/timeline` → `/publish-to-confluence`, with the publish skill silently falling back to Mermaid notes if those upstream pushes didn't happen. Step 3.5 makes the push automatic when the Figma MCP is available and the URL is missing, so the iframe-embed branch is the default outcome. Opt-out is one word at the confirmation prompt ("skip figma push") for PMs who specifically want the Mermaid fallback (e.g., when iterating quickly and don't want to clutter Figma).
 
 ### Limitations
 
@@ -225,7 +225,7 @@ No data migration. Existing features:
 
 ### Validated on
 
-Designed against the `nestfully-ai` feature after its initial `/publish-to-confluence` run (v2.13.0) shipped Step 7 + Step 10½ as raw Mermaid blocks. Re-running `/publish-to-confluence` on v2.14.0 with the Figma MCP connected is the validation path; URLs land in state, both pages re-publish with iframe embeds.
+Designed against a sample feature after its initial `/publish-to-confluence` run shipped Step 7 + Step 10½ as raw Mermaid blocks. Re-running `/publish-to-confluence` with the Figma MCP connected is the validation path; URLs land in state, both pages re-publish with iframe embeds.
 
 ---
 
@@ -249,7 +249,7 @@ Designed against the `nestfully-ai` feature after its initial `/publish-to-confl
 
 ### Validated on
 
-Designed against the `nestfully-ai` Figma file (v2.12.0 output: 29 mobile frames, 13 categories, 🐦 Nestfully Mobile library). Pull-side validation pending designer iteration.
+Designed against a sample Figma file (29 mobile frames, 13 categories). Pull-side validation pending designer iteration.
 
 ### Limitations
 
@@ -279,13 +279,13 @@ No data migration. `/pull-from-figma` is purely additive. Features that ran `/pu
 
 ### Why this matters
 
-PMs (Judy on nestfully-ai) ran the prompts-to-Figma workflow manually for v1 — every screen had to be generated one by one via the MCP. That worked but took dozens of tool calls and was non-repeatable. The new command captures the workflow as a real pipeline step: variable discovery, file creation, page setup, per-frame generation, screenshot validation, catalog write-out, and state save are all built in.
+PMs running the prompts-to-Figma workflow manually for v1 had to generate every screen one by one via the MCP — dozens of tool calls and non-repeatable. The new command captures the workflow as a real pipeline step: variable discovery, file creation, page setup, per-frame generation, screenshot validation, catalog write-out, and state save are all built in.
 
 The output is meaningfully better than v0 for teams with a real design system: v0 produces components from scratch (off-brand by default); `/push-to-figma` produces frames already wired to the team's actual color variables and component library, so even mid-fi output looks like the team's product.
 
 ### Validated on
 
-`nestfully-ai` — 29 mobile frames across 13 categories generated against the 🐦 Nestfully Mobile library. Catalog at `~/Desktop/Resources/PDLC Workflow Docs/nestfully-ai/design/nestfully-ai-figma-catalog.md`. Generated Figma file: https://www.figma.com/design/1iX0hpldO5R9QrCL5mEzyi.
+A sample mobile feature — 29 mobile frames across 13 categories generated against the team's design system library.
 
 ### Limitations
 
@@ -303,7 +303,7 @@ No data migration. PMs can keep using `/design-prompts` standalone; `/push-to-fi
 
 ### Added
 
-- **`/exec-summary` standalone command.** Synthesizes a feature's PRD + system design + user-stories breakdown + timeline + decision log into a single ~20 KB / 5–7 PDF page executive summary. Fixed 9-section structure: masthead, vision, use cases table, moving pieces (external vendors / internal Bright systems / cross-cutting work), teams & roles, critical timeline alignment, open decisions, risks, the ask, what's next. Outputs markdown + PDF + DOCX side-by-side in the feature's root folder. New file: `subprompts/exec-summary.md`.
+- **`/exec-summary` standalone command.** Synthesizes a feature's PRD + system design + user-stories breakdown + timeline + decision log into a single ~20 KB / 5–7 PDF page executive summary. Fixed 9-section structure: masthead, vision, use cases table, moving pieces (external vendors / internal systems / cross-cutting work), teams & roles, critical timeline alignment, open decisions, risks, the ask, what's next. Outputs markdown + PDF + DOCX side-by-side in the feature's root folder. New file: `subprompts/exec-summary.md`.
 - **Idempotent overwrite.** Re-running on the same feature overwrites all three output files. No version history embedded inline; change history lives in `changelog/[feature]-changelog.md`.
 - **Graceful degradation.** PRD is required; system design / user stories / timeline / decision log are opportunistic. Missing artifacts produce a thinner section with `[NOTE: ...]` rather than failing the run. PDF/DOCX tooling is best-effort — markdown always lands.
 - **Standalone only.** Not auto-invoked by `/build-product`. PMs run on demand. Pipeline state's `artifacts.exec_summary` block is updated on each run with `path`, `pdf_path`, `docx_path`, `generated_against_prd_version`, `generated_at`.
@@ -315,7 +315,7 @@ No data migration. PMs can keep using `/design-prompts` standalone; `/push-to-fi
 
 ### Why this matters
 
-PMs (Judy on nestfully-ai) flagged that downstream artifacts were becoming unreadable as `/change-mode` passes layered inline version bullets onto the same files. The same change history was being recorded in three places (the artifact, the `changelog/` folder, and pipeline state); two of those was redundant. The Artifact Conventions rule eliminates the redundancy and the `/exec-summary` skill gives PMs a way to produce an exec-readable synthesis without manually re-creating a format from scratch every time.
+PMs flagged that downstream artifacts were becoming unreadable as `/change-mode` passes layered inline version bullets onto the same files. The same change history was being recorded in three places (the artifact, the `changelog/` folder, and pipeline state); two of those was redundant. The Artifact Conventions rule eliminates the redundancy and the `/exec-summary` skill gives PMs a way to produce an exec-readable synthesis without manually re-creating a format from scratch every time.
 
 ### Migration
 
@@ -341,7 +341,7 @@ No data migration needed. The rule applies prospectively to all generative skill
 
 ### Why this matters
 
-`/validate-user-stories` Check 7 ("Wave / dependency sanity") was added in v2.9.0 expecting waves to exist — but the creation step (`/user-stories`) didn't actually produce them. PMs (like Judy on nestfully-ai) had been adding waves manually. v2.10.0 closes that loop: waves are computed automatically, persisted to state, and validated at Gate 3 + by `/validate-user-stories`.
+`/validate-user-stories` Check 7 ("Wave / dependency sanity") was added in v2.9.0 expecting waves to exist — but the creation step (`/user-stories`) didn't actually produce them. PMs had been adding waves manually. v2.10.0 closes that loop: waves are computed automatically, persisted to state, and validated at Gate 3 + by `/validate-user-stories`.
 
 The cycle-detection check is the most impactful piece. Cycles in the dependency graph are real bugs — they mean engineering can never start because every starting point depends on something else. Catching them at Gate 3 (before Jira export) saves a sprint of confusion.
 
@@ -380,7 +380,7 @@ The cycle-detection check is the most impactful piece. Cycles in the dependency 
 
 ### Cost note
 
-`/validate-user-stories` is the most expensive command in the skill. On the nestfully-ai 614KB breakdown, expect 1–3 minutes of runtime and significant token consumption. Run on-demand, not auto-run at gates.
+`/validate-user-stories` is the most expensive command in the skill. On a large 600KB+ breakdown, expect 1–3 minutes of runtime and significant token consumption. Run on-demand, not auto-run at gates.
 
 ### Not changed
 
@@ -399,11 +399,11 @@ The cycle-detection check is the most impactful piece. Cycles in the dependency 
 
 ### State files affected
 
-- `nestfully-ai` had `gate_2 = "Pending"` while at Step 10. Retroactively updated to `gate_2 = "Deferred — DRAFT mode (no finalized designs as of 2026-05-22)"` to match the new semantics. Backup saved to `_pipeline-state.json.bak-before-gate2-fix-20260522` in the feature folder.
+Any feature that had `gate_2 = "Pending"` while at Step 10 should be retroactively updated to `gate_2 = "Deferred — DRAFT mode (no finalized designs as of [date])"` to match the new semantics. Save a backup with a `.bak-before-gate2-fix-*` suffix in the feature folder before editing.
 
 ### Why this matters
 
-The doctor surfaced this as a state-corruption warning on `nestfully-ai`, but the state was actually internally consistent — it just used an ambiguous value. This patch makes the deferred-Gate-2 flow explicit in the data so it's distinguishable from unstarted-Gate-2 going forward.
+The doctor surfaced this as a state-corruption warning, but the state was actually internally consistent — it just used an ambiguous value. This patch makes the deferred-Gate-2 flow explicit in the data so it's distinguishable from unstarted-Gate-2 going forward.
 
 ---
 
@@ -454,7 +454,7 @@ PMs in stakeholder meetings get the page that's actually useful — a navigable 
 
 ### Why this matters
 
-The Step 10.5 / Step 12 orchestrator-drift bug Judy hit (fixed in the prior commit) was exactly the class of failure the doctor would have caught: `pipeline-configs.yaml` listed Step 10.5 (added in v2.2.0) but `subprompts/build-product.md` never got the matching prose block, so the orchestrator silently didn't know it existed. As the skill keeps growing — more steps, more commands, more state schema additions — this kind of drift becomes inevitable. Doctor is the safety net.
+The Step 10.5 / Step 12 orchestrator-drift bug (fixed in the prior commit) was exactly the class of failure the doctor would have caught: `pipeline-configs.yaml` listed Step 10.5 (added in v2.2.0) but `subprompts/build-product.md` never got the matching prose block, so the orchestrator silently didn't know it existed. As the skill keeps growing — more steps, more commands, more state schema additions — this kind of drift becomes inevitable. Doctor is the safety net.
 
 ### Not changed
 
@@ -588,7 +588,7 @@ Two real-world frictions removed in one release. (1) PMs no longer have to wait 
   - **Per-gate table** showing how long each of Gate 1 / 2 / 3 sat waiting on PM approval.
   - If a step is missing instrumented timestamps (older runs or interrupted instrumentation), the report falls back to parsing the session JSONL for that step and marks the inferred row with `~`. Both data sources can be mixed in a single report.
 - **State schema additions:** top-level `pipeline_started_at`, `pipeline_completed_at`, `step_timings` dict, and `timing_report` cache (last generated totals so downstream consumers don't have to re-run the report).
-- **Step 12: Export Conversation Transcript** — new pipeline step that runs automatically at the end of every `/build-product` run, and is also callable standalone via `/export-transcript`. Reads the current Claude Code session's JSONL file (`~/.claude/projects/-Users-judydarvin/[session-uuid].jsonl`), filters to messages within the feature's pipeline window (using `_pipeline-state.json` → `pipeline_started_at` as the lower bound), and writes two markdown files to `[feature]/transcript/`:
+- **Step 12: Export Conversation Transcript** — new pipeline step that runs automatically at the end of every `/build-product` run, and is also callable standalone via `/export-transcript`. Reads the current Claude Code session's JSONL file (`~/.claude/projects/[your-profile]/[session-uuid].jsonl`), filters to messages within the feature's pipeline window (using `_pipeline-state.json` → `pipeline_started_at` as the lower bound), and writes two markdown files to `[feature]/transcript/`:
   - `[feature]-transcript-clean.md` — user messages + assistant text only, the readable back-and-forth.
   - `[feature]-transcript-full.md` — same conversation plus tool calls and tool results (truncated to first 10 + last 5 lines per result, with collapsible `<details>` blocks). System reminders and permission-mode events included for forensic debugging.
   - The model's `thinking` blocks are excluded from both files (private reasoning, never part of the visible conversation).

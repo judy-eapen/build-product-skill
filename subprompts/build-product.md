@@ -573,7 +573,7 @@ Update `_pipeline-state.json` with export results.
 
 Read and follow: `ai-framework/08-export-transcript.md`.
 
-Runs automatically at the end of every pipeline. Reads the current Claude Code session's JSONL file (`~/.claude/projects/-Users-judydarvin/[session-uuid].jsonl`), filters to messages from this feature's pipeline window, and writes two markdown files:
+Runs automatically at the end of every pipeline. Reads the current Claude Code session's JSONL file (`~/.claude/projects/[your-profile]/[session-uuid].jsonl`), filters to messages from this feature's pipeline window, and writes two markdown files:
 
 - `transcript/[feature-name]-transcript-clean.md` — user + assistant text only, the readable conversation.
 - `transcript/[feature-name]-transcript-full.md` — same conversation plus tool calls and (truncated) tool results, with system reminders and permission-mode events included.

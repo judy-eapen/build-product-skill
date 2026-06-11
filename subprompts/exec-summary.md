@@ -76,10 +76,10 @@ A single table with three columns: Category / Examples / Tools-or-systems-servin
 Three subsections, each a bulleted list (2–6 bullets each):
 
 - **External vendors building for us** — third-party integrations and what each owns. Pulled from system design + PRD §5 (external services).
-- **Internal Bright systems we're building or modifying** — orchestrator, ingestion platform, mobile app, etc. Pulled from system design.
+- **Internal systems we're building or modifying** — orchestrator, ingestion platform, mobile app, etc. Pulled from system design.
 - **Cross-cutting work we own** — observability, security, AI safety, legal-copy slots, accessibility, etc. Pulled from PRD §3-§5.
 
-Each bullet is one sentence: **what the piece is** + **who owns it** (Bright team or vendor name). No deep dives.
+Each bullet is one sentence: **what the piece is** + **who owns it** (internal team or vendor name). No deep dives.
 
 ### 4. Teams & roles — who needs to be aligned
 
@@ -137,7 +137,7 @@ No version tagline. No "Generated [date]" line. No changelog block.
 ## Tone rules
 
 - **Plain English.** Spell out acronyms on first use (MCP = Model Context Protocol; FCM = Firebase Cloud Messaging; etc.). If an acronym is core to the product and unavoidable (e.g., MLS for a real-estate product), define it once in §1.
-- **Active voice.** "Bright owns ingestion" not "ingestion is owned by Bright."
+- **Active voice.** "Platform owns the ingestion pipeline" not "the ingestion pipeline is owned by Platform."
 - **No engineering minutiae.** No code, no API contract examples, no schema fragments. If you find yourself writing `SELECT` or curly braces, you're in the wrong document.
 - **Concrete numbers** where present in the source artifacts. "27 use cases," "79 working days," "12 base tools + 2 conditional," "+8 days ahead of target." Avoid vague qualifiers like "many," "several," "significantly."
 - **Exec-readable density.** Aim for one substantive idea per sentence. Bullets over paragraphs where a list is the natural shape.
@@ -207,7 +207,7 @@ Convert the markdown into `executive-summary/[feature-name]-executive-summary.pd
    - `pandoc input.md -o /tmp/output.html --from=gfm --standalone --css=/tmp/style.css --embed-resources` to get a styled HTML
    - Chrome headless to print the HTML to PDF: `"/Applications/Google Chrome.app/Contents/MacOS/Google Chrome" --headless --disable-gpu --print-to-pdf=output.pdf --no-pdf-header-footer file:///tmp/output.html`
 
-A reasonable CSS for engineering-style PDFs (Georgia serif body, Helvetica headings, light-slate code blocks, table borders, page-break-before on H1) lives in the `/Users/judydarvin/.claude/skills/build-product/` skill assets. Reuse or duplicate inline.
+A reasonable CSS for engineering-style PDFs (Georgia serif body, Helvetica headings, light-slate code blocks, table borders, page-break-before on H1) can be inlined directly or sourced from the skill's local assets directory if present. Reuse or duplicate inline.
 
 **Alternative paths:** the `anthropic-skills:pdf` and `anthropic-skills:docx` skills may be invoked if pandoc/Chrome aren't available.
 

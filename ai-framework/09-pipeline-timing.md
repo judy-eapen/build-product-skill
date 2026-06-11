@@ -5,7 +5,7 @@ Generates a timing report for a feature's pipeline run — both **wall-clock tim
 Two data sources, in order of preference:
 
 1. **Instrumented timestamps** in `_pipeline-state.json` → `step_timings` (written by the orchestrator at each step's start and end). Precise.
-2. **JSONL fallback** parsed from `~/.claude/projects/-Users-judydarvin/[session-uuid].jsonl`. Approximate — uses message timestamps and the gap-detection heuristic below.
+2. **JSONL fallback** parsed from `~/.claude/projects/[your-profile]/[session-uuid].jsonl`. Approximate — uses message timestamps and the gap-detection heuristic below.
 
 Both sources can be combined for a single run: instrumented data for steps that have it, JSONL fallback for any step missing instrumentation. The report notes which source produced each row.
 
@@ -68,7 +68,7 @@ If a step has no `completed_at` (still running or instrumentation interrupted), 
 
 For any step missing from `step_timings`, or if `step_timings` is entirely empty:
 
-1. Locate the session JSONL file (`ls -t ~/.claude/projects/-Users-judydarvin/*.jsonl | head -1`).
+1. Locate the session JSONL file (`ls -t ~/.claude/projects/*/*.jsonl | head -1`). The subfolder under `~/.claude/projects/` is derived from your home directory path (slashes replaced with hyphens); run `ls ~/.claude/projects/` to see yours.
 2. Parse it. Each `user` and `assistant` line has a `timestamp` (ISO-8601).
 3. Filter to the window `[pipeline_started_at, pipeline_completed_at]` (or "now" if still running).
 4. For each step, infer boundaries:
